@@ -15,8 +15,8 @@ export interface User {
 export interface Chalet {
   id: string
   name: string
-  normalPrice: number // أيام عادية
-  holidayPrice: number // إجازات
+  normalPrice: number
+  holidayPrice: number
   description: string
   image: string
   location: string
@@ -41,53 +41,29 @@ export interface Booking {
   brokerId?: string 
 }
 
-const INITIAL_CHALETS: Chalet[] = [
-  {
-    id: 'c1',
-    name: 'شالية لؤلؤة الساحل',
-    normalPrice: 3500,
-    holidayPrice: 4500,
-    description: 'إطلالة مباشرة على البحر في أرقى قرى الساحل الشمالي.',
-    image: 'https://picsum.photos/seed/p1/800/600',
-    location: 'الساحل الشمالي - سيدي عبد الرحمن',
-    city: 'الساحل الشمالي'
-  },
-  {
-    id: 'c2',
-    name: 'فيلا الجوهرة الملكية',
-    normalPrice: 5000,
-    holidayPrice: 6500,
-    description: 'تصميم عصري مع حمام سباحة خاص وحديقة واسعة.',
-    image: 'https://picsum.photos/seed/p2/800/600',
-    location: 'العين السخنة - المونت جلالة',
-    city: 'العين السخنة'
-  },
-  {
-    id: 'c3',
-    name: 'جناح مارينا بورتو',
-    normalPrice: 2800,
-    holidayPrice: 3800,
-    description: 'خصوصية تامة بالقرب من الخدمات والممشى السياحي.',
-    image: 'https://picsum.photos/seed/p3/800/600',
-    location: 'العين السخنة - بورتو السخنة',
-    city: 'العين السخنة'
-  },
-  {
-    id: 'c4',
-    name: 'شالية الفيروز الهادئ',
-    normalPrice: 2200,
-    holidayPrice: 3200,
-    description: 'إقامة مريحة وهادئة للعائلات مع إطلالة بانورامية.',
-    image: 'https://picsum.photos/seed/p4/800/600',
-    location: 'الساحل الشمالي - مارينا 7',
-    city: 'الساحل الشمالي'
-  }
-]
+// توليد 30 شاليه لمحاكاة الواقع
+const generateChalets = (): Chalet[] => {
+  const cities = ['الساحل الشمالي', 'العين السخنة', 'شرم الشيخ', 'الغردقة']
+  const locations = ['سيدي عبد الرحمن', 'المونت جلالة', 'بورتو السخنة', 'مارينا 7', 'خليج نعمة', 'الجونة']
+  
+  return Array.from({ length: 30 }).map((_, i) => ({
+    id: `c${i + 1}`,
+    name: `شاليه لؤلؤة ${i + 1}`,
+    normalPrice: 2000 + (Math.floor(Math.random() * 10) * 500),
+    holidayPrice: 3000 + (Math.floor(Math.random() * 10) * 500),
+    description: `وصف تفصيلي لشاليه لؤلؤة ${i + 1} الفاخر في أرقى المواقع السياحية بمصر.`,
+    image: `https://picsum.photos/seed/${i + 100}/800/600`,
+    location: locations[i % locations.length],
+    city: cities[i % cities.length]
+  }))
+}
+
+const INITIAL_CHALETS: Chalet[] = generateChalets()
 
 const INITIAL_USERS: User[] = [
-  { id: 'u1', name: 'أحمد الإدمن', role: 'admin' },
-  { id: 'u2', name: 'سامي مندوب', role: 'broker', assignedChaletIds: ['c1', 'c2'] },
-  { id: 'u3', name: 'محمود المشرف', role: 'supervisor', assignedChaletIds: ['c1', 'c2', 'c3', 'c4'] }
+  { id: 'u1', name: 'المدير العام', role: 'admin' },
+  { id: 'u2', name: 'وسيط مبيعات 1', role: 'broker', assignedChaletIds: ['c1', 'c2', 'c3', 'c4', 'c5'] },
+  { id: 'u3', name: 'المشرف الميداني', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id) }
 ]
 
 export function useAppStore() {
@@ -106,7 +82,8 @@ export function useAppStore() {
 
     if (savedRole) {
       setRole(savedRole)
-      const foundUser = (savedUsers ? JSON.parse(savedUsers) : INITIAL_USERS).find((u: any) => u.role === savedRole)
+      const usersData = savedUsers ? JSON.parse(savedUsers) : INITIAL_USERS
+      const foundUser = usersData.find((u: any) => u.role === savedRole)
       setCurrentUser(foundUser || null)
     }
     if (savedChalets) setChalets(JSON.parse(savedChalets))
