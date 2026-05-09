@@ -24,10 +24,17 @@ import { AddUserDialog } from '@/components/AddUserDialog'
 import { ChaletDetailsDialog } from '@/components/ChaletDetailsDialog'
 import { SupervisorActionDialog } from '@/components/SupervisorActionDialog'
 import Image from 'next/image'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart } from 'recharts'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
+
+const chartConfig = {
+  revenue: {
+    label: "الإيرادات",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig
 
 export default function PharmaBeachApp() {
   const store = useAppStore()
@@ -57,7 +64,6 @@ export default function PharmaBeachApp() {
         toast({ title: "تم تسجيل الدخول بنجاح" })
       } else {
         const userCred = await createUserWithEmailAndPassword(auth, email, password)
-        // Profile creation is handled in store.ts useEffect
         toast({ title: "تم إنشاء الحساب بنجاح" })
       }
     } catch (e: any) {
@@ -66,9 +72,9 @@ export default function PharmaBeachApp() {
   }
 
   const myChalets = useMemo(() => {
-    let list = store.chalets
+    let list = store.chalets || []
     if (store.role === 'broker') {
-        list = store.chalets.filter(c => c.ownerBrokerId === store.currentUser?.uid || c.status === 'active')
+        list = list.filter(c => c.ownerBrokerId === store.currentUser?.uid || c.status === 'active')
     }
     if (searchQuery) {
       list = list.filter(c => c.name.includes(searchQuery) || c.location.includes(searchQuery))
@@ -77,9 +83,9 @@ export default function PharmaBeachApp() {
   }, [store.role, store.chalets, searchQuery, store.currentUser])
 
   const filteredBookings = useMemo(() => {
-    let list = store.bookings
-    if (store.role === 'broker') list = store.bookings.filter(b => b.brokerId === store.currentUser?.uid)
-    if (store.role === 'supervisor') list = store.bookings.filter(b => b.status === 'confirmed' || b.status === 'admin_approved')
+    let list = store.bookings || []
+    if (store.role === 'broker') list = list.filter(b => b.brokerId === store.currentUser?.uid)
+    if (store.role === 'supervisor') list = list.filter(b => b.status === 'confirmed' || b.status === 'admin_approved')
     
     if (statusFilter !== 'all') {
       list = list.filter(b => b.status === statusFilter || b.paymentStatus === statusFilter)
@@ -95,7 +101,7 @@ export default function PharmaBeachApp() {
     const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو']
     return months.map((m, i) => ({
       name: m,
-      revenue: i === 4 ? store.bookings.filter(b => b.paymentStatus === 'verified').reduce((acc, b) => acc + (b.totalAmount || 0), 0) : (i * 15000 + 10000)
+      revenue: i === 5 ? (store.bookings || []).filter(b => b.paymentStatus === 'verified').reduce((acc, b) => acc + (b.totalAmount || 0), 0) : (i * 15000 + 10000)
     }))
   }, [store.bookings])
 
@@ -312,35 +318,35 @@ export default function PharmaBeachApp() {
                           <Badge className="bg-green-50 text-green-600 font-black">+12% هذا الشهر</Badge>
                        </div>
                        <div className="h-[350px] w-full">
-                          <ResponsiveContainer width="100%" height="100%">
+                          <ChartContainer config={chartConfig}>
                             <BarChart data={revenueData}>
                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                               <XAxis dataKey="name" />
-                               <YAxis />
-                               <Tooltip content={<ChartTooltipContent />} />
-                               <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[12, 12, 0, 0]} />
+                               <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                               <YAxis tickLine={false} axisLine={false} />
+                               <ChartTooltip content={<ChartTooltipContent />} />
+                               <Bar dataKey="revenue" fill="var(--color-revenue)" radius={[12, 12, 0, 0]} />
                             </BarChart>
-                          </ResponsiveContainer>
+                          </ChartContainer>
                        </div>
                     </Card>
                     <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
                        <h3 className="text-3xl font-black text-right">تحليل الإشغال</h3>
                        <div className="h-[350px] w-full">
-                          <ResponsiveContainer width="100%" height="100%">
+                          <ChartContainer config={chartConfig}>
                             <AreaChart data={revenueData}>
                                <defs>
                                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                    <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0}/>
                                   </linearGradient>
                                </defs>
                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                               <XAxis dataKey="name" />
-                               <YAxis />
-                               <Tooltip />
-                               <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRev)" />
+                               <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                               <YAxis tickLine={false} axisLine={false} />
+                               <ChartTooltip content={<ChartTooltipContent />} />
+                               <Area type="monotone" dataKey="revenue" stroke="var(--color-revenue)" fillOpacity={1} fill="url(#colorRev)" />
                             </AreaChart>
-                          </ResponsiveContainer>
+                          </ChartContainer>
                        </div>
                     </Card>
                  </div>
