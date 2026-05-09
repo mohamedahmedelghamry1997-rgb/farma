@@ -12,7 +12,6 @@ import {
   orderBy, 
   serverTimestamp,
   onSnapshot,
-  where,
   getDoc,
   setDoc
 } from 'firebase/firestore'
@@ -48,8 +47,6 @@ export interface Chalet {
   maxGuests?: number
   amenities?: string[]
   ownerBrokerId?: string
-  cleaningFee?: number
-  insuranceFee?: number
 }
 
 export interface Booking {
@@ -71,10 +68,6 @@ export interface Booking {
   notes?: string
   createdAt?: any
   conditionReport?: string
-  electricityReading?: string
-  waterReading?: string
-  checkInTime?: string
-  checkOutTime?: string
 }
 
 export interface Coupon {
@@ -105,101 +98,135 @@ export function useAppStore() {
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       setAuthUser(user)
       if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid))
-        if (userDoc.exists()) {
-          const userData = userDoc.data() as UserProfile
-          setCurrentUser({ ...userData, id: userDoc.id })
-          setRoleState(userData.role)
-        } else {
-          const isAdmin = user.email === 'admin@gmail.com'
-          const newProfile: Omit<UserProfile, 'id'> = {
-            uid: user.uid,
-            name: user.displayName || 'مستخدم جديد',
-            role: isAdmin ? 'admin' : 'client',
-            isApproved: true,
-            assignedChaletIds: []
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data() as UserProfile;
+            setCurrentUser({ ...userData, id: userDoc.id });
+            setRoleState(userData.role);
+          } else {
+            // أي شخص يسجل ببريد admin@gmail.com يصبح أدمن تلقائياً
+            const isAdmin = user.email === 'admin@gmail.com';
+            const newProfile: Omit<UserProfile, 'id'> = {
+              uid: user.uid,
+              name: user.displayName || 'مستخدم جديد',
+              role: isAdmin ? 'admin' : 'client',
+              isApproved: true,
+              assignedChaletIds: []
+            };
+            await setDoc(userDocRef, newProfile);
+            setCurrentUser({ ...newProfile, id: user.uid } as UserProfile);
+            setRoleState(newProfile.role);
           }
-          await setDoc(doc(db, 'users', user.uid), newProfile)
-          setCurrentUser({ ...newProfile, id: user.uid } as UserProfile)
-          setRoleState(newProfile.role)
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
         }
       } else {
-        setCurrentUser(null)
-        setRoleState(null)
+        setCurrentUser(null);
+        setRoleState(null);
       }
-      setIsAuthLoading(false)
-    })
+      setIsAuthLoading(false);
+    });
 
     const unsubChalets = onSnapshot(collection(db, 'chalets'), (snap) => {
-      setChalets(snap.docs.map(d => ({ ...d.data() as Chalet, id: d.id })))
-    })
+      setChalets(snap.docs.map(d => ({ ...d.data() as Chalet, id: d.id })));
+    }, (err) => console.error("Firestore error (chalets):", err));
 
     const unsubBookings = onSnapshot(query(collection(db, 'bookings'), orderBy('createdAt', 'desc')), (snap) => {
-      setBookings(snap.docs.map(d => ({ ...d.data() as Booking, id: d.id })))
-    })
+      setBookings(snap.docs.map(d => ({ ...d.data() as Booking, id: d.id })));
+    }, (err) => console.error("Firestore error (bookings):", err));
 
     const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
-      setUsers(snap.docs.map(d => ({ ...d.data() as UserProfile, id: d.id })))
-    })
+      setUsers(snap.docs.map(d => ({ ...d.data() as UserProfile, id: d.id })));
+    }, (err) => console.error("Firestore error (users):", err));
 
     const unsubCoupons = onSnapshot(collection(db, 'coupons'), (snap) => {
-      setCoupons(snap.docs.map(d => ({ ...d.data() as Coupon, id: d.id })))
-      setIsDataLoading(false)
-    })
+      setCoupons(snap.docs.map(d => ({ ...d.data() as Coupon, id: d.id })));
+      setIsDataLoading(false);
+    }, (err) => {
+      console.error("Firestore error (coupons):", err);
+      setIsDataLoading(false);
+    });
 
     return () => {
-      unsubscribeAuth()
-      unsubChalets()
-      unsubBookings()
-      unsubUsers()
-      unsubCoupons()
+      unsubscribeAuth();
+      unsubChalets();
+      unsubBookings();
+      unsubUsers();
+      unsubCoupons();
+    };
+  }, [auth, db]);
+
+  const addBooking = async (data: Omit<Booking, 'id' | 'createdAt'>) => {
+    try {
+      await addDoc(collection(db, 'bookings'), {
+        ...data,
+        status: data.status || 'pending',
+        opStatus: data.opStatus || 'waiting',
+        createdAt: serverTimestamp()
+      });
+    } catch (e) {
+      console.error("Error adding booking:", e);
+      throw e;
     }
-  }, [auth, db])
-
-  const cleanData = (data: any) => {
-    return Object.entries(data).reduce((acc, [key, value]) => {
-      if (value !== undefined && value !== null) acc[key] = value;
-      return acc;
-    }, {} as any);
-  };
-
-  const addBooking = (data: Omit<Booking, 'id' | 'createdAt'>) => {
-    const finalData = cleanData({
-      ...data,
-      status: 'pending',
-      opStatus: 'waiting',
-      paymentStatus: 'pending',
-      createdAt: serverTimestamp()
-    });
-    addDoc(collection(db, 'bookings'), finalData)
   }
 
-  const updateBooking = (id: string, updates: Partial<Booking>) => {
-    updateDoc(doc(db, 'bookings', id), cleanData(updates))
+  const updateBooking = async (id: string, updates: Partial<Booking>) => {
+    try {
+      await updateDoc(doc(db, 'bookings', id), updates);
+    } catch (e) {
+      console.error("Error updating booking:", e);
+    }
   }
 
-  const addChalet = (data: Omit<Chalet, 'id'>) => {
-    addDoc(collection(db, 'chalets'), { ...cleanData(data), createdAt: serverTimestamp() })
+  const addChalet = async (data: Omit<Chalet, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'chalets'), { ...data, createdAt: serverTimestamp() });
+    } catch (e) {
+      console.error("Error adding chalet:", e);
+    }
   }
 
-  const updateChalet = (id: string, updates: Partial<Chalet>) => {
-    updateDoc(doc(db, 'chalets', id), cleanData(updates))
+  const updateChalet = async (id: string, updates: Partial<Chalet>) => {
+    try {
+      await updateDoc(doc(db, 'chalets', id), updates);
+    } catch (e) {
+      console.error("Error updating chalet:", e);
+    }
   }
 
-  const deleteChalet = (id: string) => {
-    deleteDoc(doc(db, 'chalets', id))
+  const deleteChalet = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'chalets', id));
+    } catch (e) {
+      console.error("Error deleting chalet:", e);
+    }
   }
 
-  const addUser = (data: Omit<UserProfile, 'id'>) => {
-    addDoc(collection(db, 'users'), { ...cleanData(data), createdAt: serverTimestamp() })
+  const addUser = async (data: Omit<UserProfile, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'users'), { ...data, createdAt: serverTimestamp() });
+    } catch (e) {
+      console.error("Error adding user:", e);
+    }
   }
 
-  const addCoupon = (data: Omit<Coupon, 'id'>) => {
-    addDoc(collection(db, 'coupons'), { ...cleanData(data), isActive: true })
+  const addCoupon = async (data: Omit<Coupon, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'coupons'), { ...data, isActive: true });
+    } catch (e) {
+      console.error("Error adding coupon:", e);
+    }
   }
 
-  const deleteCoupon = (id: string) => {
-    deleteDoc(doc(db, 'coupons', id))
+  const deleteCoupon = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'coupons', id));
+    } catch (e) {
+      console.error("Error deleting coupon:", e);
+    }
   }
 
   return {
