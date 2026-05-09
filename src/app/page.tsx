@@ -14,7 +14,7 @@ import {
   History, Sparkles, Box, AlertTriangle, MessageSquare, Tag, FileSpreadsheet,
   Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings, UserPlus,
   ArrowUpRight, Megaphone, Percent, Copy, Filter, Download, Calendar as CalendarIcon,
-  LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle
+  LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle, Database
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -63,7 +63,7 @@ export default function PharmaBeachApp() {
         await signInWithEmailAndPassword(auth, email, password)
         toast({ title: "تم تسجيل الدخول بنجاح" })
       } else {
-        const userCred = await createUserWithEmailAndPassword(auth, email, password)
+        await createUserWithEmailAndPassword(auth, email, password)
         toast({ title: "تم إنشاء الحساب بنجاح" })
       }
     } catch (e: any) {
@@ -99,17 +99,30 @@ export default function PharmaBeachApp() {
 
   const revenueData = useMemo(() => {
     const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو']
+    const monthlyRevenue = (store.bookings || [])
+      .filter(b => b.paymentStatus === 'verified')
+      .reduce((acc, b) => acc + (b.totalAmount || 0), 0)
+    
     return months.map((m, i) => ({
       name: m,
-      revenue: i === 5 ? (store.bookings || []).filter(b => b.paymentStatus === 'verified').reduce((acc, b) => acc + (b.totalAmount || 0), 0) : (i * 15000 + 10000)
+      revenue: i === 5 ? monthlyRevenue : (i * 15000 + 10000)
     }))
   }, [store.bookings])
+
+  const handleSeed = async () => {
+    try {
+      await store.seedDatabase();
+      toast({ title: "تم توليد البيانات التجريبية بنجاح" });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "فشل توليد البيانات", description: e.message });
+    }
+  }
 
   if (!store.isLoaded) return <div className="h-screen flex items-center justify-center font-black bg-slate-50 text-primary animate-pulse">جاري تحميل منظومة فارما بيتش...</div>
 
   if (!store.authUser) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 text-right">
         <Card className="w-full max-w-md p-10 rounded-[3rem] shadow-2xl space-y-8 bg-white border-none">
           <div className="text-center space-y-3">
              <div className="bg-primary w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-lg shadow-primary/20"><LogIn className="text-white h-8 w-8" /></div>
@@ -379,6 +392,33 @@ export default function PharmaBeachApp() {
                       </Card>
                     ))}
                  </div>
+              </TabsContent>
+
+              <TabsContent value="settings" className="space-y-8">
+                 <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
+                    <div className="text-right space-y-4">
+                       <h3 className="text-3xl font-black">إعدادات المنظومة المتقدمة</h3>
+                       <p className="text-slate-500 font-bold">إدارة البيانات التجريبية وتهيئة النظام</p>
+                    </div>
+                    
+                    <div className="p-8 bg-primary/5 rounded-[2rem] border border-primary/10 space-y-6">
+                       <div className="flex items-center gap-4 flex-row-reverse">
+                          <Database className="text-primary h-8 w-8" />
+                          <div className="text-right">
+                             <h4 className="font-black text-xl">توليد بيانات تجريبية (Demo Data)</h4>
+                             <p className="text-sm text-slate-500 font-bold">سيقوم هذا الإجراء بملء قاعدة البيانات بشاليهات وحجوزات وموظفين لتجربة النظام بالكامل.</p>
+                          </div>
+                       </div>
+                       <Button className="w-full h-16 rounded-2xl font-black gap-3 text-lg" variant="default" onClick={handleSeed}>
+                          توليد البيانات الآن <Sparkles className="h-5 w-5" />
+                       </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8">
+                       <Button variant="outline" className="h-16 rounded-2xl font-black border-slate-200">إعدادات البريد الإلكتروني</Button>
+                       <Button variant="outline" className="h-16 rounded-2xl font-black border-slate-200">تعديل الملف الشخصي</Button>
+                    </div>
+                 </Card>
               </TabsContent>
             </Tabs>
           </div>
