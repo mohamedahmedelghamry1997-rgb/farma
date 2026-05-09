@@ -62,7 +62,21 @@ export default function PharmaBeachApp() {
   const [conditionText, setConditionText] = useState('')
   const [depositText, setDepositText] = useState('')
 
-  if (!store.isLoaded) return <div className="h-screen flex items-center justify-center bg-white"><div className="animate-pulse font-bold text-primary">جاري تحميل نظام فارما بيتش...</div></div>
+  // تصفية البيانات حسب الدور - يجب أن تكون قبل أي return مبكر
+  const filteredChalets = useMemo(() => {
+    if (!store.isLoaded) return []
+    if (store.role === 'admin' || store.role === 'client') return store.chalets
+    return store.chalets.filter(c => store.currentUser?.assignedChaletIds.includes(c.id))
+  }, [store.isLoaded, store.role, store.currentUser, store.chalets])
+
+  const filteredBookings = useMemo(() => {
+    if (!store.isLoaded) return []
+    if (store.role === 'admin') return store.bookings
+    if (store.role === 'broker') return store.bookings.filter(b => b.brokerId === store.currentUser?.id)
+    if (store.role === 'supervisor') return store.bookings.filter(b => b.status === 'confirmed' && store.currentUser?.assignedChaletIds.includes(b.chaletId))
+    if (store.role === 'client') return store.bookings.filter(b => b.phoneNumber === '0123456789') // محاكاة لعميل محدد
+    return []
+  }, [store.isLoaded, store.role, store.currentUser, store.bookings])
 
   const handleBookingConfirm = (data: any) => {
     store.addBooking({
@@ -72,19 +86,14 @@ export default function PharmaBeachApp() {
     toast({ title: "تم إرسال الطلب بنجاح", description: "سيقوم الإدمن بمراجعة حجزك قريباً." })
   }
 
-  // تصفية البيانات حسب الدور
-  const filteredChalets = useMemo(() => {
-    if (store.role === 'admin' || store.role === 'client') return store.chalets
-    return store.chalets.filter(c => store.currentUser?.assignedChaletIds.includes(c.id))
-  }, [store.role, store.currentUser, store.chalets])
-
-  const filteredBookings = useMemo(() => {
-    if (store.role === 'admin') return store.bookings
-    if (store.role === 'broker') return store.bookings.filter(b => b.brokerId === store.currentUser?.id)
-    if (store.role === 'supervisor') return store.bookings.filter(b => b.status === 'confirmed' && store.currentUser?.assignedChaletIds.includes(b.chaletId))
-    if (store.role === 'client') return store.bookings.filter(b => b.phoneNumber === '0123456789') // محاكاة لعميل محدد
-    return []
-  }, [store.role, store.currentUser, store.bookings])
+  // نقل شرط التحميل إلى هنا بعد جميع الخطافات
+  if (!store.isLoaded) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-white">
+        <div className="animate-pulse font-bold text-primary">جاري تحميل نظام فارما بيتش...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-right" dir="rtl">
