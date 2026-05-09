@@ -1,8 +1,7 @@
-
 /**
  * @fileOverview Firebase Configuration
  * 
- * تم ربط المنظومة الآن بمشروعك الحقيقي: studio-3753206868-89c35
+ * تم تحديث الربط بمشروعك الحقيقي: studio-3753206868-89c35
  */
 
 export const firebaseConfig = {
