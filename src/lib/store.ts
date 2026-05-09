@@ -41,6 +41,11 @@ export interface Booking {
   conditionReport?: string
   securityDeposit?: string
   brokerId?: string 
+  // Financial Fields
+  paymentMethod?: string
+  paymentReference?: string
+  paymentStatus?: 'pending' | 'verified' | 'rejected'
+  totalAmount?: number
 }
 
 const generateChalets = (): Chalet[] => {
@@ -108,7 +113,8 @@ export function useAppStore() {
       ...bookingData,
       id: Math.random().toString(36).substr(2, 9),
       status: 'pending',
-      opStatus: 'waiting'
+      opStatus: 'waiting',
+      paymentStatus: 'pending'
     }
     setBookings(prev => [...prev, newBooking])
     return newBooking
