@@ -22,6 +22,7 @@ import { BookingDialog } from '@/components/BookingDialog'
 import { ChaletCard } from '@/components/ChaletCard'
 import { AddChaletDialog } from '@/components/AddChaletDialog'
 import { AddUserDialog } from '@/components/AddUserDialog'
+import { EditUserDialog } from '@/components/EditUserDialog'
 import { ChaletDetailsDialog } from '@/components/ChaletDetailsDialog'
 import { SupervisorActionDialog } from '@/components/SupervisorActionDialog'
 import Image from 'next/image'
@@ -53,6 +54,8 @@ export default function PharmaBeachApp() {
   const [isBookingOpen, setIsBookingOpen] = useState(false)
   const [isAddChaletOpen, setIsAddChaletOpen] = useState(false)
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   
@@ -484,7 +487,7 @@ export default function PharmaBeachApp() {
                                           </Badge>
                                        </div>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => toast({ title: "معاينة الحساب", description: `عرض تفاصيل الحساب لـ ${u.name}` })}><Eye className="h-5 w-5" /></Button>
+                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => { setEditingUser(u); setIsEditUserOpen(true); }}><Settings className="h-5 w-5" /></Button>
                                  </div>
                                  <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-slate-50 p-4 rounded-2xl text-center">
@@ -527,7 +530,7 @@ export default function PharmaBeachApp() {
                                           </Badge>
                                        </div>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => toast({ title: "الإعدادات", description: "فتح إعدادات المشرف الميداني." })}><Settings className="h-5 w-5" /></Button>
+                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => { setEditingUser(u); setIsEditUserOpen(true); }}><Settings className="h-5 w-5" /></Button>
                                  </div>
                                  <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-slate-50 p-4 rounded-2xl text-center">
@@ -553,7 +556,7 @@ export default function PharmaBeachApp() {
                                     className={`w-full h-12 rounded-xl font-black gap-2 ${u.status === 'suspended' ? 'text-green-600 border-green-100 hover:bg-green-50' : 'text-destructive border-destructive/10 hover:bg-destructive/5'}`}
                                     onClick={() => handleUpdateUserStatus(u.id, u.status || 'active')}
                                   >
-                                    {u.status === 'suspended' ? 'تفعيل الحساب' : 'تعطيل الحساب'}
+                                    {u.status === 'suspended' ? 'تفعيل الحساب' : 'تعديل المهام'}
                                  </Button>
                               </Card>
                             )
@@ -743,6 +746,16 @@ export default function PharmaBeachApp() {
 
       <AddChaletDialog isOpen={isAddChaletOpen} onClose={() => setIsAddChaletOpen(false)} onAdd={(data) => { store.addChalet(data); toast({ title: "تمت إضافة الشاليه وبانتظار الاعتماد" }); }} />
       <AddUserDialog isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} onAdd={(data) => { store.addUser(data); toast({ title: "تم إنشاء حساب الموظف الجديد" }); }} chalets={store.chalets} />
+      
+      <EditUserDialog 
+        user={editingUser} 
+        isOpen={isEditUserOpen} 
+        onClose={() => { setIsEditUserOpen(false); setEditingUser(null); }} 
+        onUpdate={(userId, data) => { 
+          store.updateUser(userId, data); 
+          toast({ title: "تم تحديث بيانات الموظف بنجاح" }); 
+        }} 
+      />
 
       <SupervisorActionDialog 
         isOpen={isSupervisorActionOpen} 
