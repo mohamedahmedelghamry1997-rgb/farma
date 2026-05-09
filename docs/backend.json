@@ -1,0 +1,79 @@
+
+{
+  "entities": {
+    "Chalet": {
+      "title": "Chalet",
+      "description": "بيانات الشاليه المتاحة في القرية",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "normalPrice": { "type": "number" },
+        "holidayPrice": { "type": "number" },
+        "description": { "type": "string" },
+        "image": { "type": "string" },
+        "location": { "type": "string" },
+        "city": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "active"] },
+        "addedBy": { "type": "string" }
+      },
+      "required": ["name", "normalPrice", "city", "status"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "سجلات الحجوزات والعمليات المالية والميدانية",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "chaletId": { "type": "string" },
+        "clientName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "guestCount": { "type": "number" },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["pending", "admin_approved", "confirmed", "cancelled"] },
+        "opStatus": { "type": "string", "enum": ["waiting", "checked_in", "checked_out"] },
+        "paymentStatus": { "type": "string", "enum": ["pending", "verified", "rejected"] },
+        "paymentMethod": { "type": "string" },
+        "paymentReference": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "securityDeposit": { "type": "string" },
+        "conditionReport": { "type": "string" },
+        "brokerId": { "type": "string" },
+        "checkInTime": { "type": "string" },
+        "checkOutTime": { "type": "string" }
+      },
+      "required": ["chaletId", "clientName", "phoneNumber", "startDate", "endDate", "status"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "بيانات الموظفين والأدوار في المنظومة",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "broker", "supervisor"] },
+        "isApproved": { "type": "boolean" },
+        "assignedChaletIds": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["uid", "name", "role", "isApproved"]
+    }
+  },
+  "auth": {
+    "providers": ["password", "google.com"]
+  },
+  "firestore": {
+    "/chalets/{chaletId}": {
+      "schema": { "$ref": "#/backend/entities/Chalet" },
+      "description": "مجموعة الشاليهات المتاحة"
+    },
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/backend/entities/Booking" },
+      "description": "سجلات الحجوزات المالية والميدانية"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/User" },
+      "description": "بيانات الموظفين وأدوارهم"
+    }
+  }
+}
