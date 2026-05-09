@@ -211,6 +211,28 @@ export default function PharmaBeachApp() {
                     </Card>
                  </div>
               </TabsContent>
+              
+              <TabsContent value="users" className="space-y-6">
+                 <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm">
+                   <div className="text-right">
+                     <h3 className="text-3xl font-black">فريق العمل</h3>
+                     <p className="text-slate-500 font-bold">إدارة المشرفين، البروكرز، وصلاحيات الوصول</p>
+                   </div>
+                   <Button className="rounded-2xl h-16 px-10 font-black gap-2 text-lg shadow-xl shadow-primary/20" onClick={() => setIsAddUserOpen(true)}><Users /> إضافة موظف</Button>
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {store.users.map(u => (
+                      <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl flex items-center gap-6">
+                         <div className="h-16 w-16 rounded-2xl bg-slate-100 flex items-center justify-center text-primary"><Users className="h-8 w-8" /></div>
+                         <div className="text-right flex-1">
+                            <p className="font-black text-xl">{u.name}</p>
+                            <Badge className="mt-1 bg-slate-50 text-slate-600 border-none">{u.role === 'broker' ? 'وسيط' : 'مشرف'}</Badge>
+                         </div>
+                         <Button variant="ghost" className="h-10 w-10 text-destructive"><XCircle /></Button>
+                      </Card>
+                    ))}
+                 </div>
+              </TabsContent>
             </Tabs>
           </div>
         )}

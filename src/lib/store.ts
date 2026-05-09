@@ -12,7 +12,8 @@ import {
   orderBy, 
   serverTimestamp,
   onSnapshot,
-  Timestamp
+  Timestamp,
+  where
 } from 'firebase/firestore'
 import { useFirestore, useCollection } from '@/firebase'
 
@@ -28,6 +29,7 @@ export interface UserProfile {
   phone?: string
   status?: 'active' | 'suspended'
   commissionRate?: number
+  image?: string
 }
 
 export interface Chalet {
@@ -119,12 +121,20 @@ export function useAppStore() {
           name: "فيلا رويال هاسيندا", normalPrice: 12000, holidayPrice: 15000, city: "الساحل الشمالي", location: "سيدي عبد الرحمن", 
           description: "فيلا ملكية صف أول على البحر مباشرة مع حمام سباحة خاص وجاكوزي خارجي.", status: "active", maxGuests: 12,
           image: "https://picsum.photos/seed/h1/800/600", amenities: ["واي فاي", "تكييف مركزي", "مسبح", "شطاف"],
-          gallery: ["https://picsum.photos/seed/h2/800/600", "https://picsum.photos/seed/h3/800/600"]
+          gallery: ["https://picsum.photos/seed/h2/800/600", "https://picsum.photos/seed/h3/800/600"],
+          inventory: { towels: 10, sheets: 6, soap: 12 }
         },
         { 
           name: "شاليه لؤلؤة السخنة", normalPrice: 3500, holidayPrice: 5000, city: "العين السخنة", location: "تلال", 
           description: "إطلالة بانورامية ساحرة على البحر الأحمر. تصميم مودرن وأثاث فاخر.", status: "active", maxGuests: 5,
-          image: "https://picsum.photos/seed/s1/800/600", amenities: ["تكييف", "مطبخ كامل", "فيو بحر"]
+          image: "https://picsum.photos/seed/s1/800/600", amenities: ["تكييف", "مطبخ كامل", "فيو بحر"],
+          inventory: { towels: 4, sheets: 3, soap: 6 }
+        },
+        { 
+          name: "جناح المارينا الملكي", normalPrice: 8000, holidayPrice: 10000, city: "الساحل الشمالي", location: "مارينا 7", 
+          description: "جناح فاخر يطل على البحيرة مباشرة. خصوصية تامة وخدمة فندقية.", status: "active", maxGuests: 8,
+          image: "https://picsum.photos/seed/m1/800/600", amenities: ["تكييف", "فيو بحيرة", "حديقة خاصة"],
+          inventory: { towels: 8, sheets: 4, soap: 10 }
         }
       ]
       demoChalets.forEach(c => addDoc(collection(db, 'chalets'), { ...c, createdAt: serverTimestamp() }))
@@ -141,11 +151,18 @@ export function useAppStore() {
 
     if (coupons?.length === 0) {
       addDoc(collection(db, 'coupons'), { code: "PHARMA20", discountType: "percentage", value: 20, isActive: true, expiryDate: "2025-12-31" })
+      addDoc(collection(db, 'coupons'), { code: "SUMMER2024", discountType: "fixed", value: 500, isActive: true, expiryDate: "2024-09-30" })
     }
   }, [chaletsLoading, usersLoading, db, coupons])
 
   const addBooking = (data: Omit<Booking, 'id' | 'createdAt'>) => {
-    addDoc(collection(db, 'bookings'), { ...data, createdAt: serverTimestamp() })
+    addDoc(collection(db, 'bookings'), { 
+      ...data, 
+      status: data.status || 'pending',
+      opStatus: data.opStatus || 'waiting',
+      paymentStatus: data.paymentStatus || 'pending',
+      createdAt: serverTimestamp() 
+    })
   }
 
   const updateBooking = (id: string, updates: Partial<Booking>) => {
@@ -168,10 +185,14 @@ export function useAppStore() {
     addDoc(collection(db, 'users'), { ...data, createdAt: serverTimestamp() })
   }
 
+  const addCoupon = (data: Omit<Coupon, 'id'>) => {
+    addDoc(collection(db, 'coupons'), { ...data })
+  }
+
   return {
     role, setRole, currentUser, users: users || [],
     chalets: chalets || [], bookings: bookings || [], coupons: coupons || [],
-    addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser,
+    addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser, addCoupon,
     isLoaded: !chaletsLoading && !bookingsLoading && !usersLoading
   }
 }
