@@ -32,7 +32,9 @@ import {
   Copy,
   ExternalLink,
   ShieldAlert,
-  UserCheck
+  UserCheck,
+  ShieldCheck,
+  Zap
 } from 'lucide-react'
 import { analyzeChaletConditionNotes } from '@/ai/flows/admin-chalet-condition-analyzer'
 import { adminChaletBookingGapOptimizer } from '@/ai/flows/admin-chalet-booking-gap-optimizer'
@@ -68,7 +70,7 @@ export default function PharmaBeachApp() {
     }
   }, [searchParams, store.brokers, toast])
 
-  // Revenue Data for Chart
+  // Revenue Data for Chart (All stats available to both Admin and Broker as requested)
   const revenueData = useMemo(() => {
     return store.chalets.map(c => ({
       name: c.name,
@@ -78,8 +80,8 @@ export default function PharmaBeachApp() {
     }))
   }, [store.bookings, store.chalets])
 
-  // Current Broker Identity (Simplified for Demo)
-  const currentBroker = store.brokers[0] // نفترض أننا نستخدم أول وسيط للتجريب
+  // Current Broker Identity
+  const currentBroker = store.brokers[0] 
 
   if (!store.isLoaded) return <div className="h-screen flex items-center justify-center bg-background"><Clock className="animate-spin text-primary" /></div>
 
@@ -91,7 +93,7 @@ export default function PharmaBeachApp() {
   const handleConfirmBooking = (bookingData: Omit<Booking, 'id' | 'status'>) => {
     store.addBooking({
       ...bookingData,
-      brokerId: activeBrokerId // حفظ معرف الوسيط إذا وجد
+      brokerId: activeBrokerId 
     })
     toast({
       title: "تم استلام الطلب",
@@ -142,7 +144,6 @@ export default function PharmaBeachApp() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      {/* Header */}
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -176,7 +177,7 @@ export default function PharmaBeachApp() {
             <div className="grid grid-cols-1 gap-4">
               {[
                 { id: 'client', label: 'دخول كعميل' },
-                { id: 'broker', label: 'دخول كوسيط' },
+                { id: 'broker', label: 'دخول كوسيط (مدير مبيعات)' },
                 { id: 'supervisor', label: 'دخول كمشرف' },
                 { id: 'admin', label: 'دخول كمدير نظام' }
               ].map((r) => (
@@ -203,92 +204,6 @@ export default function PharmaBeachApp() {
                     <ChaletCard key={c.id} chalet={c} onBook={handleBook} />
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* BROKER VIEW */}
-            {store.role === 'broker' && (
-              <div className="space-y-6">
-                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                      <h2 className="text-2xl font-headline font-bold text-primary">مرحباً، {currentBroker.name}</h2>
-                      <p className="text-muted-foreground text-sm">أنت شريك مبيعات معتمد في فارما بيتش.</p>
-                    </div>
-                    <Card className="rounded-2xl border-none shadow-sm bg-primary text-white p-4 flex flex-row items-center gap-4">
-                       <div className="flex-1">
-                          <p className="text-[10px] font-bold uppercase opacity-80">رابط الإحالة الخاص بك</p>
-                          <p className="font-mono text-xs mt-1">?ref={currentBroker.referralCode}</p>
-                       </div>
-                       <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => copyReferralLink(currentBroker.referralCode)}>
-                         <Copy className="h-4 w-4" />
-                       </Button>
-                    </Card>
-                 </div>
-
-                 <Tabs defaultValue="bookings">
-                   <TabsList className="grid w-full grid-cols-2 mb-6 h-12">
-                     <TabsTrigger value="bookings" className="h-10">مبيعاتي وحجوزاتي</TabsTrigger>
-                     <TabsTrigger value="settings" className="h-10">إعدادات العرض</TabsTrigger>
-                   </TabsList>
-                   
-                   <TabsContent value="bookings" className="space-y-4">
-                      {store.bookings.filter(b => b.brokerId === currentBroker.id).length === 0 ? (
-                        <div className="text-center p-12 bg-white rounded-3xl opacity-50">لا توجد مبيعات مسجلة باسمك بعد.</div>
-                      ) : (
-                        store.bookings.filter(b => b.brokerId === currentBroker.id).map(b => (
-                          <Card key={b.id} className="rounded-2xl border-none shadow-sm p-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div className="flex items-center gap-4 flex-1">
-                              <div className="bg-primary/5 p-3 rounded-xl">
-                                <Users className="h-6 w-6 text-primary" />
-                              </div>
-                              <div>
-                                <p className="font-bold">{b.clientName}</p>
-                                <p className="text-xs text-muted-foreground">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
-                                <p className="text-[10px] opacity-60">{format(new Date(b.startDate), 'PPP', { locale: ar })}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <Badge className={b.status === 'confirmed' ? 'bg-green-500' : b.status === 'cancelled' ? 'bg-red-500' : 'bg-yellow-500'}>
-                                {b.status === 'confirmed' ? 'مؤكد' : b.status === 'cancelled' ? 'ملغي' : 'معلق'}
-                              </Badge>
-                              {b.status === 'pending' && store.allowBrokerConfirm && (
-                                <Button size="sm" variant="outline" className="text-xs font-bold border-green-500 text-green-600 hover:bg-green-50" onClick={() => store.updateBookingStatus(b.id, 'confirmed')}>
-                                  تأكيد الحجز الآن
-                                </Button>
-                              )}
-                              {!store.allowBrokerConfirm && b.status === 'pending' && (
-                                <span className="text-[10px] text-muted-foreground italic flex items-center gap-1">
-                                  <ShieldAlert className="h-3 w-3" /> بانتظار الأدمن
-                                </span>
-                              )}
-                            </div>
-                          </Card>
-                        ))
-                      )}
-                   </TabsContent>
-
-                   <TabsContent value="settings" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {store.chalets.map(c => (
-                        <Card key={c.id} className="rounded-2xl border-none shadow-md overflow-hidden group">
-                          <div className="relative h-32">
-                             <img src={c.image} alt="" className="object-cover w-full h-full" />
-                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                               <Button size="sm" variant="secondary" onClick={() => copyReferralLink(currentBroker.referralCode)}>مشاركة الرابط</Button>
-                             </div>
-                          </div>
-                          <CardHeader className="p-4">
-                            <CardTitle className="text-sm font-bold">{c.name}</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4 pt-0 space-y-4">
-                             <div className="space-y-1">
-                               <label className="text-[10px] font-bold uppercase text-muted-foreground">السعر المعروض ($)</label>
-                               <Input type="number" value={c.price} onChange={(e) => store.updateChalet(c.id, { price: parseInt(e.target.value) })} className="h-8" />
-                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                   </TabsContent>
-                 </Tabs>
               </div>
             )}
 
@@ -346,20 +261,38 @@ export default function PharmaBeachApp() {
               </div>
             )}
 
-            {/* ADMIN VIEW */}
-            {store.role === 'admin' && (
+            {/* ADMIN & BROKER DASHBOARD (Shared as requested) */}
+            {(store.role === 'admin' || store.role === 'broker') && (
               <div className="space-y-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
-                    <h2 className="text-3xl font-headline font-black text-primary">لوحة تحكم المدير</h2>
-                    <p className="text-muted-foreground">مرحباً بك مجدداً في نظام STUDIO FIREBASS AI</p>
+                    <h2 className="text-3xl font-headline font-black text-primary">
+                      {store.role === 'admin' ? 'لوحة تحكم المدير' : `لوحة تحكم المبيعات: ${currentBroker.name}`}
+                    </h2>
+                    <p className="text-muted-foreground">نظرة شاملة على عمليات قرية فارما بيتش</p>
                   </div>
-                  <div className="flex items-center gap-4 bg-white p-3 rounded-2xl shadow-sm border">
-                    <div className="flex items-center gap-2">
-                       <Label htmlFor="broker-confirm" className="text-xs font-bold cursor-pointer">السماح للوسطاء بتأكيد الحجوزات</Label>
-                       <Switch id="broker-confirm" checked={store.allowBrokerConfirm} onCheckedChange={store.setAllowBrokerConfirm} />
+                  
+                  {/* Broker Specific Tools */}
+                  {store.role === 'broker' && (
+                    <Card className="rounded-2xl border-none shadow-sm bg-primary text-white p-4 flex flex-row items-center gap-4">
+                       <div className="flex-1">
+                          <p className="text-[10px] font-bold uppercase opacity-80">رابط الإحالة الخاص بك</p>
+                          <p className="font-mono text-xs mt-1">?ref={currentBroker.referralCode}</p>
+                       </div>
+                       <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => copyReferralLink(currentBroker.referralCode)}>
+                         <Copy className="h-4 w-4" />
+                       </Button>
+                    </Card>
+                  )}
+
+                  {store.role === 'admin' && (
+                    <div className="flex items-center gap-4 bg-white p-3 rounded-2xl shadow-sm border">
+                      <div className="flex items-center gap-2">
+                         <Label htmlFor="broker-confirm" className="text-xs font-bold cursor-pointer">السماح للوسطاء بتأكيد الحجوزات</Label>
+                         <Switch id="broker-confirm" checked={store.allowBrokerConfirm} onCheckedChange={store.setAllowBrokerConfirm} />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Main Stats */}
@@ -384,8 +317,8 @@ export default function PharmaBeachApp() {
                   </Card>
                    <Card className="rounded-2xl border-none shadow-md bg-white">
                     <CardHeader className="pb-2">
-                      <CardDescription className="text-xs font-bold uppercase">طلبات معلقة</CardDescription>
-                      <CardTitle className="text-4xl text-red-500">{store.bookings.filter(b => b.status === 'pending').length}</CardTitle>
+                      <CardDescription className="text-xs font-bold uppercase">بانتظار الموافقة</CardDescription>
+                      <CardTitle className="text-4xl text-red-500">{store.bookings.filter(b => b.status === 'pending' || b.status === 'approved').length}</CardTitle>
                     </CardHeader>
                   </Card>
                 </div>
@@ -455,12 +388,12 @@ export default function PharmaBeachApp() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Booking Queue */}
+                  {/* Booking Queue with Two-Stage Confirmation */}
                   <Card className="rounded-3xl border-none shadow-xl bg-white overflow-hidden">
                     <CardHeader className="bg-primary/5 p-6 border-b">
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-primary" />
-                        طابور المراجعة
+                        طابور المراجعة والاعتماد
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
@@ -470,6 +403,8 @@ export default function PharmaBeachApp() {
                         ) : (
                           store.bookings.map(b => {
                             const broker = store.brokers.find(br => br.id === b.brokerId)
+                            const isMyReferral = store.role === 'broker' && b.brokerId === currentBroker.id
+                            
                             return (
                               <div key={b.id} className="p-6 flex justify-between items-center hover:bg-muted/10 transition-colors">
                                 <div className="space-y-1">
@@ -486,16 +421,49 @@ export default function PharmaBeachApp() {
                                   <p className="text-[10px] opacity-60 font-bold">{format(new Date(b.startDate), 'dd MMMM', { locale: ar })} - {format(new Date(b.endDate), 'dd MMMM', { locale: ar })}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  {b.status === 'pending' ? (
-                                    <>
-                                      <Button size="icon" variant="ghost" className="text-red-500" onClick={() => store.updateBookingStatus(b.id, 'cancelled')}><XCircle /></Button>
-                                      <Button size="icon" variant="ghost" className="text-green-500" onClick={() => store.updateBookingStatus(b.id, 'confirmed')}><CheckCircle2 /></Button>
-                                    </>
-                                  ) : (
-                                    <Badge className={b.status === 'confirmed' ? 'bg-green-500' : 'bg-red-500'}>
-                                      {b.status === 'confirmed' ? 'مؤكد' : 'ملغي'}
+                                  {/* Status Display */}
+                                  <div className="flex flex-col items-end gap-1">
+                                    <Badge className={
+                                      b.status === 'confirmed' ? 'bg-green-500' : 
+                                      b.status === 'approved' ? 'bg-blue-500' : 
+                                      b.status === 'cancelled' ? 'bg-red-500' : 
+                                      'bg-yellow-500'
+                                    }>
+                                      {b.status === 'confirmed' ? 'مؤكد نهائياً' : 
+                                       b.status === 'approved' ? 'موافقة مبدئية' : 
+                                       b.status === 'cancelled' ? 'ملغي' : 
+                                       'بانتظار المراجعة'}
                                     </Badge>
-                                  )}
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-1 mt-2">
+                                      {/* Admin Actions */}
+                                      {store.role === 'admin' && b.status === 'pending' && (
+                                        <Button size="sm" variant="outline" className="text-xs h-7 border-blue-500 text-blue-600 font-bold" onClick={() => store.updateBookingStatus(b.id, 'approved')}>
+                                          <ShieldCheck className="h-3 w-3 ml-1" /> موافقة الإدارة
+                                        </Button>
+                                      )}
+                                      {store.role === 'admin' && (b.status === 'pending' || b.status === 'approved') && (
+                                        <>
+                                          <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500" onClick={() => store.updateBookingStatus(b.id, 'cancelled')}><XCircle /></Button>
+                                          <Button size="sm" className="text-xs h-7 bg-green-600 font-bold" onClick={() => store.updateBookingStatus(b.id, 'confirmed')}>تأكيد نهائي</Button>
+                                        </>
+                                      )}
+
+                                      {/* Broker Actions: Only if referral and approved by admin */}
+                                      {store.role === 'broker' && b.status === 'approved' && isMyReferral && (
+                                        <Button size="sm" className="text-xs h-7 bg-orange-500 hover:bg-orange-600 font-bold" onClick={() => store.updateBookingStatus(b.id, 'confirmed')}>
+                                          <Zap className="h-3 w-3 ml-1" /> تأكيد الوسيط النهائي
+                                        </Button>
+                                      )}
+                                      
+                                      {store.role === 'broker' && b.status === 'pending' && isMyReferral && (
+                                        <span className="text-[10px] text-muted-foreground italic flex items-center gap-1">
+                                          <ShieldAlert className="h-3 w-3" /> بانتظار موافقة الأدمن
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             )
@@ -505,7 +473,7 @@ export default function PharmaBeachApp() {
                     </CardContent>
                   </Card>
 
-                  {/* AI Gap Optimizer */}
+                  {/* AI Gap Optimizer (Available to Broker too) */}
                   <Card className="rounded-3xl border-none shadow-xl bg-white overflow-hidden">
                     <CardHeader className="bg-secondary/10 p-6 border-b">
                       <CardTitle className="text-lg flex items-center gap-2">
@@ -515,7 +483,7 @@ export default function PharmaBeachApp() {
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                       <p className="text-sm text-muted-foreground">
-                        يقوم الذكاء الاصطناعي بتحليل البيانات التاريخية والحجوزات المستقبلية لتحديد الثغرات واقتراح عروض ترويجية لضمان إشغال بنسبة 100%.
+                        نظام تحليل البيانات الذكي لتحديد الثغرات واقتراح العروض لضمان إشغال كامل.
                       </p>
                       <div className="space-y-4">
                         {store.chalets.map(c => (

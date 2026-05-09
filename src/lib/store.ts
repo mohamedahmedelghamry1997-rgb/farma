@@ -22,13 +22,13 @@ export interface Booking {
   guestCount: number
   startDate: string
   endDate: string
-  status: 'pending' | 'confirmed' | 'cancelled'
+  status: 'pending' | 'approved' | 'confirmed' | 'cancelled'
   checkInTime?: string
   checkOutTime?: string
   notes?: string
   conditionReport?: string
   securityDeposit?: number
-  brokerId?: string // التابع الذي جاء منه العميل
+  brokerId?: string 
 }
 
 export interface Broker {
