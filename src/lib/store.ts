@@ -12,11 +12,12 @@ import {
   orderBy, 
   serverTimestamp,
   onSnapshot,
-  Timestamp,
   where,
-  getDoc
+  getDoc,
+  setDoc
 } from 'firebase/firestore'
-import { useFirestore, useCollection } from '@/firebase'
+import { onAuthStateChanged, User } from 'firebase/auth'
+import { useFirestore, useAuth } from '@/firebase'
 
 export type UserRole = 'client' | 'broker' | 'supervisor' | 'admin'
 
@@ -31,7 +32,6 @@ export interface UserProfile {
   status?: 'active' | 'suspended'
   commissionRate?: number
   image?: string
-  performanceScore?: number
 }
 
 export interface Chalet {
@@ -39,12 +39,9 @@ export interface Chalet {
   name: string
   normalPrice: number
   holidayPrice: number
-  weeklyPrice?: number
-  monthlyPrice?: number
   description: string
   image: string
   gallery?: string[]
-  videoUrl?: string
   location: string
   city: string
   status: 'active' | 'maintenance' | 'closed' | 'pending'
@@ -53,8 +50,6 @@ export interface Chalet {
   ownerBrokerId?: string
   cleaningFee?: number
   insuranceFee?: number
-  minStay?: number
-  maxStay?: number
 }
 
 export interface Booking {
@@ -67,20 +62,13 @@ export interface Booking {
   endDate: string
   status: 'pending' | 'admin_approved' | 'confirmed' | 'cancelled'
   opStatus: 'waiting' | 'checked_in' | 'checked_out'
-  checkInTime?: string
-  checkOutTime?: string
+  paymentStatus?: 'pending' | 'verified' | 'rejected'
   paymentMethod?: string
   paymentReference?: string
-  paymentStatus?: 'pending' | 'verified' | 'rejected'
   totalAmount: number
   brokerId?: string
   supervisorId?: string
   notes?: string
-  conditionReport?: string
-  electricityReading?: string
-  waterReading?: string
-  brokerCommission?: number
-  couponCode?: string
   createdAt?: any
 }
 
@@ -95,64 +83,77 @@ export interface Coupon {
 
 export function useAppStore() {
   const db = useFirestore()
+  const auth = useAuth()
+  
   const [role, setRoleState] = useState<UserRole | null>(null)
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
+  const [authUser, setAuthUser] = useState<User | null>(null)
+  const [isAuthLoading, setIsAuthLoading] = useState(true)
 
-  const { data: chalets, loading: chaletsLoading } = useCollection<Chalet>(
-    collection(db, 'chalets')
-  )
-  
-  const { data: bookings, loading: bookingsLoading } = useCollection<Booking>(
-    query(collection(db, 'bookings'), orderBy('createdAt', 'desc'))
-  )
-  
-  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
-    collection(db, 'users')
-  )
-
-  const { data: coupons, loading: couponsLoading } = useCollection<Coupon>(
-    collection(db, 'coupons')
-  )
+  // Firebase Instances
+  const [chalets, setChalets] = useState<Chalet[]>([])
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [users, setUsers] = useState<UserProfile[]>([])
+  const [coupons, setCoupons] = useState<Coupon[]>([])
+  const [isDataLoading, setIsDataLoading] = useState(true)
 
   useEffect(() => {
-    if (!chaletsLoading && chalets?.length === 0) {
-      const demoChalets = [
-        { 
-          name: "فيلا رويال هاسيندا", normalPrice: 12000, holidayPrice: 15000, city: "الساحل الشمالي", location: "سيدي عبد الرحمن", 
-          description: "فيلا ملكية صف أول على البحر مباشرة مع حمام سباحة خاص وجاكوزي خارجي. خصوصية تامة.", status: "active", maxGuests: 12,
-          image: "https://picsum.photos/seed/h1/800/600", amenities: ["تكييف مركزي", "مسبح", "فيو بحر"],
-          gallery: ["https://picsum.photos/seed/h2/800/600", "https://picsum.photos/seed/h3/800/600"],
-          cleaningFee: 500, insuranceFee: 2000
-        },
-        { 
-          name: "شاليه لؤلؤة السخنة", normalPrice: 3500, holidayPrice: 5000, city: "العين السخنة", location: "تلال", 
-          description: "إطلالة بانورامية ساحرة على البحر الأحمر. تصميم مودرن وأثاث فاخر ونظيف.", status: "active", maxGuests: 5,
-          image: "https://picsum.photos/seed/s1/800/600", amenities: ["تكييف", "مطبخ كامل", "فيو بحر"],
-          cleaningFee: 200, insuranceFee: 1000
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      setAuthUser(user)
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        if (userDoc.exists()) {
+          const userData = userDoc.data() as UserProfile
+          setCurrentUser({ ...userData, id: userDoc.id })
+          setRoleState(userData.role)
+        } else {
+          // If user exists in Auth but not in Firestore (e.g. first login)
+          const newProfile: Omit<UserProfile, 'id'> = {
+            uid: user.uid,
+            name: user.displayName || 'مستخدم جديد',
+            role: 'client',
+            isApproved: true,
+            assignedChaletIds: []
+          }
+          await setDoc(doc(db, 'users', user.uid), newProfile)
+          setRoleState('client')
         }
-      ]
-      demoChalets.forEach(c => addDoc(collection(db, 'chalets'), { ...c, createdAt: serverTimestamp() }))
-    }
+      } else {
+        setCurrentUser(null)
+        setRoleState(null)
+      }
+      setIsAuthLoading(false)
+    })
 
-    if (!usersLoading && users?.length === 0) {
-      const demoUsers = [
-        { uid: "admin_1", name: "مدير المنظومة", role: "admin", isApproved: true },
-        { uid: "broker_1", name: "أحمد البروكر", role: "broker", isApproved: true, commissionRate: 10 },
-        { uid: "super_1", name: "محمد المشرف", role: "supervisor", isApproved: true }
-      ]
-      demoUsers.forEach(u => addDoc(collection(db, 'users'), { ...u, createdAt: serverTimestamp() }))
-    }
-  }, [chaletsLoading, usersLoading, db])
+    // Listen to Chalets
+    const unsubChalets = onSnapshot(collection(db, 'chalets'), (snap) => {
+      setChalets(snap.docs.map(d => ({ ...d.data() as Chalet, id: d.id })))
+    })
 
-  const setRole = (newRole: UserRole | null) => {
-    setRoleState(newRole);
-    if (newRole && users) {
-      const user = users.find(u => u.role === newRole);
-      if (user) setCurrentUser(user);
-    } else {
-      setCurrentUser(null);
+    // Listen to Bookings
+    const unsubBookings = onSnapshot(query(collection(db, 'bookings'), orderBy('createdAt', 'desc')), (snap) => {
+      setBookings(snap.docs.map(d => ({ ...d.data() as Booking, id: d.id })))
+    })
+
+    // Listen to Users (Admin only usually, but for mock/mvp we listen all)
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
+      setUsers(snap.docs.map(d => ({ ...d.data() as UserProfile, id: d.id })))
+    })
+
+    // Listen to Coupons
+    const unsubCoupons = onSnapshot(collection(db, 'coupons'), (snap) => {
+      setCoupons(snap.docs.map(d => ({ ...d.data() as Coupon, id: d.id })))
+      setIsDataLoading(false)
+    })
+
+    return () => {
+      unsubscribeAuth()
+      unsubChalets()
+      unsubBookings()
+      unsubUsers()
+      unsubCoupons()
     }
-  }
+  }, [auth, db])
 
   const cleanData = (data: any) => {
     return Object.entries(data).reduce((acc, [key, value]) => {
@@ -164,9 +165,9 @@ export function useAppStore() {
   const addBooking = (data: Omit<Booking, 'id' | 'createdAt'>) => {
     addDoc(collection(db, 'bookings'), { 
       ...cleanData(data), 
-      status: data.status || 'pending',
-      opStatus: data.opStatus || 'waiting',
-      paymentStatus: data.paymentStatus || 'pending',
+      status: 'pending',
+      opStatus: 'waiting',
+      paymentStatus: 'pending',
       createdAt: serverTimestamp() 
     })
   }
@@ -200,9 +201,9 @@ export function useAppStore() {
   }
 
   return {
-    role, setRole, currentUser, users: users || [],
-    chalets: chalets || [], bookings: bookings || [], coupons: coupons || [],
+    role, currentUser, authUser, isAuthLoading,
+    chalets, bookings, users, coupons,
     addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser, addCoupon, deleteCoupon,
-    isLoaded: !chaletsLoading && !bookingsLoading && !usersLoading && !couponsLoading
+    isLoaded: !isAuthLoading && !isDataLoading
   }
 }
