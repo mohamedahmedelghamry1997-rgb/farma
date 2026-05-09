@@ -28,6 +28,13 @@ export interface Booking {
   notes?: string
   conditionReport?: string
   securityDeposit?: number
+  brokerId?: string // التابع الذي جاء منه العميل
+}
+
+export interface Broker {
+  id: string
+  name: string
+  referralCode: string
 }
 
 const INITIAL_CHALETS: Chalet[] = [
@@ -68,23 +75,33 @@ const INITIAL_BOOKINGS: Booking[] = [
     endDate: new Date(Date.now() + 86400000 * 2).toISOString(),
     status: 'confirmed',
     notes: 'يحتاج مناشف إضافية',
+    brokerId: 'broker_1'
   }
+]
+
+const INITIAL_BROKERS: Broker[] = [
+  { id: 'broker_1', name: 'سامي مندوب', referralCode: 'SAMI2024' },
+  { id: 'broker_2', name: 'منى تسويق', referralCode: 'MONA_PRO' }
 ]
 
 export function useAppStore() {
   const [role, setRole] = useState<UserRole | null>(null)
   const [chalets, setChalets] = useState<Chalet[]>(INITIAL_CHALETS)
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS)
+  const [brokers] = useState<Broker[]>(INITIAL_BROKERS)
+  const [allowBrokerConfirm, setAllowBrokerConfirm] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
     const savedRole = localStorage.getItem('sfa_role') as UserRole
     const savedChalets = localStorage.getItem('sfa_chalets')
     const savedBookings = localStorage.getItem('sfa_bookings')
+    const savedSettings = localStorage.getItem('sfa_settings')
 
     if (savedRole) setRole(savedRole)
     if (savedChalets) setChalets(JSON.parse(savedChalets))
     if (savedBookings) setBookings(JSON.parse(savedBookings))
+    if (savedSettings) setAllowBrokerConfirm(JSON.parse(savedSettings).allowBrokerConfirm)
     setIsLoaded(true)
   }, [])
 
@@ -93,8 +110,9 @@ export function useAppStore() {
       if (role) localStorage.setItem('sfa_role', role)
       localStorage.setItem('sfa_chalets', JSON.stringify(chalets))
       localStorage.setItem('sfa_bookings', JSON.stringify(bookings))
+      localStorage.setItem('sfa_settings', JSON.stringify({ allowBrokerConfirm }))
     }
-  }, [role, chalets, bookings, isLoaded])
+  }, [role, chalets, bookings, allowBrokerConfirm, isLoaded])
 
   const addBooking = (booking: Omit<Booking, 'id' | 'status'>) => {
     const newBooking: Booking = {
@@ -123,6 +141,9 @@ export function useAppStore() {
     setRole,
     chalets,
     bookings,
+    brokers,
+    allowBrokerConfirm,
+    setAllowBrokerConfirm,
     addBooking,
     updateBookingStatus,
     updateBookingDetails,
