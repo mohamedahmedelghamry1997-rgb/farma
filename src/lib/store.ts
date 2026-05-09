@@ -108,17 +108,27 @@ export function useAppStore() {
             setCurrentUser({ ...userData, id: userDoc.id });
             setRoleState(userData.role);
           } else {
-            const isAdmin = user.email === 'admin@gmail.com';
+            // منطق تعيين الأدوار بناءً على البريد الإلكتروني
+            let assignedRole: UserRole = 'client';
+            if (user.email === 'admin@gmail.com') {
+              assignedRole = 'admin';
+            } else if (user.email === 'admin1@gmail.com') {
+              assignedRole = 'broker';
+            } else if (user.email === 'admin2@gmail.com') {
+              assignedRole = 'supervisor';
+            }
+
             const newProfile: Omit<UserProfile, 'id'> = {
               uid: user.uid,
               name: user.displayName || 'مستخدم جديد',
-              role: isAdmin ? 'admin' : 'client',
+              role: assignedRole,
               isApproved: true,
-              assignedChaletIds: []
+              assignedChaletIds: [],
+              status: 'active'
             };
             await setDoc(userDocRef, newProfile);
             setCurrentUser({ ...newProfile, id: user.uid } as UserProfile);
-            setRoleState(newProfile.role);
+            setRoleState(assignedRole);
           }
         } catch (error) {
           console.error("Error fetching user profile:", error);
