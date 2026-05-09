@@ -137,7 +137,8 @@ export function useAppStore() {
 
   const addUser = (userData: Omit<User, 'id' | 'isApproved'>) => {
     const newUser: User = { 
-      ...userData, 
+      ...userData,
+      assignedChaletIds: userData.assignedChaletIds || [],
       id: 'u' + (users.length + 1), 
       isApproved: role === 'admin' 
     }

@@ -336,7 +336,7 @@ export default function PharmaBeachApp() {
                            {store.role === 'admin' && !u.isApproved && (
                              <Button size="sm" className="bg-green-600 text-white rounded-lg px-4" onClick={() => store.updateUser(u.id, { isApproved: true })}>اعتماد الموظف</Button>
                            )}
-                           <Badge variant="outline">{u.assignedChaletIds.length} شاليهات</Badge>
+                           <Badge variant="outline">{u.assignedChaletIds?.length || 0} شاليهات</Badge>
                         </div>
                       </Card>
                     ))}
