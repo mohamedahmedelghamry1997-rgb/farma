@@ -221,13 +221,53 @@ export function useAppStore() {
       chaletRefs.push(ref.id);
     }
 
+    const today = new Date();
     const bookingData = [
-      { chaletId: chaletRefs[0], clientName: "ياسر محمود", phoneNumber: "01011223344", guestCount: 4, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 86400000 * 3).toISOString(), status: "admin_approved", opStatus: "waiting", paymentStatus: "verified", totalAmount: 15000, paymentMethod: 'vodafone_cash', paymentReference: 'REF123', createdAt: serverTimestamp() }
+      { 
+        chaletId: chaletRefs[0], 
+        clientName: "ياسر محمود", 
+        phoneNumber: "01011223344", 
+        guestCount: 4, 
+        startDate: today.toISOString(), 
+        endDate: new Date(today.getTime() + 86400000 * 3).toISOString(), 
+        status: "confirmed", 
+        opStatus: "waiting", 
+        paymentStatus: "verified", 
+        totalAmount: 15000, 
+        paymentMethod: 'vodafone_cash', 
+        paymentReference: 'REF123', 
+        createdAt: serverTimestamp() 
+      },
+      { 
+        chaletId: chaletRefs[1], 
+        clientName: "خالد علي", 
+        phoneNumber: "01122334455", 
+        guestCount: 2, 
+        startDate: today.toISOString(), 
+        endDate: new Date(today.getTime() + 86400000 * 2).toISOString(), 
+        status: "admin_approved", 
+        opStatus: "waiting", 
+        paymentStatus: "pending", 
+        totalAmount: 7000, 
+        paymentMethod: 'instapay', 
+        paymentReference: 'TXN789', 
+        createdAt: serverTimestamp() 
+      }
     ];
 
     for (const b of bookingData) {
       const ref = doc(collection(db, 'bookings'));
       batch.set(ref, b);
+    }
+
+    const couponData = [
+      { code: "PHARMA10", discountType: "percentage", value: 10, isActive: true, expiryDate: "2025-12-31" },
+      { code: "SUMMER2024", discountType: "fixed", value: 500, isActive: true, expiryDate: "2024-09-30" }
+    ];
+
+    for (const cp of couponData) {
+      const ref = doc(collection(db, 'coupons'));
+      batch.set(ref, cp);
     }
 
     await batch.commit();

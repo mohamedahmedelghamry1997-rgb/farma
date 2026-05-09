@@ -74,12 +74,13 @@ export default function PharmaBeachApp() {
     const pendingTransfers = relevantBookings.filter(b => b.paymentStatus === 'pending').length;
     const activeCoupons = store.coupons.filter(c => c.isActive).length;
     
-    const today = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
     const occupiedToday = store.bookings.filter(b => 
-      b.status === 'confirmed' && 
-      today >= b.startDate.split('T')[0] && 
-      today <= b.endDate.split('T')[0]
+      (b.status === 'confirmed' || b.status === 'admin_approved') && 
+      todayStr >= b.startDate.split('T')[0] && 
+      todayStr <= b.endDate.split('T')[0]
     ).length;
+    
     const occupancyRate = store.chalets.length > 0 ? Math.round((occupiedToday / store.chalets.length) * 100) : 0;
 
     return { totalRevenue, pendingTransfers, activeCoupons, occupancyRate };
