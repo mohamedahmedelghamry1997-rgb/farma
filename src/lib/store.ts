@@ -50,15 +50,15 @@ export interface Booking {
 
 const generateChalets = (): Chalet[] => {
   const cities = ['الساحل الشمالي', 'العين السخنة']
-  const locations = ['سيدي عبد الرحمن', 'المونت جلالة', 'بورتو السخنة', 'مارينا 7']
+  const locations = ['سيدي عبد الرحمن', 'المونت جلالة', 'بورتو السخنة', 'مارينا 7', 'هاسيندا ووترز']
   
   return Array.from({ length: 30 }).map((_, i) => ({
     id: `c${i + 1}`,
     name: `شاليه لؤلؤة ${i + 1}`,
-    normalPrice: 2500 + (Math.floor(Math.random() * 10) * 500),
-    holidayPrice: 3500 + (Math.floor(Math.random() * 10) * 500),
-    description: `وصف تفصيلي لشاليه لؤلؤة ${i + 1} الفاخر، يتميز بطلة مباشرة على البحر وتشطيبات فندقية راقية.`,
-    image: `https://picsum.photos/seed/${i + 100}/800/600`,
+    normalPrice: 2000 + (Math.floor(Math.random() * 8) * 500),
+    holidayPrice: 3500 + (Math.floor(Math.random() * 8) * 500),
+    description: `وصف تفصيلي لشاليه لؤلؤة ${i + 1} الفاخر، يتميز بطلة مباشرة على البحر وتشطيبات فندقية راقية ومساحات خضراء واسعة.`,
+    image: `https://picsum.photos/seed/${i + 200}/800/600`,
     location: locations[i % locations.length],
     city: cities[i % cities.length],
     status: 'active'
@@ -68,9 +68,57 @@ const generateChalets = (): Chalet[] => {
 const INITIAL_CHALETS: Chalet[] = generateChalets()
 
 const INITIAL_USERS: User[] = [
-  { id: 'u1', name: 'المدير العام (الأدمن)', role: 'admin', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
-  { id: 'u2', name: 'أحمد البروكر', role: 'broker', assignedChaletIds: INITIAL_CHALETS.map(c => c.id).slice(0, 10), isApproved: true },
-  { id: 'u3', name: 'محمد المشرف', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id).slice(0, 15), isApproved: true }
+  { id: 'u1', name: 'أحمد الإداري (مدير النظام)', role: 'admin', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
+  { id: 'u2', name: 'محمد البروكر (شريك إداري)', role: 'broker', assignedChaletIds: INITIAL_CHALETS.map(c => c.id).slice(0, 15), isApproved: true },
+  { id: 'u3', name: 'كابتن محمود (مشرف ميداني)', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id).slice(0, 10), isApproved: true }
+]
+
+const INITIAL_BOOKINGS: Booking[] = [
+  {
+    id: 'b1',
+    chaletId: 'c1',
+    clientName: 'إبراهيم علي',
+    phoneNumber: '01011223344',
+    guestCount: 4,
+    startDate: new Date().toISOString(),
+    endDate: new Date(Date.now() + 86400000 * 3).toISOString(),
+    status: 'pending',
+    opStatus: 'waiting',
+    paymentStatus: 'pending',
+    paymentMethod: 'vodafone_cash',
+    paymentReference: 'VOD-8899221',
+    totalAmount: 6000
+  },
+  {
+    id: 'b2',
+    chaletId: 'c2',
+    clientName: 'منى محمود',
+    phoneNumber: '01122334455',
+    guestCount: 2,
+    startDate: new Date(Date.now() - 86400000 * 2).toISOString(),
+    endDate: new Date(Date.now() + 86400000 * 2).toISOString(),
+    status: 'confirmed',
+    opStatus: 'checked_in',
+    paymentStatus: 'verified',
+    paymentReference: 'BANK-TR-556',
+    totalAmount: 8500,
+    checkInTime: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 'b3',
+    chaletId: 'c3',
+    clientName: 'أحمد خالد',
+    phoneNumber: '01222334455',
+    guestCount: 6,
+    startDate: new Date(Date.now() - 86400000 * 10).toISOString(),
+    endDate: new Date(Date.now() - 86400000 * 7).toISOString(),
+    status: 'confirmed',
+    opStatus: 'checked_out',
+    paymentStatus: 'verified',
+    totalAmount: 12000,
+    conditionReport: 'الوحدة سلمت بحالة ممتازة، تم تنظيف الفلاتر وتحصيل تلف بسيط في كرسي المطبخ بقيمة 200 ج.م',
+    securityDeposit: '800'
+  }
 ]
 
 export function useAppStore() {
@@ -78,7 +126,7 @@ export function useAppStore() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [chalets, setChalets] = useState<Chalet[]>(INITIAL_CHALETS)
   const [users, setUsers] = useState<User[]>(INITIAL_USERS)
-  const [bookings, setBookings] = useState<Booking[]>([])
+  const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS)
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
@@ -111,7 +159,7 @@ export function useAppStore() {
   const addBooking = (bookingData: Omit<Booking, 'id' | 'status' | 'opStatus'>) => {
     const newBooking: Booking = {
       ...bookingData,
-      id: Math.random().toString(36).substr(2, 9),
+      id: 'b' + (bookings.length + 100),
       status: 'pending',
       opStatus: 'waiting',
       paymentStatus: 'pending'
