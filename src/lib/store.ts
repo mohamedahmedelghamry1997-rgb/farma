@@ -10,7 +10,7 @@ export interface User {
   name: string
   role: UserRole
   assignedChaletIds: string[]
-  isApproved: boolean // لاعتماد البروكرز والمشرفين الجدد
+  isApproved: boolean 
 }
 
 export interface Chalet {
@@ -22,7 +22,7 @@ export interface Chalet {
   image: string
   location: string
   city: string
-  status: 'pending' | 'active' // البروكر يضيف شاليه والادمن يعتمده
+  status: 'pending' | 'active' 
 }
 
 export interface Booking {
@@ -64,7 +64,7 @@ const INITIAL_CHALETS: Chalet[] = generateChalets()
 
 const INITIAL_USERS: User[] = [
   { id: 'u1', name: 'المدير العام', role: 'admin', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
-  { id: 'u2', name: 'أحمد السيلز (بروكر)', role: 'broker', assignedChaletIds: ['c1', 'c2', 'c3'], isApproved: true },
+  { id: 'u2', name: 'أحمد السيلز (بروكر)', role: 'broker', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
   { id: 'u3', name: 'محمد المشرف', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true }
 ]
 

@@ -71,17 +71,13 @@ export default function PharmaBeachApp() {
     if (!store.isLoaded) return []
     // Client sees only active approved chalets
     if (store.role === 'client') return store.chalets.filter(c => c.status === 'active')
-    // Admin sees all
-    if (store.role === 'admin') return store.chalets
-    // Broker sees all (including their pending ones)
-    if (store.role === 'broker') return store.chalets
+    // Admin & Broker see all (Broker acts as Co-Admin)
     return store.chalets
   }, [store.isLoaded, store.role, store.chalets])
 
   const filteredBookings = useMemo(() => {
     if (!store.isLoaded) return []
-    if (store.role === 'admin') return store.bookings
-    if (store.role === 'broker') return store.bookings // Broker acts as Co-Admin
+    if (store.role === 'admin' || store.role === 'broker') return store.bookings
     if (store.role === 'supervisor') return store.bookings.filter(b => b.status === 'confirmed')
     if (store.role === 'client') return store.bookings.filter(b => b.phoneNumber === '0123456789')
     return []
@@ -273,7 +269,7 @@ export default function PharmaBeachApp() {
                              )}
 
                              {/* Broker Final Confirmation Button */}
-                             {b.status === 'admin_approved' && (
+                             {(store.role === 'broker' || store.role === 'admin') && b.status === 'admin_approved' && (
                                <Button className="bg-green-600 hover:bg-green-700 text-white rounded-xl h-10 px-6 font-bold gap-2" onClick={() => {
                                  store.updateBooking(b.id, { status: 'confirmed' })
                                  toast({ title: "تم التأكيد النهائي", description: "الحجز متاح الآن للمشرف الميداني." })
@@ -336,7 +332,7 @@ export default function PharmaBeachApp() {
                            {store.role === 'admin' && !u.isApproved && (
                              <Button size="sm" className="bg-green-600 text-white rounded-lg px-4" onClick={() => store.updateUser(u.id, { isApproved: true })}>اعتماد الموظف</Button>
                            )}
-                           <Badge variant="outline">{u.assignedChaletIds?.length || 0} شاليهات</Badge>
+                           <Badge variant="outline">{(u.assignedChaletIds || []).length} شاليهات</Badge>
                         </div>
                       </Card>
                     ))}
