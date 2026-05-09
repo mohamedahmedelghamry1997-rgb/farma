@@ -9,7 +9,8 @@ export interface User {
   id: string
   name: string
   role: UserRole
-  assignedChaletIds: string[] // الشاليهات المسؤول عنها الموظف
+  assignedChaletIds: string[]
+  isApproved: boolean // لاعتماد البروكرز والمشرفين الجدد
 }
 
 export interface Chalet {
@@ -21,6 +22,7 @@ export interface Chalet {
   image: string
   location: string
   city: string
+  status: 'pending' | 'active' // البروكر يضيف شاليه والادمن يعتمده
 }
 
 export interface Booking {
@@ -31,17 +33,16 @@ export interface Booking {
   guestCount: number
   startDate: string
   endDate: string
-  status: 'pending' | 'confirmed' | 'cancelled'
+  status: 'pending' | 'admin_approved' | 'confirmed' | 'cancelled'
   opStatus: 'waiting' | 'checked_in' | 'checked_out'
   checkInTime?: string
   checkOutTime?: string
   notes?: string
-  conditionReport?: string // تقرير المشرف عن الحالة
-  securityDeposit?: string // مبلغ التأمين المسترد أو المخصوم منه
+  conditionReport?: string
+  securityDeposit?: string
   brokerId?: string 
 }
 
-// توليد بيانات أولية
 const generateChalets = (): Chalet[] => {
   const cities = ['الساحل الشمالي', 'العين السخنة']
   const locations = ['سيدي عبد الرحمن', 'المونت جلالة', 'بورتو السخنة', 'مارينا 7']
@@ -51,19 +52,20 @@ const generateChalets = (): Chalet[] => {
     name: `شاليه لؤلؤة ${i + 1}`,
     normalPrice: 2000 + (Math.floor(Math.random() * 10) * 500),
     holidayPrice: 3000 + (Math.floor(Math.random() * 10) * 500),
-    description: `وصف تفصيلي لشاليه لؤلؤة ${i + 1} الفاخر في أرقى المواقع السياحية بمصر.`,
+    description: `وصف تفصيلي لشاليه لؤلؤة ${i + 1} الفاخر.`,
     image: `https://picsum.photos/seed/${i + 100}/800/600`,
     location: locations[i % locations.length],
-    city: cities[i % cities.length]
+    city: cities[i % cities.length],
+    status: 'active'
   }))
 }
 
 const INITIAL_CHALETS: Chalet[] = generateChalets()
 
 const INITIAL_USERS: User[] = [
-  { id: 'u1', name: 'المدير العام (أدمن)', role: 'admin', assignedChaletIds: INITIAL_CHALETS.map(c => c.id) },
-  { id: 'u2', name: 'أحمد السيلز (بروكر)', role: 'broker', assignedChaletIds: ['c1', 'c2', 'c3', 'c4', 'c5'] },
-  { id: 'u3', name: 'محمد المشرف (مشرف)', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id) }
+  { id: 'u1', name: 'المدير العام', role: 'admin', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
+  { id: 'u2', name: 'أحمد السيلز (بروكر)', role: 'broker', assignedChaletIds: ['c1', 'c2', 'c3'], isApproved: true },
+  { id: 'u3', name: 'محمد المشرف', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true }
 ]
 
 export function useAppStore() {
@@ -116,8 +118,12 @@ export function useAppStore() {
     setBookings(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b))
   }
 
-  const addChalet = (chalet: Omit<Chalet, 'id'>) => {
-    const newChalet = { ...chalet, id: 'c' + (chalets.length + 1) }
+  const addChalet = (chalet: Omit<Chalet, 'id' | 'status'>) => {
+    const newChalet: Chalet = { 
+      ...chalet, 
+      id: 'c' + (chalets.length + 1), 
+      status: role === 'admin' ? 'active' : 'pending' 
+    }
     setChalets(prev => [...prev, newChalet])
   }
 
@@ -125,13 +131,17 @@ export function useAppStore() {
     setChalets(prev => prev.filter(c => c.id !== id))
   }
 
-  const addUser = (userData: Omit<User, 'id'>) => {
-    const newUser = { ...userData, id: 'u' + (users.length + 1) }
-    setUsers(prev => [...prev, newUser])
+  const updateChalet = (id: string, updates: Partial<Chalet>) => {
+    setChalets(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c))
   }
 
-  const deleteUser = (id: string) => {
-    setUsers(prev => prev.filter(u => u.id !== id))
+  const addUser = (userData: Omit<User, 'id' | 'isApproved'>) => {
+    const newUser: User = { 
+      ...userData, 
+      id: 'u' + (users.length + 1), 
+      isApproved: role === 'admin' 
+    }
+    setUsers(prev => [...prev, newUser])
   }
 
   const updateUser = (id: string, updates: Partial<User>) => {
@@ -149,8 +159,8 @@ export function useAppStore() {
     updateBooking,
     addChalet,
     deleteChalet,
+    updateChalet,
     addUser,
-    deleteUser,
     updateUser,
     isLoaded
   }
