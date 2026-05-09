@@ -4,7 +4,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Chalet, Booking, UserRole } from '@/lib/store'
 import { Badge } from './ui/badge'
-import { User, Phone, Calendar as CalendarIcon, DollarSign, Tag, Briefcase, History, MapPin } from 'lucide-react'
+import { User, Phone, Calendar as CalendarIcon, DollarSign, Tag, Briefcase, History, MapPin, Hash, Receipt, Wallet, UserCheck } from 'lucide-react'
 import { format, differenceInDays } from 'date-fns'
 import { ar } from 'date-fns/locale'
 
@@ -20,55 +20,86 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, userRole 
   if (!chalet) return null
 
   const nights = booking ? differenceInDays(new Date(booking.endDate), new Date(booking.startDate)) + 1 : 0;
+  const commission = nights * 200;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-[3rem] border-none shadow-2xl text-right bg-white">
-        <DialogHeader className="bg-primary p-8 text-white">
-          <DialogTitle className="text-3xl font-black text-right flex items-center justify-end gap-3">
-            تقرير الوحدة: {chalet.name} <Tag className="h-6 w-6" />
-          </DialogTitle>
-          <p className="text-primary-foreground/70 font-bold mt-2">كود الوحدة: {chalet.code} | {chalet.location}</p>
+      <DialogContent className="max-w-3xl p-0 overflow-hidden rounded-[3rem] border-none shadow-2xl text-right bg-white max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <DialogHeader className="bg-primary p-10 text-white relative">
+          <div className="flex flex-col gap-2 z-10 relative">
+             <Badge variant="outline" className="w-fit border-white/30 text-white font-black px-4">{chalet.code}</Badge>
+             <DialogTitle className="text-4xl font-black text-right flex items-center justify-end gap-3 mt-2">
+               {chalet.name} <Tag className="h-8 w-8" />
+             </DialogTitle>
+             <div className="flex items-center gap-2 justify-end opacity-80 font-bold mt-1">
+                <span>{chalet.location}</span>
+                <MapPin className="h-4 w-4" />
+             </div>
+          </div>
+          <div className="absolute top-0 left-0 p-10 opacity-10">
+             <Hash size={120} />
+          </div>
         </DialogHeader>
 
-        <div className="p-10 space-y-10">
+        <div className="p-10 space-y-12">
           {booking ? (
-            <div className="space-y-8">
+            <div className="space-y-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InfoCard title="العميل" value={booking.clientName} icon={User} color="text-blue-600" subValue={booking.phoneNumber} />
-                <InfoCard title="التواريخ" value={`${format(new Date(booking.startDate), 'dd MMM')} - ${format(new Date(booking.endDate), 'dd MMM')}`} icon={CalendarIcon} color="text-orange-600" subValue={`${nights} ليالي`} />
-                <InfoCard title="المسوق (البروكر)" value={booking.brokerName || "مباشر"} icon={Briefcase} color="text-purple-600" />
-                <InfoCard title="إجمالي الحجز" value={`${booking.totalAmount?.toLocaleString()} ج.م`} icon={DollarSign} color="text-green-600" />
+                <InfoCard title="العميل المستأجر" value={booking.clientName} icon={User} color="text-blue-600" subValue={booking.phoneNumber} />
+                <InfoCard title="فترة الإقامة" value={`${format(new Date(booking.startDate), 'dd MMMM yyyy', { locale: ar })}`} icon={CalendarIcon} color="text-orange-600" subValue={`إلى ${format(new Date(booking.endDate), 'dd MMMM yyyy', { locale: ar })} (${nights} ليالي)`} />
+                <InfoCard title="المسوق المسؤول" value={booking.brokerName || "حجز مباشر"} icon={Briefcase} color="text-purple-600" subValue={booking.brokerId ? "وسيط معتمد" : "إدارة المنتج"} />
+                <InfoCard title="إجمالي مبلغ الحجز" value={`${booking.totalAmount?.toLocaleString()} ج.م`} icon={Wallet} color="text-green-600" subValue={`سعر الليلة: ${chalet.normalPrice.toLocaleString()} ج.م`} />
               </div>
 
-              <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row-reverse justify-between items-center gap-6">
-                <div className="text-right">
-                  <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">عمولة المسوق</h4>
-                  <p className="text-4xl font-black text-primary">{(nights * 200).toLocaleString()} <span className="text-sm">ج.م</span></p>
-                  <p className="text-[10px] text-slate-500 mt-1 font-bold">بواقع 200 ج.م لكل ليلة حجز</p>
-                </div>
-                <div className={`px-6 py-2 rounded-full font-black text-sm ${booking.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                  {booking.status === 'confirmed' ? 'حجز مؤكد' : 'في انتظار التأكيد'}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 flex flex-col items-center text-center gap-2">
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">عمولة المسوق الإجمالية</p>
+                    <p className="text-4xl font-black text-primary">{commission.toLocaleString()} <span className="text-sm">ج.م</span></p>
+                    <Badge className="bg-primary/10 text-primary border-none text-[10px] mt-2">200 ج.م × {nights} ليالي</Badge>
+                 </div>
+                 
+                 <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex flex-col items-center text-center gap-2">
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">مرجع العملية المالية</p>
+                    <p className="text-xl font-black text-slate-900">{booking.paymentReference || '---'}</p>
+                    <div className="flex gap-2 mt-2">
+                       <Badge className={booking.paymentStatus === 'verified' ? 'bg-green-500' : 'bg-orange-500'}>
+                          {booking.paymentStatus === 'verified' ? 'دفع مؤكد' : 'انتظار المراجعة'}
+                       </Badge>
+                    </div>
+                 </div>
               </div>
+
+              {booking.notes && (
+                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-right">
+                   <p className="text-xs font-black text-slate-400 mb-2 uppercase">ملاحظات الحجز</p>
+                   <p className="text-slate-600 font-bold">{booking.notes}</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-20 space-y-6">
-              <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
-                <History size={40} />
+              <div className="h-24 w-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
+                <History size={48} />
               </div>
-              <p className="text-xl font-black text-slate-400">لا يوجد حجز نشط حالياً لهذا التاريخ</p>
+              <div>
+                <p className="text-2xl font-black text-slate-900">الوحدة متاحة حالياً</p>
+                <p className="text-slate-400 font-bold mt-2">لا يوجد أي حجوزات مسجلة لهذا التاريخ في شيت الجدولة.</p>
+              </div>
             </div>
           )}
 
-          <div className="pt-6 border-t flex items-center justify-between flex-row-reverse">
-             <div className="text-right">
-                <p className="text-xs font-black text-slate-400">سعر الليلة الأساسي</p>
-                <p className="text-xl font-black text-slate-900">{chalet.normalPrice.toLocaleString()} ج.م</p>
+          <div className="pt-10 border-t flex flex-col md:flex-row items-center justify-between gap-6">
+             <div className="flex items-center gap-4 flex-row-reverse w-full md:w-auto">
+                <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center text-primary shadow-sm"><Receipt /></div>
+                <div className="text-right">
+                   <p className="text-xs font-black text-slate-400 uppercase">سياسة الإلغاء</p>
+                   <p className="font-bold text-slate-700">تخضع لشروط الإدارة اليدوية</p>
+                </div>
              </div>
-             <Badge variant="outline" className="rounded-full px-6 py-2 border-slate-200 text-slate-500 font-bold">
-               {chalet.city}
-             </Badge>
+             <div className="flex gap-4 w-full md:w-auto">
+                <button className="flex-1 md:flex-none h-14 px-10 rounded-2xl font-black bg-slate-900 text-white hover:bg-primary transition-colors">طباعة التقرير</button>
+                <button className="flex-1 md:flex-none h-14 px-10 rounded-2xl font-black border-2 border-slate-100 text-slate-400 hover:bg-slate-50 transition-colors" onClick={onClose}>إغلاق</button>
+             </div>
           </div>
         </div>
       </DialogContent>
@@ -78,12 +109,12 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, userRole 
 
 function InfoCard({ title, value, icon: Icon, color, subValue }: any) {
   return (
-    <div className="p-6 bg-white border border-slate-100 rounded-[1.5rem] shadow-sm flex items-center gap-4 flex-row-reverse text-right">
-       <div className={`${color} bg-slate-50 p-4 rounded-2xl`}><Icon className="h-6 w-6" /></div>
-       <div>
-          <p className="text-[10px] font-black text-slate-400 uppercase mb-1">{title}</p>
-          <p className="text-lg font-black text-slate-900 leading-tight">{value}</p>
-          {subValue && <p className="text-xs font-bold text-slate-500">{subValue}</p>}
+    <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm flex items-center gap-6 flex-row-reverse text-right group hover:border-primary/20 transition-all">
+       <div className={`${color} bg-slate-50 p-5 rounded-[1.5rem] group-hover:bg-white group-hover:shadow-inner transition-all`}><Icon className="h-7 w-7" /></div>
+       <div className="flex-1">
+          <p className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">{title}</p>
+          <p className="text-xl font-black text-slate-900 leading-tight">{value}</p>
+          {subValue && <p className="text-xs font-bold text-slate-500 mt-1">{subValue}</p>}
        </div>
     </div>
   )

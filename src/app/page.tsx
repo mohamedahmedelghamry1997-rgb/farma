@@ -29,17 +29,8 @@ import { SupervisorActionDialog } from '@/components/SupervisorActionDialog'
 import { ChaletSpreadsheet } from '@/components/ChaletSpreadsheet'
 import { ChaletReportDialog } from '@/components/ChaletReportDialog'
 import Image from 'next/image'
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, Area, AreaChart, Pie, PieChart, Cell } from 'recharts'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
-
-const chartConfig = {
-  revenue: {
-    label: "الإيرادات",
-    color: "hsl(var(--primary))",
-  },
-} satisfies ChartConfig
 
 export default function PharmaBeachApp() {
   const store = useAppStore()
@@ -65,7 +56,6 @@ export default function PharmaBeachApp() {
   const [activeSupervisorBooking, setActiveSupervisorBooking] = useState<Booking | null>(null)
   const [isSupervisorActionOpen, setIsSupervisorActionOpen] = useState(false)
 
-  // تقرير الشيت
   const [reportChalet, setReportChalet] = useState<Chalet | null>(null)
   const [reportBooking, setReportBooking] = useState<Booking | null>(null)
   const [isReportOpen, setIsReportOpen] = useState(false)
@@ -76,7 +66,7 @@ export default function PharmaBeachApp() {
       relevantBookings = store.bookings.filter(b => b.brokerId === store.currentUser?.uid);
     }
 
-    const verifiedBookings = relevantBookings.filter(b => b.paymentStatus === 'verified');
+    const verifiedBookings = relevantBookings.filter(b => b.paymentStatus === 'verified' || b.status === 'admin_approved' || b.status === 'confirmed');
     const totalRevenue = verifiedBookings.reduce((acc, b) => acc + (b.totalAmount || 0), 0);
     const pendingTransfers = relevantBookings.filter(b => b.paymentStatus === 'pending').length;
     const activeCoupons = store.coupons.filter(c => c.isActive).length;
@@ -100,7 +90,7 @@ export default function PharmaBeachApp() {
         list = list.filter(c => c.ownerBrokerId === store.currentUser?.uid || c.status === 'active')
     }
     if (searchQuery) {
-      list = list.filter(c => c.name.includes(searchQuery) || c.location.includes(searchQuery))
+      list = list.filter(c => c.name.includes(searchQuery) || c.location.includes(searchQuery) || c.code?.includes(searchQuery))
     }
     return list
   }, [store.role, store.chalets, searchQuery, store.currentUser]);
@@ -140,6 +130,12 @@ export default function PharmaBeachApp() {
     setReportChalet(chalet)
     setReportBooking(booking || null)
     setIsReportOpen(true)
+  }
+
+  const handleAddBookingFromSheet = (chalet: Chalet, date: Date) => {
+    setSelectedChalet(chalet);
+    setIsBookingOpen(true);
+    // Note: We could pre-select the date in the dialog if needed
   }
 
   if (!store.isLoaded) return <div className="h-screen flex items-center justify-center font-black bg-slate-50 text-primary animate-pulse text-2xl">جاري تشغيل محرك فارما بيتش...</div>
@@ -234,7 +230,13 @@ export default function PharmaBeachApp() {
               </TabsList>
 
               <TabsContent value="spreadsheet" className="space-y-8">
-                 <ChaletSpreadsheet chalets={store.chalets} bookings={store.bookings} onSelectChalet={handleOpenSpreadsheetReport} userRole={store.role} />
+                 <ChaletSpreadsheet 
+                    chalets={store.chalets} 
+                    bookings={store.bookings} 
+                    onSelectChalet={handleOpenSpreadsheetReport} 
+                    onAddBooking={handleAddBookingFromSheet}
+                    userRole={store.role} 
+                  />
               </TabsContent>
 
               <TabsContent value="bookings" className="space-y-8">
@@ -392,7 +394,13 @@ export default function PharmaBeachApp() {
                 </TabsList>
 
                 <TabsContent value="spreadsheet">
-                   <ChaletSpreadsheet chalets={store.chalets} bookings={store.bookings} onSelectChalet={handleOpenSpreadsheetReport} userRole={store.role} />
+                   <ChaletSpreadsheet 
+                    chalets={store.chalets} 
+                    bookings={store.bookings} 
+                    onSelectChalet={handleOpenSpreadsheetReport} 
+                    onAddBooking={handleAddBookingFromSheet}
+                    userRole={store.role} 
+                   />
                 </TabsContent>
 
                 <TabsContent value="units">
