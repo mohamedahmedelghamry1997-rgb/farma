@@ -42,13 +42,13 @@ export function ChaletCard({ chalet, onBook }: ChaletCardProps) {
           <div className="space-y-1">
             <p className="text-slate-400 text-[10px] font-bold uppercase">الأيام العادية</p>
             <p className="text-red-500 font-black text-lg">
-              {chalet.normalPrice} <span className="text-xs">ر.ع</span>
+              {chalet.normalPrice} <span className="text-xs">ج.م</span>
             </p>
           </div>
           <div className="space-y-1 border-r border-slate-100">
             <p className="text-slate-400 text-[10px] font-bold uppercase">الإجازات</p>
             <p className="text-red-600 font-black text-lg">
-              {chalet.holidayPrice} <span className="text-xs">ر.ع</span>
+              {chalet.holidayPrice} <span className="text-xs">ج.م</span>
             </p>
           </div>
         </div>

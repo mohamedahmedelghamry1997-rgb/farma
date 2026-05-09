@@ -44,43 +44,43 @@ export interface Booking {
 const INITIAL_CHALETS: Chalet[] = [
   {
     id: 'c1',
-    name: 'شالية بيت الأجداد',
-    normalPrice: 22.89,
-    holidayPrice: 22.89,
-    description: 'إطلالة مباشرة على البحر مع تراس واسع ومرافق فاخرة.',
+    name: 'شالية لؤلؤة الساحل',
+    normalPrice: 3500,
+    holidayPrice: 4500,
+    description: 'إطلالة مباشرة على البحر في أرقى قرى الساحل الشمالي.',
     image: 'https://picsum.photos/seed/p1/800/600',
-    location: 'ظفار (صلالة)',
-    city: 'صلالة'
+    location: 'الساحل الشمالي - سيدي عبد الرحمن',
+    city: 'الساحل الشمالي'
   },
   {
     id: 'c2',
-    name: 'استراحة شط الغدير',
-    normalPrice: 14.35,
-    holidayPrice: 14.35,
-    description: 'تصميم عصري وهادئ يناسب العائلات الكبيرة.',
+    name: 'فيلا الجوهرة الملكية',
+    normalPrice: 5000,
+    holidayPrice: 6500,
+    description: 'تصميم عصري مع حمام سباحة خاص وحديقة واسعة.',
     image: 'https://picsum.photos/seed/p2/800/600',
-    location: 'ظفار (صلالة)',
-    city: 'صلالة'
+    location: 'العين السخنة - المونت جلالة',
+    city: 'العين السخنة'
   },
   {
     id: 'c3',
-    name: 'أستراحة السيب',
-    normalPrice: 47.28,
-    holidayPrice: 47.28,
-    description: 'خصوصية تامة مع حمام سباحة خاص وديكورات مذهلة.',
+    name: 'جناح مارينا بورتو',
+    normalPrice: 2800,
+    holidayPrice: 3800,
+    description: 'خصوصية تامة بالقرب من الخدمات والممشى السياحي.',
     image: 'https://picsum.photos/seed/p3/800/600',
-    location: 'ظفار (صلالة)',
-    city: 'السيب'
+    location: 'العين السخنة - بورتو السخنة',
+    city: 'العين السخنة'
   },
   {
     id: 'c4',
-    name: 'استراحة الماسة',
-    normalPrice: 15.31,
-    holidayPrice: 15.31,
-    description: 'إقامة مريحة بالقرب من المرافق الحيوية.',
+    name: 'شالية الفيروز الهادئ',
+    normalPrice: 2200,
+    holidayPrice: 3200,
+    description: 'إقامة مريحة وهادئة للعائلات مع إطلالة بانورامية.',
     image: 'https://picsum.photos/seed/p4/800/600',
-    location: 'ظفار (صلالة)',
-    city: 'صلالة'
+    location: 'الساحل الشمالي - مارينا 7',
+    city: 'الساحل الشمالي'
   }
 ]
 

@@ -71,7 +71,7 @@ export default function PharmaBeachApp() {
           </div>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <span className="font-bold">96812345678+</span>
+              <span className="font-bold">+20 100 123 4567</span>
               <Phone className="h-4 w-4" />
             </div>
             <div className="flex items-center gap-2 cursor-pointer hover:opacity-80">
@@ -135,8 +135,8 @@ export default function PharmaBeachApp() {
                           <SelectValue placeholder="فلتر حسب المدينة (الكل)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="salalah">صلالة</SelectItem>
-                          <SelectItem value="seeb">السيب</SelectItem>
+                          <SelectItem value="north-coast">الساحل الشمالي</SelectItem>
+                          <SelectItem value="sokhna">العين السخنة</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -159,8 +159,8 @@ export default function PharmaBeachApp() {
                           <SelectValue placeholder="فلتر حسب النطاق السعري" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="10-20">10 - 20 ر.ع</SelectItem>
-                          <SelectItem value="20-50">20 - 50 ر.ع</SelectItem>
+                          <SelectItem value="1000-2000">1000 - 2000 ج.م</SelectItem>
+                          <SelectItem value="2000-5000">2000 - 5000 ج.م</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -176,10 +176,10 @@ export default function PharmaBeachApp() {
 
                 <div className="text-center space-y-4">
                   <h2 className="text-3xl font-black text-slate-800 relative inline-block">
-                    شاليهاتنا المميزة
+                    شاليهاتنا المميزة في مصر
                     <div className="h-1.5 w-16 bg-primary mx-auto mt-4 rounded-full"></div>
                   </h2>
-                  <p className="text-slate-400 font-medium">اختر وجهتك المثالية لقضاء أجمل الأوقات</p>
+                  <p className="text-slate-400 font-medium">اختر وجهتك المثالية لقضاء أجمل الأوقات في الساحل والسخنة</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -249,7 +249,7 @@ export default function PharmaBeachApp() {
                               <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1">
                                 <MapPin className="h-3 w-3" /> {c.location}
                               </div>
-                              <p className="text-red-500 font-black text-xs mt-2">{c.normalPrice} ر.ع</p>
+                              <p className="text-red-500 font-black text-xs mt-2">{c.normalPrice} ج.م</p>
                             </div>
                          </Card>
                        ))}
@@ -318,7 +318,7 @@ export default function PharmaBeachApp() {
                                        </div>
                                        <div className="space-y-2">
                                          <Label className="text-xs font-black text-slate-600 text-right block">مبلغ التأمين المسترد</Label>
-                                         <Input type="number" placeholder="ر.ع" onChange={(e) => store.updateBooking(b.id, { securityDeposit: parseInt(e.target.value) })} className="rounded-xl h-12 bg-slate-50 border-none" />
+                                         <Input type="number" placeholder="ج.م" onChange={(e) => store.updateBooking(b.id, { securityDeposit: parseInt(e.target.value) })} className="rounded-xl h-12 bg-slate-50 border-none" />
                                        </div>
                                      </div>
                                      <div className="space-y-2">
@@ -344,7 +344,7 @@ export default function PharmaBeachApp() {
               <div className="space-y-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 gap-6">
                    <div className="text-right space-y-1">
-                      <h2 className="text-3xl font-black text-slate-900 leading-none">إدارة منتجع فارما بيتش</h2>
+                      <h2 className="text-3xl font-black text-slate-900 leading-none">إدارة منتجع فارما بيتش مصر</h2>
                       <p className="text-slate-400 font-bold">لوحة تحكم المدير العام</p>
                    </div>
                    <div className="flex gap-4">
@@ -419,12 +419,12 @@ export default function PharmaBeachApp() {
                        <h3 className="font-black text-xl text-slate-800">إدارة المعروض العقاري</h3>
                        <Button className="rounded-xl font-black h-12 gap-2 shadow-lg shadow-primary/20" onClick={() => store.addChalet({
                          name: 'شاليه لؤلؤة البحر',
-                         normalPrice: 30,
-                         holidayPrice: 45,
+                         normalPrice: 3000,
+                         holidayPrice: 4500,
                          description: 'وصف شاليه جديد...',
                          image: 'https://picsum.photos/seed/newchalet/800/600',
-                         location: 'صلالة - شاطئ المغسيل',
-                         city: 'صلالة'
+                         location: 'الساحل الشمالي - مراسي',
+                         city: 'الساحل الشمالي'
                        })}><Plus className="h-5 w-5" /> إضافة شاليه جديد</Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -447,12 +447,12 @@ export default function PharmaBeachApp() {
                              <div className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
                                <div className="text-center">
                                  <p className="text-[10px] text-slate-400 font-bold">الأيام العادية</p>
-                                 <p className="font-black text-red-500">{c.normalPrice} ر.ع</p>
+                                 <p className="font-black text-red-500">{c.normalPrice} ج.م</p>
                                </div>
                                <div className="w-px h-8 bg-slate-200"></div>
                                <div className="text-center">
                                  <p className="text-[10px] text-slate-400 font-bold">الإجازات</p>
-                                 <p className="font-black text-red-600">{c.holidayPrice} ر.ع</p>
+                                 <p className="font-black text-red-600">{c.holidayPrice} ج.م</p>
                                </div>
                              </div>
                            </div>
@@ -508,13 +508,13 @@ export default function PharmaBeachApp() {
              <div className="flex items-center gap-3 justify-end">
                 <div className="text-left">
                   <h3 className="text-2xl font-black text-white">فارما بيتش</h3>
-                  <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Pharma Beach Resort</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Pharma Beach Resort Egypt</p>
                 </div>
                 <div className="bg-[#fecaca] p-2 rounded-full h-12 w-12 flex items-center justify-center">
                    <Home className="text-[#991b1b] h-6 w-6" />
                 </div>
              </div>
-             <p className="text-slate-400 leading-relaxed font-bold">وجهتك الأولى للفخامة والراحة على شواطئ عُمان الساحرة. نقدم أرقى الشاليهات بخدمات متكاملة تضمن لك قضاء أجمل اللحظات.</p>
+             <p className="text-slate-400 leading-relaxed font-bold">وجهتك الأولى للفخامة والراحة على شواطئ مصر الساحرة. نقدم أرقى الشاليهات بخدمات متكاملة تضمن لك قضاء أجمل اللحظات.</p>
              <div className="flex gap-4 justify-end">
                <Twitter className="h-6 w-6 text-slate-500 hover:text-white cursor-pointer transition-colors" />
                <Instagram className="h-6 w-6 text-slate-500 hover:text-white cursor-pointer transition-colors" />
@@ -526,15 +526,15 @@ export default function PharmaBeachApp() {
               <h4 className="text-xl font-black border-r-4 border-primary pr-4 leading-none">تواصل معنا</h4>
               <ul className="space-y-4">
                  <li className="flex items-center gap-3 justify-end text-slate-400 font-bold">
-                    <span>96812345678+</span>
+                    <span>+20 100 123 4567</span>
                     <Phone className="h-5 w-5 text-primary" />
                  </li>
                  <li className="flex items-center gap-3 justify-end text-slate-400 font-bold">
-                    <span>info@pharmabeach.com</span>
+                    <span>info@pharmabeach.eg</span>
                     <Mail className="h-5 w-5 text-primary" />
                  </li>
                  <li className="flex items-center gap-3 justify-end text-slate-400 font-bold">
-                    <span>صلالة، سلطنة عمان</span>
+                    <span>الساحل الشمالي، مصر</span>
                     <MapPin className="h-5 w-5 text-primary" />
                  </li>
               </ul>
@@ -553,7 +553,7 @@ export default function PharmaBeachApp() {
            </div>
         </div>
         <div className="container mx-auto px-4 mt-16 pt-8 border-t border-slate-800 text-center text-slate-500 text-sm font-bold">
-           جميع الحقوق محفوظة &copy; {new Date().getFullYear()} فارما بيتش ريزورت
+           جميع الحقوق محفوظة &copy; {new Date().getFullYear()} فارما بيتش ريزورت مصر
         </div>
       </footer>
 
