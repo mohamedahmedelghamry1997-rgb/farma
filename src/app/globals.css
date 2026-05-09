@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -69,4 +70,17 @@
 /* Glassmorphism utility */
 .glass {
   @apply bg-white/70 backdrop-blur-md border border-white/20;
+}
+
+/* Fix for Calendar and RTL */
+[dir="rtl"] .rdp-month {
+  direction: rtl;
+}
+
+[dir="rtl"] .rdp-nav_button_previous {
+  transform: rotate(180deg);
+}
+
+[dir="rtl"] .rdp-nav_button_next {
+  transform: rotate(180deg);
 }

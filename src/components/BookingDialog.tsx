@@ -49,7 +49,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden rounded-3xl border-none shadow-2xl text-right">
+      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-3xl border-none shadow-2xl text-right">
         <div className="bg-primary p-6 text-white">
           <DialogTitle className="font-headline text-2xl">حجز {chalet?.name}</DialogTitle>
           <DialogDescription className="text-white/80 mt-1">
@@ -57,24 +57,24 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
           </DialogDescription>
         </div>
         
-        <div className="p-6 space-y-6 bg-white overflow-y-auto max-h-[70vh]">
-          <div className="space-y-2">
+        <div className="p-6 space-y-6 bg-white overflow-y-auto max-h-[75vh]">
+          <div className="space-y-3">
             <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2 justify-end">
                اختر التواريخ <CalendarIcon className="h-3 w-3" />
             </Label>
-            <div className="flex justify-center">
+            <div className="flex justify-center border rounded-2xl p-2 bg-muted/5">
               <Calendar
                 mode="range"
                 selected={{ from: date?.from, to: date?.to }}
                 onSelect={(range: any) => setDate(range)}
                 disabled={isDateDisabled}
-                className="rounded-xl border shadow-sm"
+                className="rounded-xl"
                 locale={ar}
               />
             </div>
             {date?.from && date?.to && (
-              <p className="text-xs text-primary font-medium px-1 text-center">
-                {format(date.from, "dd MMMM y", { locale: ar })} - {format(date.to, "dd MMMM y", { locale: ar })}
+              <p className="text-sm text-primary font-bold text-center bg-primary/5 py-2 rounded-lg">
+                {format(date.from, "dd MMMM", { locale: ar })} - {format(date.to, "dd MMMM y", { locale: ar })}
               </p>
             )}
           </div>
@@ -125,11 +125,11 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
           <Button 
             onClick={handleConfirm} 
             disabled={!date?.to || !name || !phone}
-            className="rounded-xl h-12 bg-primary text-white flex-1"
+            className="rounded-xl h-12 bg-primary text-white flex-1 font-bold text-lg"
           >
             تأكيد الطلب
           </Button>
-          <Button variant="outline" onClick={onClose} className="rounded-xl h-12">إلغاء</Button>
+          <Button variant="outline" onClick={onClose} className="rounded-xl h-12 font-bold">إلغاء</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
