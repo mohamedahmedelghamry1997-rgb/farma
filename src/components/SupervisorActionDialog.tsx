@@ -54,7 +54,7 @@ export function SupervisorActionDialog({ booking, chalet, isOpen, onClose, onCon
             فحص إخلاء الوحدة <ShieldAlert className="text-orange-600" />
           </DialogTitle>
           <DialogDescription className="text-right font-bold">
-            سجل بيانات الفحص النهائي قبل تسليم الوحدة: {chalet.name}
+            سجل بيانات الفحص النهائي يدوياً قبل تسليم الوحدة: {chalet.name}
           </DialogDescription>
         </DialogHeader>
 
@@ -86,8 +86,8 @@ export function SupervisorActionDialog({ booking, chalet, isOpen, onClose, onCon
            </div>
 
            <div className="space-y-2">
-              <Label className="font-black text-slate-600 flex items-center gap-2 justify-end text-xs">تقرير الملاحظات (سيحلل بالذكاء الاصطناعي)</Label>
-              <Textarea placeholder="اكتب أي مشاكل أو مفقودات بالتفصيل..." value={damages} onChange={e => setDamages(e.target.value)} className="rounded-2xl min-h-[100px] text-right bg-slate-50 border-slate-100" />
+              <Label className="font-black text-slate-600 flex items-center gap-2 justify-end text-xs">تقرير الملاحظات اليدوي</Label>
+              <Textarea placeholder="اكتب أي مشاكل أو مفقودات بالتفصيل لتنبيه الإدارة..." value={damages} onChange={e => setDamages(e.target.value)} className="rounded-2xl min-h-[100px] text-right bg-slate-50 border-slate-100" />
            </div>
 
            <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10 flex items-center justify-between flex-row-reverse">

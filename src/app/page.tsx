@@ -12,11 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { 
   Users, Home, CheckCircle2, XCircle, Plus, Trash2, MapPin, Phone, LogOut, 
   Wallet, Receipt, Search, Activity, BarChart3, TrendingUp, Clock, Star,
-  History, Sparkles, Box, AlertTriangle, MessageSquare, Tag, FileSpreadsheet,
+  History, Box, AlertTriangle, MessageSquare, Tag, FileSpreadsheet,
   Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings, UserPlus,
   ArrowUpRight, Megaphone, Percent, Copy, Filter, Download, Calendar as CalendarIcon,
   LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle, Database,
-  ArrowRightLeft, Eye, Brain, Waves, Sun, Anchor, Palmtree
+  ArrowRightLeft, Eye, Waves, Sun, Anchor, Palmtree
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -31,8 +31,6 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, Area, AreaChart, Pie, PieChart, Cell } from 'recharts'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
-import { adminChaletBookingGapOptimizer } from '@/ai/flows/admin-chalet-booking-gap-optimizer'
-import { analyzeChaletConditionNotes } from '@/ai/flows/admin-chalet-condition-analyzer'
 
 const chartConfig = {
   revenue: {
@@ -64,9 +62,6 @@ export default function PharmaBeachApp() {
   
   const [activeSupervisorBooking, setActiveSupervisorBooking] = useState<Booking | null>(null)
   const [isSupervisorActionOpen, setIsSupervisorActionOpen] = useState(false)
-
-  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
-  const [aiAnalysisResult, setAiAnalysisResult] = useState<any>(null)
 
   const stats = useMemo(() => {
     let relevantBookings = store.bookings;
@@ -143,21 +138,8 @@ export default function PharmaBeachApp() {
   const handleSupervisorConfirm = async (updates: Partial<Booking>) => {
     if (!activeSupervisorBooking) return;
     try {
-      if (updates.conditionReport) {
-        const aiAnalysis = await analyzeChaletConditionNotes({
-          notes: updates.conditionReport,
-          chaletId: activeSupervisorBooking.chaletId
-        });
-        if (aiAnalysis.urgentFlag) {
-          toast({ 
-            variant: "destructive", 
-            title: "تنبيه: حالة حرجة!", 
-            description: `تم اكتشاف مشكلة عاجلة: ${aiAnalysis.summary}` 
-          });
-        }
-      }
       await store.updateBooking(activeSupervisorBooking.id, updates);
-      toast({ title: "تم تحديث حالة الوحدة بنجاح" });
+      toast({ title: "تم تحديث حالة الوحدة يدوياً بنجاح" });
       setIsSupervisorActionOpen(false);
     } catch (e: any) {
       toast({ variant: "destructive", title: "فشل تحديث الحالة", description: e.message });
@@ -210,7 +192,7 @@ export default function PharmaBeachApp() {
                     <div className="bg-primary/5 p-6 rounded-[2rem] text-primary animate-bounce delay-300"><Palmtree size={48} /></div>
                   </div>
                   <h2 className="text-5xl md:text-7xl font-black text-slate-900 leading-tight">فخامة <span className="text-primary">الإقامة الساحلية</span><br/>بين يديك الآن</h2>
-                  <p className="text-xl md:text-2xl font-bold text-slate-500 max-w-3xl mx-auto leading-relaxed">استكشف أفخم شاليهات فارما بيتش واحجز عطلتك القادمة بضغطة زر. نظام إدارة ذكي لضمان راحتك.</p>
+                  <p className="text-xl md:text-2xl font-bold text-slate-500 max-w-3xl mx-auto leading-relaxed">استكشف أفخم شاليهات فارما بيتش واحجز عطلتك القادمة بضغطة زر. نظام إدارة يدوي بالكامل لضمان الدقة.</p>
                   <div className="flex flex-col sm:flex-row justify-center gap-6">
                     <Button size="lg" className="rounded-[2rem] h-20 px-16 text-2xl font-black shadow-2xl shadow-primary/30 transition-transform hover:scale-105" onClick={() => document.getElementById('units')?.scrollIntoView({behavior: 'smooth'})}>تصفح الشاليهات</Button>
                     {!store.authUser && (
@@ -250,7 +232,7 @@ export default function PharmaBeachApp() {
               <TabsList className="bg-white p-2 rounded-[2.5rem] mb-12 flex flex-wrap justify-start border shadow-sm h-auto gap-3">
                 <TabsTrigger value="bookings" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">الحجوزات والمالية</TabsTrigger>
                 <TabsTrigger value="chalets" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">إدارة الأصول</TabsTrigger>
-                <TabsTrigger value="reports" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">التقارير الذكية</TabsTrigger>
+                <TabsTrigger value="reports" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">التقارير المالية</TabsTrigger>
                 <TabsTrigger value="users" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">فريق العمل</TabsTrigger>
                 <TabsTrigger value="settings" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">الإعدادات</TabsTrigger>
               </TabsList>
@@ -305,60 +287,9 @@ export default function PharmaBeachApp() {
               </TabsContent>
 
               <TabsContent value="reports" className="space-y-12">
-                 <div className="bg-primary/5 p-12 rounded-[3.5rem] border border-primary/10 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="text-right">
-                       <h3 className="text-3xl font-black text-slate-900 flex items-center gap-3 justify-end">التحليلات الذكية <Brain className="text-primary h-8 w-8" /></h3>
-                       <p className="text-slate-500 font-bold text-lg mt-2">استخدم الذكاء الاصطناعي لتحسين معدلات الإشغال وزيادة الأرباح</p>
-                    </div>
-                    <Button 
-                      className="h-16 px-12 rounded-2xl font-black gap-2 bg-primary text-white text-xl shadow-xl shadow-primary/20"
-                      onClick={async () => {
-                        if (store.chalets[0]) {
-                          setIsAiAnalyzing(true);
-                          try {
-                            const res = await adminChaletBookingGapOptimizer({
-                              chaletId: store.chalets[0].id,
-                              currentDate: new Date().toISOString(),
-                              bookings: store.bookings.filter(b => b.chaletId === store.chalets[0].id).map(b => ({ startDate: b.startDate, endDate: b.endDate }))
-                            });
-                            setAiAnalysisResult(res);
-                          } catch(e) { toast({ variant: "destructive", title: "فشل التحليل" }) }
-                          finally { setIsAiAnalyzing(false); }
-                        }
-                      }}
-                      disabled={isAiAnalyzing}
-                    >
-                      {isAiAnalyzing ? <Activity className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-                      تحليل فرص الإشغال
-                    </Button>
-                 </div>
-
-                 {aiAnalysisResult && (
-                    <Card className="p-12 rounded-[3.5rem] bg-white border-2 border-primary/20 shadow-2xl space-y-8 animate-slide-up">
-                       <h3 className="text-3xl font-black text-primary text-right border-b pb-8">نتائج تحليل GenAI</h3>
-                       <div className="space-y-8 text-right">
-                          <div className="space-y-4">
-                             <h4 className="font-black text-xl">التحليل الميداني:</h4>
-                             <p className="text-lg text-slate-600 leading-loose">{aiAnalysisResult.analysis}</p>
-                          </div>
-                          <div className="space-y-4">
-                             <h4 className="font-black text-xl">توصيات:</h4>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {aiAnalysisResult.suggestions.map((s: string, idx: number) => (
-                                  <div key={idx} className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex items-center gap-4 flex-row-reverse">
-                                     <div className="bg-primary/10 p-3 rounded-xl text-primary"><TrendingUp className="h-6 w-6" /></div>
-                                     <p className="font-bold text-slate-800">{s}</p>
-                                  </div>
-                                ))}
-                             </div>
-                          </div>
-                       </div>
-                    </Card>
-                 )}
-
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
-                       <h3 className="text-3xl font-black text-right">نمو الإيرادات</h3>
+                       <h3 className="text-3xl font-black text-right">مراقبة الإيرادات الشهرية</h3>
                        <div className="h-[350px] w-full">
                           <ChartContainer config={chartConfig}>
                             <BarChart data={revenueData}>
@@ -372,7 +303,7 @@ export default function PharmaBeachApp() {
                        </div>
                     </Card>
                     <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
-                       <h3 className="text-3xl font-black text-right">التدفق النقدي</h3>
+                       <h3 className="text-3xl font-black text-right">تحليل التدفق النقدي</h3>
                        <div className="h-[350px] w-full">
                           <ChartContainer config={chartConfig}>
                             <AreaChart data={revenueData}>
@@ -392,7 +323,7 @@ export default function PharmaBeachApp() {
                  <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm gap-6">
                     <div className="text-right">
                        <h3 className="text-3xl font-black">فريق العمل</h3>
-                       <p className="text-slate-500 font-bold">إدارة الوسطاء والمشرفين</p>
+                       <p className="text-slate-500 font-bold">إدارة يدوية للوسطاء والمشرفين</p>
                     </div>
                     <Button className="rounded-2xl h-14 px-8 font-black gap-2" onClick={() => setIsAddUserOpen(true)}>
                        <UserPlus className="h-5 w-5" /> إضافة موظف
@@ -432,9 +363,9 @@ export default function PharmaBeachApp() {
                  <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8 text-right">
                     <h3 className="text-3xl font-black">إعدادات النظام</h3>
                     <div className="p-8 bg-primary/5 rounded-[2rem] border border-primary/10 space-y-6">
-                       <p className="text-slate-500 font-bold">توليد بيانات حقيقية لتجربة كافة وظائف المنظومة.</p>
+                       <p className="text-slate-500 font-bold">توليد بيانات يدوية حقيقية لتجربة كافة وظائف المنظومة.</p>
                        <Button className="w-full h-16 rounded-2xl font-black gap-3 text-lg" variant="default" onClick={() => { store.seedDatabase(); toast({ title: "تم توليد البيانات بنجاح" }); }}>
-                          توليد البيانات الآن <Sparkles className="h-5 w-5" />
+                          توليد البيانات الآن <Database className="h-5 w-5" />
                        </Button>
                     </div>
                  </Card>
@@ -446,7 +377,7 @@ export default function PharmaBeachApp() {
              <div className="flex justify-between items-center flex-row-reverse">
                 <div className="text-right">
                    <h2 className="text-4xl font-black text-slate-900">لوحة تحكم الوسيط</h2>
-                   <p className="text-slate-500 font-bold mt-2">تابع عمولاتك وحجوزاتك النشطة</p>
+                   <p className="text-slate-500 font-bold mt-2">تابع عمولاتك وحجوزاتك النشطة يدوياً</p>
                 </div>
                 <div className="flex gap-4">
                   <StatCard title="عمولات محققة" val={(stats.totalRevenue * 0.1).toLocaleString() + " ج.م"} icon={TrendingUp} color="text-primary" />
@@ -462,7 +393,7 @@ export default function PharmaBeachApp() {
              <div className="flex justify-between items-center flex-row-reverse">
                 <div className="text-right">
                    <h2 className="text-4xl font-black text-slate-900">المهام الميدانية</h2>
-                   <p className="text-slate-500 font-bold mt-2">إدارة الاستلام والتسليم وفحص الوحدات</p>
+                   <p className="text-slate-500 font-bold mt-2">إدارة الاستلام والتسليم وفحص الوحدات يدوياً</p>
                 </div>
                 <StatCard title="مهام معلقة" val={filteredBookings.filter(b => b.opStatus === 'waiting').length} icon={ShieldAlert} color="text-orange-600" />
              </div>
@@ -489,7 +420,7 @@ export default function PharmaBeachApp() {
       </main>
 
       <footer className="bg-slate-900 text-white py-12 text-center border-t-8 border-primary">
-         <p className="text-slate-400 font-bold">فارما بيتش ريزورت - STUDIO FIREBASS AI</p>
+         <p className="text-slate-400 font-bold">فارما بيتش ريزورت - نظام الإدارة اليدوي الموثوق</p>
       </footer>
 
       {/* Auth Dialog */}
