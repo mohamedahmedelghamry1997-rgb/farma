@@ -35,8 +35,6 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
   const calculateTotal = () => {
     if (!chalet || !dateRange?.from || !dateRange?.to) return 0
     const days = differenceInDays(dateRange.to, dateRange.from) + 1
-    // Simple logic: if weekend involved, use holiday price, else normal
-    // For MVP, we'll just use normalPrice * days
     return chalet.normalPrice * days
   }
 
@@ -79,7 +77,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden rounded-[2rem] border-none shadow-2xl text-right">
-        <div className="bg-primary p-8 text-white relative">
+        <DialogHeader className="bg-primary p-8 text-white relative">
           <DialogTitle className="text-2xl font-bold text-right mb-2">طلب حجز واستلام الوحدة</DialogTitle>
           <DialogDescription className="text-white/70 text-right font-medium">
              منتجع فارما بيتش - يرجى استكمال بيانات الدفع للتأكيد
@@ -87,7 +85,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
           <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
             <CalendarIcon size={120} />
           </div>
-        </div>
+        </DialogHeader>
         
         <div className="p-8 space-y-6 bg-white overflow-y-auto max-h-[75vh]">
           <div className="space-y-4">

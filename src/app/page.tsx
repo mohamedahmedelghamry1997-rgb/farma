@@ -274,7 +274,7 @@ export default function PharmaBeachApp() {
                       </div>
                       <div className="flex gap-3">
                         <Button className="rounded-2xl h-14 px-8 font-black bg-blue-600 shadow-lg shadow-blue-100 gap-2"><MessageSquare className="h-5 w-5" /> دردشة العميل</Button>
-                        <Button variant="outline" className="rounded-2xl h-14 px-6 font-black gap-2 border-slate-200" onClick={() => toast({ title: "تم فتح سجل التشغيل التاريخي" })}><History className="h-5 w-5" /> سجل التشغيل</Button>
+                        <Button variant="outline" className="rounded-2xl h-14 px-6 rounded-2xl font-black gap-2 border-slate-200" onClick={() => toast({ title: "تم فتح سجل التشغيل التاريخي" })}><History className="h-5 w-5" /> سجل التشغيل</Button>
                       </div>
                    </Card>
                  ))}

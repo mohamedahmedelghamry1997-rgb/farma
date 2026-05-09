@@ -41,6 +41,11 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-[3rem] border-none shadow-2xl bg-white text-right max-h-[90vh] overflow-y-auto custom-scrollbar">
         
+        {/* Hidden but required for accessibility */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>تفاصيل {chalet.name}</DialogTitle>
+        </DialogHeader>
+
         {/* MEDIA GALLERY */}
         <div className="relative group h-[400px]">
            <Carousel className="w-full h-full">
@@ -67,9 +72,9 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
               </Badge>
            </div>
 
-           <div className="absolute bottom-8 right-8 left-8 text-white">
-              <DialogTitle className="text-4xl font-black mb-2">{chalet.name}</DialogTitle>
-              <p className="flex items-center gap-2 text-white/80 font-bold"><MapPin className="h-4 w-4 text-primary" /> {chalet.location}</p>
+           <div className="absolute bottom-8 right-8 left-8 text-white text-right">
+              <h2 className="text-4xl font-black mb-2">{chalet.name}</h2>
+              <p className="flex items-center gap-2 justify-end text-white/80 font-bold"><MapPin className="h-4 w-4 text-primary" /> {chalet.location}</p>
            </div>
         </div>
 
@@ -78,24 +83,24 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
            {/* DESCRIPTION & PRICING */}
            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               <div className="md:col-span-2 space-y-6">
-                 <div className="flex items-center gap-3 text-primary">
-                    <Info className="h-6 w-6" />
+                 <div className="flex items-center gap-3 text-primary justify-end">
                     <h3 className="text-2xl font-black text-slate-900">نظرة عامة</h3>
+                    <Info className="h-6 w-6" />
                  </div>
                  <p className="text-lg text-slate-600 font-bold leading-loose">
                    {chalet.description}
                  </p>
-                 <div className="flex flex-wrap gap-4 pt-4">
+                 <div className="flex flex-wrap gap-4 pt-4 justify-end">
                     {['تكييف مركزي', 'شاشة سمارت', 'مطبخ كامل', 'فيو مباشر', 'قريب من البحر'].map(f => (
-                       <Badge key={f} variant="outline" className="px-5 py-2 rounded-full border-slate-200 text-slate-600 font-bold flex items-center gap-2">
+                       <Badge key={f} variant="outline" className="px-5 py-2 rounded-full border-slate-200 text-slate-600 font-bold flex items-center gap-2 flex-row-reverse">
                           <CheckCircle2 className="h-4 w-4 text-green-500" /> {f}
                        </Badge>
                     ))}
                  </div>
                  
-                 <div className="p-6 bg-orange-50 rounded-3xl border border-orange-100 flex items-center gap-4">
+                 <div className="p-6 bg-orange-50 rounded-3xl border border-orange-100 flex items-center gap-4 flex-row-reverse">
                     <ShieldAlert className="text-orange-600 h-8 w-8" />
-                    <div>
+                    <div className="text-right">
                        <p className="font-black text-orange-800">سياسة التأمين والرسوم</p>
                        <p className="text-sm text-orange-600 font-bold">يتم دفع مبلغ تأمين مسترد عند الاستلام لضمان سلامة الوحدة.</p>
                     </div>
@@ -103,11 +108,11 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
               </div>
 
               <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 flex flex-col justify-center gap-6">
-                 <div className="space-y-1">
+                 <div className="space-y-1 text-right">
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">أيام الأسبوع</p>
                     <p className="text-3xl font-black text-slate-900">{chalet.normalPrice.toLocaleString()} <span className="text-sm">ج.م</span></p>
                  </div>
-                 <div className="space-y-1">
+                 <div className="space-y-1 text-right">
                     <p className="text-xs font-black text-primary uppercase tracking-widest">نهاية الأسبوع</p>
                     <p className="text-3xl font-black text-primary">{chalet.holidayPrice.toLocaleString()} <span className="text-sm">ج.م</span></p>
                  </div>
@@ -117,24 +122,11 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
               </div>
            </div>
 
-           {/* VIDEO SECTION */}
-           {chalet.videoUrl && (
-             <div className="space-y-6">
-                <div className="flex items-center gap-3 text-primary">
-                   <Video className="h-6 w-6" />
-                   <h3 className="text-2xl font-black text-slate-900">فيديو توضيحي</h3>
-                </div>
-                <div className="rounded-[2.5rem] overflow-hidden border-8 border-slate-100 shadow-xl aspect-video bg-slate-200 relative">
-                   <video src={chalet.videoUrl} controls className="w-full h-full object-cover" />
-                </div>
-             </div>
-           )}
-
            {/* CALENDAR VIEW */}
            <div className="space-y-6">
-              <div className="flex items-center gap-3 text-primary">
-                 <CalendarIcon className="h-6 w-6" />
+              <div className="flex items-center gap-3 text-primary justify-end">
                  <h3 className="text-2xl font-black text-slate-900">حالة الإشغال</h3>
+                 <CalendarIcon className="h-6 w-6" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center bg-blue-50/50 p-8 rounded-[3rem] border border-blue-100">
                  <div className="flex justify-center bg-white p-4 rounded-[2rem] shadow-sm">

@@ -120,20 +120,20 @@ export function useAppStore() {
       const demoChalets = [
         { 
           name: "فيلا رويال هاسيندا", normalPrice: 12000, holidayPrice: 15000, city: "الساحل الشمالي", location: "سيدي عبد الرحمن", 
-          description: "فيلا ملكية صف أول على البحر مباشرة مع حمام سباحة خاص وجاكوزي خارجي.", status: "active", maxGuests: 12,
+          description: "فيلا ملكية صف أول على البحر مباشرة مع حمام سباحة خاص وجاكوزي خارجي. خصوصية تامة.", status: "active", maxGuests: 12,
           image: "https://picsum.photos/seed/h1/800/600", amenities: ["واي فاي", "تكييف مركزي", "مسبح", "شطاف"],
           gallery: ["https://picsum.photos/seed/h2/800/600", "https://picsum.photos/seed/h3/800/600"],
           inventory: { towels: 10, sheets: 6, soap: 12 }
         },
         { 
           name: "شاليه لؤلؤة السخنة", normalPrice: 3500, holidayPrice: 5000, city: "العين السخنة", location: "تلال", 
-          description: "إطلالة بانورامية ساحرة على البحر الأحمر. تصميم مودرن وأثاث فاخر.", status: "active", maxGuests: 5,
+          description: "إطلالة بانورامية ساحرة على البحر الأحمر. تصميم مودرن وأثاث فاخر ونظيف.", status: "active", maxGuests: 5,
           image: "https://picsum.photos/seed/s1/800/600", amenities: ["تكييف", "مطبخ كامل", "فيو بحر"],
           inventory: { towels: 4, sheets: 3, soap: 6 }
         },
         { 
           name: "جناح المارينا الملكي", normalPrice: 8000, holidayPrice: 10000, city: "الساحل الشمالي", location: "مارينا 7", 
-          description: "جناح فاخر يطل على البحيرة مباشرة. خصوصية تامة وخدمة فندقية.", status: "active", maxGuests: 8,
+          description: "جناح فاخر يطل على البحيرة مباشرة. خصوصية تامة وخدمة فندقية راقية.", status: "active", maxGuests: 8,
           image: "https://picsum.photos/seed/m1/800/600", amenities: ["تكييف", "فيو بحيرة", "حديقة خاصة"],
           inventory: { towels: 8, sheets: 4, soap: 10 }
         }
