@@ -11,9 +11,9 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%; /* Royal Blue */
+    --primary: 271 91% 65%; /* Purple based on top bar */
     --primary-foreground: 210 40% 98%;
-    --secondary: 45 93% 47%; /* Gold Accent */
+    --secondary: 217 91% 60%; /* Blue based on buttons */
     --secondary-foreground: 222 47% 11%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
@@ -23,8 +23,8 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
-    --radius: 1rem;
+    --ring: 271 91% 65%;
+    --radius: 0.5rem;
   }
 }
 
@@ -38,8 +38,12 @@
   }
 }
 
-.glass {
-  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
+.top-bar-gradient {
+  background: linear-gradient(90deg, #a855f7 0%, #7e22ce 100%);
+}
+
+.filter-container {
+  @apply bg-[#e0f2fe] p-6 rounded-lg shadow-sm mb-8;
 }
 
 /* Hide AI indicators */

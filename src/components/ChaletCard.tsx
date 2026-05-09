@@ -2,11 +2,9 @@
 "use client"
 
 import Image from "next/image"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Star, MapPin } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Chalet } from "@/lib/store"
+import { ChevronLeft } from "lucide-react"
 
 interface ChaletCardProps {
   chalet: Chalet
@@ -15,45 +13,39 @@ interface ChaletCardProps {
 
 export function ChaletCard({ chalet, onBook }: ChaletCardProps) {
   return (
-    <Card className="overflow-hidden group border-none shadow-lg hover:shadow-2xl transition-all duration-500 rounded-2xl bg-white">
-      <div className="relative h-64 overflow-hidden">
+    <Card className="overflow-hidden border-none shadow-lg rounded-none bg-white text-center hover:shadow-xl transition-shadow duration-300">
+      <div className="relative h-56 overflow-hidden">
         <Image
           src={chalet.image}
           alt={chalet.name}
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-110"
-          data-ai-hint="beachfront chalet"
+          className="object-cover"
+          data-ai-hint="luxury chalet"
         />
-        <div className="absolute top-4 left-4">
-          <Badge className="bg-white/90 text-primary border-none font-bold py-1 px-3 backdrop-blur-sm">
-            ${chalet.price}<span className="text-[10px] opacity-60 mr-1">/ليلة</span>
-          </Badge>
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-          <p className="text-white text-sm line-clamp-2">{chalet.description}</p>
-        </div>
       </div>
-      <CardContent className="p-6 text-right">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-headline text-xl text-primary font-bold">{chalet.name}</h3>
-          <div className="flex items-center gap-1 text-secondary font-bold">
-            <Star className="h-4 w-4 fill-secondary" />
-            <span>{chalet.rating}</span>
-          </div>
+      <CardContent className="p-6 space-y-3">
+        <div className="text-slate-400 text-sm font-medium">
+          {chalet.location}
         </div>
-        <div className="flex items-center gap-1 text-muted-foreground text-sm mb-4">
-          <MapPin className="h-4 w-4" />
-          <span>قرية فارما بيتش، الساحل الشمالي</span>
+        
+        <div className="space-y-1">
+          <p className="text-red-500 text-sm">
+            أيام عادية بسعر: <span className="font-bold">{chalet.normalPrice} ر.ع</span>
+          </p>
+          <p className="text-red-500 text-sm">
+            اجازات بسعر: <span className="font-bold">{chalet.holidayPrice} ر.ع</span>
+          </p>
         </div>
-      </CardContent>
-      <CardFooter className="px-6 pb-6 pt-0">
-        <Button 
-          className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 rounded-xl"
+
+        <h3 className="text-xl font-bold text-slate-800">{chalet.name}</h3>
+        
+        <button 
           onClick={() => onBook(chalet)}
+          className="flex items-center gap-1 justify-center mx-auto text-slate-600 hover:text-primary transition-colors font-medium"
         >
-          احجز الآن
-        </Button>
-      </CardFooter>
+          عرض التفاصيل <ChevronLeft className="h-4 w-4" />
+        </button>
+      </CardContent>
     </Card>
   )
 }

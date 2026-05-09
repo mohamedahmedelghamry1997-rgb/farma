@@ -9,16 +9,18 @@ export interface User {
   id: string
   name: string
   role: UserRole
-  assignedChaletIds?: string[] // للبروكار والمشرف
+  assignedChaletIds?: string[]
 }
 
 export interface Chalet {
   id: string
   name: string
-  price: number
+  normalPrice: number // أيام عادية
+  holidayPrice: number // إجازات
   description: string
   image: string
   location: string
+  city: string
 }
 
 export interface Booking {
@@ -42,34 +44,50 @@ export interface Booking {
 const INITIAL_CHALETS: Chalet[] = [
   {
     id: 'c1',
-    name: 'شاليه رويال فيو',
-    price: 500,
+    name: 'شالية بيت الأجداد',
+    normalPrice: 22.89,
+    holidayPrice: 22.89,
     description: 'إطلالة مباشرة على البحر مع تراس واسع ومرافق فاخرة.',
     image: 'https://picsum.photos/seed/p1/800/600',
-    location: 'الصف الأول - فارما بيتش'
+    location: 'ظفار (صلالة)',
+    city: 'صلالة'
   },
   {
     id: 'c2',
-    name: 'شاليه لؤلؤة الشاطئ',
-    price: 450,
+    name: 'استراحة شط الغدير',
+    normalPrice: 14.35,
+    holidayPrice: 14.35,
     description: 'تصميم عصري وهادئ يناسب العائلات الكبيرة.',
     image: 'https://picsum.photos/seed/p2/800/600',
-    location: 'الصف الثاني - فارما بيتش'
+    location: 'ظفار (صلالة)',
+    city: 'صلالة'
   },
   {
     id: 'c3',
-    name: 'جناح الرمال الذهبية',
-    price: 600,
+    name: 'أستراحة السيب',
+    normalPrice: 47.28,
+    holidayPrice: 47.28,
     description: 'خصوصية تامة مع حمام سباحة خاص وديكورات مذهلة.',
     image: 'https://picsum.photos/seed/p3/800/600',
-    location: 'منطقة الفيلات - فارما بيتش'
+    location: 'ظفار (صلالة)',
+    city: 'السيب'
+  },
+  {
+    id: 'c4',
+    name: 'استراحة الماسة',
+    normalPrice: 15.31,
+    holidayPrice: 15.31,
+    description: 'إقامة مريحة بالقرب من المرافق الحيوية.',
+    image: 'https://picsum.photos/seed/p4/800/600',
+    location: 'ظفار (صلالة)',
+    city: 'صلالة'
   }
 ]
 
 const INITIAL_USERS: User[] = [
   { id: 'u1', name: 'أحمد الإدمن', role: 'admin' },
   { id: 'u2', name: 'سامي مندوب', role: 'broker', assignedChaletIds: ['c1', 'c2'] },
-  { id: 'u3', name: 'محمود المشرف', role: 'supervisor', assignedChaletIds: ['c1', 'c2', 'c3'] }
+  { id: 'u3', name: 'محمود المشرف', role: 'supervisor', assignedChaletIds: ['c1', 'c2', 'c3', 'c4'] }
 ]
 
 export function useAppStore() {
