@@ -12,7 +12,7 @@ import {
   Users, Home, CheckCircle2, XCircle, Plus, Trash2, MapPin, Phone, LogOut, 
   Wallet, Receipt, Search, Activity, BarChart3, TrendingUp, Clock, Star,
   History, Sparkles, Box, AlertTriangle, MessageSquare, Tag, FileSpreadsheet,
-  Zap, Droplets, ShieldAlert, ClipboardCheck
+  Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -21,6 +21,7 @@ import { AddChaletDialog } from '@/components/AddChaletDialog'
 import { AddUserDialog } from '@/components/AddUserDialog'
 import { RoleSwitcher } from '@/components/RoleSwitcher'
 import { ChaletDetailsDialog } from '@/components/ChaletDetailsDialog'
+import { SupervisorActionDialog } from '@/components/SupervisorActionDialog'
 import Image from 'next/image'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
@@ -35,6 +36,10 @@ export default function PharmaBeachApp() {
   const [isAddChaletOpen, setIsAddChaletOpen] = useState(false)
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  
+  // Supervisor specific state
+  const [activeSupervisorBooking, setActiveSupervisorBooking] = useState<Booking | null>(null)
+  const [isSupervisorActionOpen, setIsSupervisorActionOpen] = useState(false)
 
   const myChalets = useMemo(() => {
     let list = store.chalets
@@ -103,11 +108,11 @@ export default function PharmaBeachApp() {
         
         {(!store.role || store.role === 'client') && (
           <div className="space-y-0">
-            <div className="bg-white py-32 border-b">
+            <div className="bg-white py-24 md:py-32 border-b">
                <div className="container mx-auto px-4 text-center space-y-8">
                   <Badge variant="secondary" className="px-6 py-2 rounded-full font-black text-primary bg-primary/5 border-primary/10">أهلاً بك في فخر الساحل</Badge>
-                  <h2 className="text-6xl font-black text-slate-900 leading-tight">فخامة <span className="text-primary">الساحل</span> بين يديك</h2>
-                  <p className="text-xl font-bold text-slate-500 max-w-2xl mx-auto">نظام الإدارة المركزي لضمان أقصى درجات الرقابة والجودة في التشغيل الفندقي.</p>
+                  <h2 className="text-4xl md:text-6xl font-black text-slate-900 leading-tight">فخامة <span className="text-primary">الساحل</span> بين يديك</h2>
+                  <p className="text-lg md:text-xl font-bold text-slate-500 max-w-2xl mx-auto">نظام الإدارة المركزي لمنتجع فارما بيتش لضمان أقصى درجات الرقابة والجودة.</p>
                   <div className="flex justify-center gap-4">
                     <Button size="lg" className="rounded-full h-16 px-12 text-xl font-black shadow-xl shadow-primary/20" onClick={() => document.getElementById('units')?.scrollIntoView({behavior: 'smooth'})}>استعرض الشاليهات</Button>
                   </div>
@@ -143,7 +148,7 @@ export default function PharmaBeachApp() {
             </div>
 
             <Tabs defaultValue="bookings" className="w-full">
-              <TabsList className="bg-white p-2 rounded-[2rem] mb-8 flex flex-wrap justify-start border shadow-sm h-auto">
+              <TabsList className="bg-white p-2 rounded-[2rem] mb-8 flex flex-wrap justify-start border shadow-sm h-auto gap-2">
                 <TabsTrigger value="bookings" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">المالية والحجوزات</TabsTrigger>
                 <TabsTrigger value="chalets" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">إدارة الأصول</TabsTrigger>
                 <TabsTrigger value="reports" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">التقارير</TabsTrigger>
@@ -315,30 +320,92 @@ export default function PharmaBeachApp() {
               <StatCard title="المستلزمات" val="متوفر" icon={Box} color="text-green-600" />
             </div>
 
-            <div className="space-y-8">
-               <h3 className="text-3xl font-black text-right px-4 flex items-center justify-end gap-3">المهام الميدانية <Activity className="text-primary" /></h3>
-               {myBookings.map(b => (
-                 <Card key={b.id} className="p-10 rounded-[3.5rem] shadow-2xl border-none bg-white hover:shadow-primary/5 transition-all">
-                    <div className="flex flex-col md:flex-row justify-between items-start gap-10">
-                       <div className="text-right space-y-4 flex-1 w-full">
-                          <div className="flex items-center gap-4 flex-row-reverse">
-                            <h3 className="text-3xl font-black text-slate-900">{store.chalets.find(c => c.id === b.chaletId)?.name}</h3>
-                            <Badge className="h-8 px-4 rounded-xl bg-slate-100 text-slate-700 border-none font-black">{b.opStatus === 'waiting' ? 'بانتظار وصول' : 'بالداخل الآن'}</Badge>
+            <Tabs defaultValue="tasks" className="w-full">
+               <TabsList className="bg-white p-2 rounded-[2.5rem] mb-8 border shadow-sm h-auto flex gap-2">
+                 <TabsTrigger value="tasks" className="rounded-2xl px-8 py-4 font-black flex items-center gap-2">
+                   <LayoutDashboard className="h-4 w-4" /> مهام التشغيل
+                 </TabsTrigger>
+                 <TabsTrigger value="units" className="rounded-2xl px-8 py-4 font-black flex items-center gap-2">
+                   <Home className="h-4 w-4" /> حالة الوحدات
+                 </TabsTrigger>
+                 <TabsTrigger value="inventory" className="rounded-2xl px-8 py-4 font-black flex items-center gap-2">
+                   <Box className="h-4 w-4" /> عهدة المستلزمات
+                 </TabsTrigger>
+               </TabsList>
+
+               <TabsContent value="tasks" className="space-y-8">
+                  <h3 className="text-3xl font-black text-right px-4 flex items-center justify-end gap-3">المهام الميدانية المباشرة <Activity className="text-primary" /></h3>
+                  {myBookings.map(b => (
+                    <Card key={b.id} className="p-10 rounded-[3.5rem] shadow-2xl border-none bg-white hover:shadow-primary/5 transition-all">
+                       <div className="flex flex-col md:flex-row justify-between items-start gap-10">
+                          <div className="text-right space-y-4 flex-1 w-full">
+                             <div className="flex items-center gap-4 flex-row-reverse">
+                               <h3 className="text-3xl font-black text-slate-900">{store.chalets.find(c => c.id === b.chaletId)?.name}</h3>
+                               <Badge className="h-8 px-4 rounded-xl bg-slate-100 text-slate-700 border-none font-black">{b.opStatus === 'waiting' ? 'بانتظار وصول' : 'بالداخل الآن'}</Badge>
+                             </div>
+                             <div className="flex flex-col gap-2">
+                               <p className="text-xl font-bold text-slate-600">النزيل: {b.clientName}</p>
+                               <div className="flex items-center gap-3 justify-end">
+                                 <a href={`tel:${b.phoneNumber}`} className="text-primary font-black underline flex items-center gap-1">{b.phoneNumber} <Phone className="h-4 w-4" /></a>
+                               </div>
+                             </div>
                           </div>
-                          <p className="text-xl font-bold text-slate-600">النزيل: {b.clientName} | <span className="text-primary underline">{b.phoneNumber}</span></p>
+                          <div className="flex flex-col gap-4 w-full md:w-auto min-w-[250px]">
+                             {b.opStatus === 'waiting' && (
+                               <Button className="h-20 rounded-[1.5rem] font-black bg-primary text-white text-xl shadow-xl shadow-primary/20" onClick={() => store.updateBooking(b.id, { opStatus: 'checked_in', checkInTime: new Date().toISOString() })}>تسجيل دخول العميل</Button>
+                             )}
+                             {b.opStatus === 'checked_in' && (
+                               <Button 
+                                 className="h-20 rounded-[1.5rem] font-black bg-orange-600 text-white text-xl shadow-xl shadow-orange-100" 
+                                 onClick={() => {
+                                   setActiveSupervisorBooking(b)
+                                   setIsSupervisorActionOpen(true)
+                                 }}
+                               >
+                                 تسجيل خروج وفحص
+                               </Button>
+                             )}
+                          </div>
                        </div>
-                       <div className="flex flex-col gap-4 w-full md:w-auto min-w-[250px]">
-                          {b.opStatus === 'waiting' && (
-                            <Button className="h-20 rounded-[1.5rem] font-black bg-primary text-white text-xl shadow-xl shadow-primary/20" onClick={() => store.updateBooking(b.id, { opStatus: 'checked_in', checkInTime: new Date().toISOString() })}>تسجيل دخول العميل</Button>
-                          )}
-                          {b.opStatus === 'checked_in' && (
-                            <Button className="h-20 rounded-[1.5rem] font-black bg-orange-600 text-white text-xl shadow-xl shadow-orange-100" onClick={() => toast({ title: "تم فتح نموذج الفحص النهائي والمخزون" })}>تسجيل خروج وفحص</Button>
-                          )}
+                    </Card>
+                  ))}
+               </TabsContent>
+
+               <TabsContent value="units" className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {store.chalets.map(c => (
+                    <Card key={c.id} className="p-6 rounded-[2.5rem] bg-white border-none shadow-xl space-y-4 text-right">
+                       <div className="flex justify-between items-center flex-row-reverse">
+                         <h4 className="font-black text-xl">{c.name}</h4>
+                         <Badge className={c.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}>
+                           {c.status === 'active' ? 'نظيف' : 'تحت الصيانة'}
+                         </Badge>
                        </div>
-                    </div>
-                 </Card>
-               ))}
-            </div>
+                       <div className="space-y-2">
+                         <p className="text-xs text-slate-500 font-bold">آخر قراءة عداد: {store.bookings.find(b => b.chaletId === c.id)?.electricityReading || 'غير مسجلة'}</p>
+                         <div className="flex gap-2 justify-end">
+                            <Button variant="outline" size="sm" className="rounded-xl font-black gap-2" onClick={() => toast({ title: "تم التبليغ عن عطل فني للأدمن" })}><AlertTriangle className="h-3 w-3" /> عطل فني</Button>
+                            <Button variant="outline" size="sm" className="rounded-xl font-black gap-2" onClick={() => toast({ title: "تم تحديث الحالة لـ بحاجة تنظيف" })}><Sparkles className="h-3 w-3" /> طلب تنظيف</Button>
+                         </div>
+                       </div>
+                    </Card>
+                  ))}
+               </TabsContent>
+
+               <TabsContent value="inventory" className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {['مناشف', 'شراشف', 'صابون', 'مناديل'].map(item => (
+                      <Card key={item} className="p-8 rounded-[2rem] bg-white text-right space-y-4">
+                        <Box className="h-8 w-8 text-primary" />
+                        <h4 className="font-black text-xl">{item}</h4>
+                        <div className="flex items-center justify-between flex-row-reverse">
+                           <span className="text-2xl font-black">24</span>
+                           <Button variant="secondary" size="sm" className="rounded-xl" onClick={() => toast({ title: `تم طلب توريد ${item}` })}>طلب توريد</Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+               </TabsContent>
+            </Tabs>
           </div>
         )}
 
@@ -349,7 +416,7 @@ export default function PharmaBeachApp() {
       <footer className="bg-slate-900 text-white py-24 mt-24 border-t-8 border-primary">
          <div className="container mx-auto px-4 text-center space-y-8">
             <h3 className="text-4xl font-black">فارما بيتش ريزورت</h3>
-            <p className="text-slate-400 font-bold max-w-2xl mx-auto leading-loose text-lg">نظام الإدارة المركزي المتكامل لمنتجع فارما بيتش</p>
+            <p className="text-slate-400 font-bold max-w-2xl mx-auto leading-loose text-lg">نظام الإدارة المركزي المتكامل لمنتجع فارما بيتش - STUDIO FIREBASS AI</p>
          </div>
       </footer>
 
@@ -372,6 +439,19 @@ export default function PharmaBeachApp() {
 
       <AddChaletDialog isOpen={isAddChaletOpen} onClose={() => setIsAddChaletOpen(false)} onAdd={(data) => { store.addChalet(data); toast({ title: "تمت إضافة الشاليه وبانتظار الاعتماد" }); }} />
       <AddUserDialog isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} onAdd={(data) => { store.addUser(data); toast({ title: "تم إنشاء حساب الموظف الجديد" }); }} chalets={store.chalets} />
+
+      <SupervisorActionDialog 
+        isOpen={isSupervisorActionOpen} 
+        onClose={() => setIsSupervisorActionOpen(false)} 
+        booking={activeSupervisorBooking} 
+        chalet={store.chalets.find(c => c.id === activeSupervisorBooking?.chaletId) || null}
+        onConfirm={(updates) => {
+          if (activeSupervisorBooking) {
+            store.updateBooking(activeSupervisorBooking.id, updates)
+            toast({ title: "تم تسجيل الخروج وتحديث حالة الوحدة" })
+          }
+        }}
+      />
 
     </div>
   )
