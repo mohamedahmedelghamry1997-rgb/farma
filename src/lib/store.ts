@@ -70,6 +70,11 @@ export interface Booking {
   supervisorId?: string
   notes?: string
   createdAt?: any
+  conditionReport?: string
+  electricityReading?: string
+  waterReading?: string
+  checkInTime?: string
+  checkOutTime?: string
 }
 
 export interface Coupon {
@@ -90,7 +95,6 @@ export function useAppStore() {
   const [authUser, setAuthUser] = useState<User | null>(null)
   const [isAuthLoading, setIsAuthLoading] = useState(true)
 
-  // Firebase Instances
   const [chalets, setChalets] = useState<Chalet[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [users, setUsers] = useState<UserProfile[]>([])
@@ -107,16 +111,17 @@ export function useAppStore() {
           setCurrentUser({ ...userData, id: userDoc.id })
           setRoleState(userData.role)
         } else {
-          // If user exists in Auth but not in Firestore (e.g. first login)
+          const isAdmin = user.email === 'admin@gmail.com'
           const newProfile: Omit<UserProfile, 'id'> = {
             uid: user.uid,
             name: user.displayName || 'مستخدم جديد',
-            role: 'client',
+            role: isAdmin ? 'admin' : 'client',
             isApproved: true,
             assignedChaletIds: []
           }
           await setDoc(doc(db, 'users', user.uid), newProfile)
-          setRoleState('client')
+          setCurrentUser({ ...newProfile, id: user.uid } as UserProfile)
+          setRoleState(newProfile.role)
         }
       } else {
         setCurrentUser(null)
@@ -125,22 +130,18 @@ export function useAppStore() {
       setIsAuthLoading(false)
     })
 
-    // Listen to Chalets
     const unsubChalets = onSnapshot(collection(db, 'chalets'), (snap) => {
       setChalets(snap.docs.map(d => ({ ...d.data() as Chalet, id: d.id })))
     })
 
-    // Listen to Bookings
     const unsubBookings = onSnapshot(query(collection(db, 'bookings'), orderBy('createdAt', 'desc')), (snap) => {
       setBookings(snap.docs.map(d => ({ ...d.data() as Booking, id: d.id })))
     })
 
-    // Listen to Users (Admin only usually, but for mock/mvp we listen all)
     const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
       setUsers(snap.docs.map(d => ({ ...d.data() as UserProfile, id: d.id })))
     })
 
-    // Listen to Coupons
     const unsubCoupons = onSnapshot(collection(db, 'coupons'), (snap) => {
       setCoupons(snap.docs.map(d => ({ ...d.data() as Coupon, id: d.id })))
       setIsDataLoading(false)
@@ -163,13 +164,14 @@ export function useAppStore() {
   };
 
   const addBooking = (data: Omit<Booking, 'id' | 'createdAt'>) => {
-    addDoc(collection(db, 'bookings'), { 
-      ...cleanData(data), 
+    const finalData = cleanData({
+      ...data,
       status: 'pending',
       opStatus: 'waiting',
       paymentStatus: 'pending',
-      createdAt: serverTimestamp() 
-    })
+      createdAt: serverTimestamp()
+    });
+    addDoc(collection(db, 'bookings'), finalData)
   }
 
   const updateBooking = (id: string, updates: Partial<Booking>) => {

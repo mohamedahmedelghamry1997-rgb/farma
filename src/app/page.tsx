@@ -34,7 +34,6 @@ export default function PharmaBeachApp() {
   const auth = useAuth()
   const { toast } = useToast()
   
-  // Auth Form State
   const [isLoginView, setIsLoginView] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -232,10 +231,6 @@ export default function PharmaBeachApp() {
                             <option value="admin_approved">موافق عليه</option>
                         </select>
                     </div>
-                    <div className="flex gap-4 w-full md:w-auto">
-                        <Button variant="outline" className="flex-1 md:flex-none rounded-xl h-12 font-black gap-2 border-slate-200" onClick={() => toast({ title: "جاري استخراج التقرير..." })}><Download className="h-4 w-4" /> تصدير تقرير</Button>
-                        <Button className="flex-1 md:flex-none rounded-xl h-12 font-black gap-2" onClick={() => toast({ title: "سيتم تفعيل إضافة حجز يدوي قريباً" })}><Plus className="h-4 w-4" /> حجز يدوي</Button>
-                    </div>
                  </div>
 
                  <div className="space-y-6">
@@ -265,7 +260,6 @@ export default function PharmaBeachApp() {
                  </div>
               </TabsContent>
 
-              {/* ... Rest of Admin Content (Same as previous, just ensure roles are correct) ... */}
               <TabsContent value="chalets" className="space-y-8">
                  <div className="flex flex-col md:flex-row justify-between items-center bg-white p-12 rounded-[3.5rem] border shadow-xl gap-8">
                    <div className="text-right">
@@ -321,7 +315,6 @@ export default function PharmaBeachApp() {
           </div>
         )}
 
-        {/* ... Other Roles Content (Same logic as Admin, checking store.role) ... */}
         {store.role === 'broker' && (
           <div className="container mx-auto px-4 py-10">
              <h2 className="text-4xl font-black text-slate-900 mb-10">لوحة تحكم البروكر</h2>
@@ -336,15 +329,17 @@ export default function PharmaBeachApp() {
         {store.role === 'supervisor' && (
           <div className="container mx-auto px-4 py-10">
              <h2 className="text-4xl font-black text-slate-900 mb-10">المهام الميدانية</h2>
-             {filteredBookings.map(b => (
-               <Card key={b.id} className="p-8 rounded-[2rem] shadow-xl mb-6 bg-white flex justify-between items-center flex-row-reverse">
-                  <div className="text-right">
-                    <p className="text-2xl font-black">{b.clientName}</p>
-                    <p className="text-slate-500 font-bold">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
-                  </div>
-                  <Button className="h-16 px-10 rounded-2xl font-black bg-primary" onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>إجراء فحص</Button>
-               </Card>
-             ))}
+             <div className="grid grid-cols-1 gap-6">
+                {filteredBookings.map(b => (
+                  <Card key={b.id} className="p-8 rounded-[2rem] shadow-xl bg-white flex justify-between items-center flex-row-reverse">
+                      <div className="text-right">
+                        <p className="text-2xl font-black">{b.clientName}</p>
+                        <p className="text-slate-500 font-bold">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
+                      </div>
+                      <Button className="h-16 px-10 rounded-2xl font-black bg-primary" onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>إجراء فحص</Button>
+                  </Card>
+                ))}
+             </div>
           </div>
         )}
 
@@ -364,7 +359,11 @@ export default function PharmaBeachApp() {
         isOpen={isBookingOpen} 
         onClose={() => setIsBookingOpen(false)} 
         onConfirm={(data) => { 
-          store.addBooking({ ...data, brokerId: store.role === 'broker' ? store.currentUser?.uid : undefined })
+          const bookingPayload = { ...data };
+          if (store.role === 'broker' && store.currentUser?.uid) {
+            (bookingPayload as any).brokerId = store.currentUser.uid;
+          }
+          store.addBooking(bookingPayload);
           toast({ title: "تم إرسال الطلب للمراجعة المالية" }); 
         }} 
         existingBookings={store.bookings} 

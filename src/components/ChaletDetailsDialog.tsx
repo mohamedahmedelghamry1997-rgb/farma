@@ -48,7 +48,6 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
           <DialogDescription className="text-slate-500 font-bold">{chalet.location} | {chalet.city}</DialogDescription>
         </DialogHeader>
 
-        {/* MEDIA GALLERY */}
         <div className="relative group h-[400px]">
            <Carousel className="w-full h-full">
               <CarouselContent>
@@ -77,7 +76,6 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
 
         <div className="p-10 space-y-12">
            
-           {/* LOG SECTION FOR ADMIN/BROKER */}
            {(userRole === 'admin' || userRole === 'broker') && (
              <div className="space-y-6">
                 <div className="flex items-center gap-3 text-primary justify-end">
@@ -110,7 +108,6 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
              </div>
            )}
 
-           {/* DESCRIPTION & PRICING */}
            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               <div className="md:col-span-2 space-y-6">
                  <div className="flex items-center gap-3 text-primary justify-end">
@@ -146,7 +143,6 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
               </div>
            </div>
 
-           {/* CALENDAR VIEW */}
            <div className="space-y-6">
               <div className="flex items-center gap-3 text-primary justify-end">
                  <h3 className="text-2xl font-black text-slate-900">حالة الإشغال</h3>
@@ -173,7 +169,7 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
         </div>
 
         <div className="p-10 border-t border-slate-100 flex justify-center">
-           <Button variant="ghost" className="rounded-2xl h-14 px-10 font-black text-slate-400 hover:bg-slate-50" onClick={onClose}>إغلاق النافذة</Button>
+           <Button variant="ghost" className="rounded-2xl h-14 px-10 font-black text-slate-400 hover:bg-slate-50" onClick={onClose}>إإغلاق النافذة</Button>
         </div>
       </DialogContent>
     </Dialog>
