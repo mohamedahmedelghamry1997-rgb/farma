@@ -8,13 +8,16 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
+        "code": { "type": "string" },
         "normalPrice": { "type": "number" },
         "holidayPrice": { "type": "number" },
         "description": { "type": "string" },
         "image": { "type": "string" },
+        "gallery": { "type": "array", "items": { "type": "string" } },
+        "videoUrl": { "type": "string" },
         "location": { "type": "string" },
         "city": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "active"] },
+        "status": { "type": "string", "enum": ["pending", "active", "maintenance", "closed"] },
         "addedBy": { "type": "string" }
       },
       "required": ["name", "normalPrice", "city", "status"]
@@ -37,9 +40,9 @@
         "paymentMethod": { "type": "string" },
         "paymentReference": { "type": "string" },
         "totalAmount": { "type": "number" },
-        "securityDeposit": { "type": "string" },
-        "conditionReport": { "type": "string" },
         "brokerId": { "type": "string" },
+        "brokerName": { "type": "string" },
+        "brokerCommission": { "type": "number" },
         "checkInTime": { "type": "string" },
         "checkOutTime": { "type": "string" }
       },
@@ -52,7 +55,7 @@
       "properties": {
         "uid": { "type": "string" },
         "name": { "type": "string" },
-        "role": { "type": "string", "enum": ["admin", "broker", "supervisor"] },
+        "role": { "type": "string", "enum": ["admin", "broker", "supervisor", "client"] },
         "isApproved": { "type": "boolean" },
         "assignedChaletIds": { "type": "array", "items": { "type": "string" } }
       },

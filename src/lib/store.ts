@@ -43,6 +43,7 @@ export interface Chalet {
   description: string
   image: string
   gallery?: string[]
+  videoUrl?: string // رابط الفيديو
   location: string
   city: string
   status: 'active' | 'maintenance' | 'closed' | 'pending'
@@ -224,8 +225,8 @@ export function useAppStore() {
     const batch = writeBatch(db);
 
     const chaletData = [
-      { code: "CH-101", name: "فيلا الياقوت - مارينا 5", normalPrice: 5000, holidayPrice: 7500, city: "الساحل الشمالي", location: "مارينا 5، الصف الأول", status: "active", description: "فيلا فاخرة تطل مباشرة على البحر مع حمام سباحة خاص وحديقة واسعة.", image: "https://picsum.photos/seed/beachfront1/800/600" },
-      { code: "CH-102", name: "شاليه اللؤلؤة - هاسيندا", normalPrice: 3500, holidayPrice: 5000, city: "الساحل الشمالي", location: "هاسيندا باي، الساحل", status: "active", description: "شاليه مودرن بموقع متميز بالقرب من الكلوب هاوس.", image: "https://picsum.photos/seed/beachfront2/800/600" },
+      { code: "CH-101", name: "فيلا الياقوت - مارينا 5", normalPrice: 5000, holidayPrice: 7500, city: "الساحل الشمالي", location: "مارينا 5، الصف الأول", status: "active", description: "فيلا فاخرة تطل مباشرة على البحر مع حمام سباحة خاص وحديقة واسعة.", image: "https://picsum.photos/seed/beachfront1/800/600", gallery: ["https://picsum.photos/seed/beach1/800/600", "https://picsum.photos/seed/beach2/800/600"] },
+      { code: "CH-102", name: "شاليه اللؤلؤة - هاسيندا", normalPrice: 3500, holidayPrice: 5000, city: "الساحل الشمالي", location: "هاسيندا باي، الساحل", status: "active", description: "شاليه مودرن بموقع متميز بالقرب من الكلوب هاوس.", image: "https://picsum.photos/seed/beachfront2/800/600", gallery: ["https://picsum.photos/seed/resort1/800/600"] },
       { code: "CH-103", name: "رويال سويت - العين السخنة", normalPrice: 2500, holidayPrice: 3500, city: "العين السخنة", location: "بورتو سخنة", status: "active", description: "جناح ملكي مع إطلالة بانورامية على الجبل والبحر.", image: "https://picsum.photos/seed/beachfront3/800/600" }
     ];
 

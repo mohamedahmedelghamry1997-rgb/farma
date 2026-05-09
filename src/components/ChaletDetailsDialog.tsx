@@ -7,10 +7,11 @@ import { Badge } from "@/components/ui/badge"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { Calendar } from "@/components/ui/calendar"
 import { Chalet, Booking, UserRole } from "@/lib/store"
-import { MapPin, Star, CheckCircle2, CalendarIcon, Info, ShieldAlert, History, User } from "lucide-react"
+import { MapPin, Star, CheckCircle2, CalendarIcon, Info, ShieldAlert, History, User, Video, Play } from "lucide-react"
 import { ar } from "date-fns/locale"
 import Image from "next/image"
 import { startOfDay, isSameDay, isWithinInterval, format } from "date-fns"
+import { useState } from "react"
 
 interface ChaletDetailsDialogProps {
   chalet: Chalet | null
@@ -22,6 +23,8 @@ interface ChaletDetailsDialogProps {
 }
 
 export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingBookings, userRole }: ChaletDetailsDialogProps) {
+  const [activeMedia, setActiveMedia] = useState<'images' | 'video'>('images')
+
   if (!chalet) return null
 
   const isDateDisabled = (day: Date) => {
@@ -48,29 +51,57 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
           <DialogDescription className="text-slate-500 font-bold">{chalet.location} | {chalet.city}</DialogDescription>
         </DialogHeader>
 
-        <div className="relative group h-[400px]">
-           <Carousel className="w-full h-full">
-              <CarouselContent>
-                 {images.map((img, idx) => (
-                   <CarouselItem key={idx} className="relative h-[400px]">
-                      <Image src={img} alt={`${chalet.name}-${idx}`} fill className="object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                   </CarouselItem>
-                 ))}
-              </CarouselContent>
-              <div className="absolute bottom-6 right-1/2 translate-x-1/2 flex gap-2">
-                 <CarouselPrevious className="static translate-y-0 bg-white/20 border-none text-white hover:bg-white/40" />
-                 <CarouselNext className="static translate-y-0 bg-white/20 border-none text-white hover:bg-white/40" />
-              </div>
-           </Carousel>
+        <div className="relative group h-[450px] bg-slate-950">
+           {activeMedia === 'images' ? (
+             <Carousel className="w-full h-full">
+                <CarouselContent>
+                   {images.map((img, idx) => (
+                     <CarouselItem key={idx} className="relative h-[450px]">
+                        <Image src={img} alt={`${chalet.name}-${idx}`} fill className="object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                     </CarouselItem>
+                   ))}
+                </CarouselContent>
+                <div className="absolute bottom-6 right-1/2 translate-x-1/2 flex gap-2 z-10">
+                   <CarouselPrevious className="static translate-y-0 bg-white/20 border-none text-white hover:bg-white/40" />
+                   <CarouselNext className="static translate-y-0 bg-white/20 border-none text-white hover:bg-white/40" />
+                </div>
+             </Carousel>
+           ) : (
+             <div className="w-full h-full flex items-center justify-center bg-black">
+                {chalet.videoUrl?.includes('youtube') ? (
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src={chalet.videoUrl.replace('watch?v=', 'embed/')} 
+                    title="YouTube video player" 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                  ></iframe>
+                ) : (
+                  <video controls className="w-full h-full object-contain">
+                    <source src={chalet.videoUrl} type="video/mp4" />
+                    متصفحك لا يدعم تشغيل الفيديو.
+                  </video>
+                )}
+             </div>
+           )}
            
-           <div className="absolute top-8 right-8 flex gap-3">
+           <div className="absolute top-8 right-8 flex gap-3 z-10">
               <Badge className="bg-primary text-white px-6 py-2 rounded-full border-none shadow-xl font-black">
                 {chalet.city}
               </Badge>
-              <Badge className="bg-white text-slate-900 px-6 py-2 rounded-full border-none shadow-xl font-black flex items-center gap-2">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" /> 5.0
-              </Badge>
+              {chalet.videoUrl && (
+                <Button 
+                  size="sm" 
+                  className={`rounded-full gap-2 font-black ${activeMedia === 'video' ? 'bg-red-600 text-white' : 'bg-white text-slate-900'}`}
+                  onClick={() => setActiveMedia(activeMedia === 'images' ? 'video' : 'images')}
+                >
+                  {activeMedia === 'video' ? 'عرض الصور' : 'مشاهدة الفيديو'}
+                  {activeMedia === 'video' ? <ImageIcon className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </Button>
+              )}
            </div>
         </div>
 
@@ -114,7 +145,7 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
                     <h3 className="text-2xl font-black text-slate-900">نظرة عامة</h3>
                     <Info className="h-6 w-6" />
                  </div>
-                 <p className="text-lg text-slate-600 font-bold leading-loose">
+                 <p className="text-lg text-slate-600 font-bold leading-loose text-right">
                    {chalet.description}
                  </p>
                  <div className="flex flex-wrap gap-4 pt-4 justify-end">
@@ -169,7 +200,7 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
         </div>
 
         <div className="p-10 border-t border-slate-100 flex justify-center">
-           <Button variant="ghost" className="rounded-2xl h-14 px-10 font-black text-slate-400 hover:bg-slate-50" onClick={onClose}>إإغلاق النافذة</Button>
+           <Button variant="ghost" className="rounded-2xl h-14 px-10 font-black text-slate-400 hover:bg-slate-50" onClick={onClose}>إغلاق النافذة</Button>
         </div>
       </DialogContent>
     </Dialog>
