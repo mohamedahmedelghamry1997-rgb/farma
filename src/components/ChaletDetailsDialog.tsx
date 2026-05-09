@@ -1,7 +1,7 @@
 
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
@@ -41,9 +41,9 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-[3rem] border-none shadow-2xl bg-white text-right max-h-[90vh] overflow-y-auto custom-scrollbar">
         
-        {/* Hidden but required for accessibility */}
-        <DialogHeader className="sr-only">
-          <DialogTitle>تفاصيل {chalet.name}</DialogTitle>
+        <DialogHeader className="p-8 pb-0">
+          <DialogTitle className="text-3xl font-black text-slate-900">{chalet.name}</DialogTitle>
+          <DialogDescription className="text-slate-500 font-bold">{chalet.location} | {chalet.city}</DialogDescription>
         </DialogHeader>
 
         {/* MEDIA GALLERY */}
@@ -70,11 +70,6 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
               <Badge className="bg-white text-slate-900 px-6 py-2 rounded-full border-none shadow-xl font-black flex items-center gap-2">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" /> 5.0
               </Badge>
-           </div>
-
-           <div className="absolute bottom-8 right-8 left-8 text-white text-right">
-              <h2 className="text-4xl font-black mb-2">{chalet.name}</h2>
-              <p className="flex items-center gap-2 justify-end text-white/80 font-bold"><MapPin className="h-4 w-4 text-primary" /> {chalet.location}</p>
            </div>
         </div>
 
