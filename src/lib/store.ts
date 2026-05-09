@@ -61,7 +61,7 @@ const generateChalets = (): Chalet[] => {
     image: `https://picsum.photos/seed/${i + 200}/800/600`,
     location: locations[i % locations.length],
     city: cities[i % cities.length],
-    status: 'active'
+    status: i < 5 ? 'active' : (Math.random() > 0.3 ? 'active' : 'pending')
   }))
 }
 
