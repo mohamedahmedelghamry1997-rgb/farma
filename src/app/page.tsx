@@ -46,6 +46,7 @@ import { ChaletCard } from '@/components/ChaletCard'
 import { AddChaletDialog } from '@/components/AddChaletDialog'
 import { AddUserDialog } from '@/components/AddUserDialog'
 import { RoleSwitcher } from '@/components/RoleSwitcher'
+import { ChaletDetailsDialog } from '@/components/ChaletDetailsDialog'
 import Image from 'next/image'
 
 export default function PharmaBeachApp() {
@@ -54,6 +55,7 @@ export default function PharmaBeachApp() {
   
   // Local States
   const [selectedChalet, setSelectedChalet] = useState<Chalet | null>(null)
+  const [viewingDetailsChalet, setViewingDetailsChalet] = useState<Chalet | null>(null)
   const [isBookingOpen, setIsBookingOpen] = useState(false)
   const [isAddChaletOpen, setIsAddChaletOpen] = useState(false)
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
@@ -141,7 +143,6 @@ export default function PharmaBeachApp() {
         {/* LANDING PAGE / CLIENT VIEW */}
         {(!store.role || store.role === 'client') && (
           <div className="space-y-0 animate-slide-up">
-            {/* CLEAN HERO SECTION (NO IMAGE) */}
             <div className="relative min-h-[75vh] flex items-center justify-center text-slate-900 overflow-hidden bg-white border-b border-slate-100">
                <div className="absolute top-0 right-0 w-[40%] h-[40%] bg-primary/5 rounded-full blur-[100px] -mr-24 -mt-24"></div>
                <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[100px] -ml-24 -mb-24"></div>
@@ -179,7 +180,7 @@ export default function PharmaBeachApp() {
 
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                   {filteredChalets.map(c => (
-                    <ChaletCard key={c.id} chalet={c} onBook={(chalet) => { setSelectedChalet(chalet); setIsBookingOpen(true); }} />
+                    <ChaletCard key={c.id} chalet={c} onBook={(chalet) => { setViewingDetailsChalet(chalet); }} />
                   ))}
                </div>
             </div>
@@ -480,6 +481,17 @@ export default function PharmaBeachApp() {
       </footer>
 
       {/* MODALS */}
+      <ChaletDetailsDialog 
+        chalet={viewingDetailsChalet} 
+        isOpen={!!viewingDetailsChalet} 
+        onClose={() => setViewingDetailsChalet(null)} 
+        onBook={() => { 
+          setSelectedChalet(viewingDetailsChalet); 
+          setViewingDetailsChalet(null); 
+          setIsBookingOpen(true); 
+        }} 
+        existingBookings={store.bookings}
+      />
       <BookingDialog chalet={selectedChalet} isOpen={isBookingOpen} onClose={() => setIsBookingOpen(false)} onConfirm={(data) => { store.addBooking(data); toast({ title: "تم إرسال طلب الحجز للمراجعة" }); }} existingBookings={store.bookings} />
       <AddChaletDialog isOpen={isAddChaletOpen} onClose={() => setIsAddChaletOpen(false)} onAdd={(data) => { store.addChalet(data); toast({ title: "تمت إضافة الوحدة بنجاح" }); }} />
       <AddUserDialog isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} onAdd={(data) => { store.addUser(data); toast({ title: "تمت إضافة الموظف بنجاح" }); }} chalets={store.chalets} />
