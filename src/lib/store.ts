@@ -69,6 +69,9 @@ export interface Booking {
   notes?: string
   createdAt?: any
   conditionReport?: string
+  electricityReading?: string
+  waterReading?: string
+  checkOutTime?: string
 }
 
 export interface Coupon {
@@ -109,13 +112,9 @@ export function useAppStore() {
             setRoleState(userData.role);
           } else {
             let assignedRole: UserRole = 'client';
-            if (user.email === 'admin@gmail.com') {
-              assignedRole = 'admin';
-            } else if (user.email === 'admin1@gmail.com') {
-              assignedRole = 'broker';
-            } else if (user.email === 'admin2@gmail.com') {
-              assignedRole = 'supervisor';
-            }
+            if (user.email === 'admin@gmail.com') assignedRole = 'admin';
+            else if (user.email === 'admin1@gmail.com') assignedRole = 'broker';
+            else if (user.email === 'admin2@gmail.com') assignedRole = 'supervisor';
 
             const newProfile: Omit<UserProfile, 'id'> = {
               uid: user.uid,
@@ -123,7 +122,8 @@ export function useAppStore() {
               role: assignedRole,
               isApproved: true,
               assignedChaletIds: [],
-              status: 'active'
+              status: 'active',
+              commissionRate: assignedRole === 'broker' ? 10 : 0
             };
             await setDoc(userDocRef, newProfile);
             setCurrentUser({ ...newProfile, id: user.uid } as UserProfile);
@@ -141,21 +141,20 @@ export function useAppStore() {
 
     const unsubChalets = onSnapshot(collection(db, 'chalets'), (snap) => {
       setChalets(snap.docs.map(d => ({ ...d.data() as Chalet, id: d.id })));
-    }, (err) => console.error("Firestore error (chalets):", err));
+    });
 
     const unsubBookings = onSnapshot(query(collection(db, 'bookings'), orderBy('createdAt', 'desc')), (snap) => {
       setBookings(snap.docs.map(d => ({ ...d.data() as Booking, id: d.id })));
-    }, (err) => console.error("Firestore error (bookings):", err));
+    });
 
     const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
       setUsers(snap.docs.map(d => ({ ...d.data() as UserProfile, id: d.id })));
-    }, (err) => console.error("Firestore error (users):", err));
+    });
 
     const unsubCoupons = onSnapshot(collection(db, 'coupons'), (snap) => {
       setCoupons(snap.docs.map(d => ({ ...d.data() as Coupon, id: d.id })));
       setIsDataLoading(false);
     }, (err) => {
-      console.error("Firestore error (coupons):", err);
       setIsDataLoading(false);
     });
 
@@ -198,51 +197,11 @@ export function useAppStore() {
     }
   }
 
-  const updateChalet = async (id: string, updates: Partial<Chalet>) => {
-    try {
-      await updateDoc(doc(db, 'chalets', id), updates);
-    } catch (e) {
-      console.error("Error updating chalet:", e);
-    }
-  }
-
-  const deleteChalet = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'chalets', id));
-    } catch (e) {
-      console.error("Error deleting chalet:", e);
-    }
-  }
-
-  const addUser = async (data: Omit<UserProfile, 'id'>) => {
-    try {
-      await addDoc(collection(db, 'users'), { ...data, createdAt: serverTimestamp() });
-    } catch (e) {
-      console.error("Error adding user:", e);
-    }
-  }
-
   const updateUser = async (id: string, updates: Partial<UserProfile>) => {
     try {
       await updateDoc(doc(db, 'users', id), updates);
     } catch (e) {
       console.error("Error updating user:", e);
-    }
-  }
-
-  const addCoupon = async (data: Omit<Coupon, 'id'>) => {
-    try {
-      await addDoc(collection(db, 'coupons'), { ...data, isActive: true });
-    } catch (e) {
-      console.error("Error adding coupon:", e);
-    }
-  }
-
-  const deleteCoupon = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'coupons', id));
-    } catch (e) {
-      console.error("Error deleting coupon:", e);
     }
   }
 
@@ -252,8 +211,7 @@ export function useAppStore() {
     const chaletData = [
       { name: "فيلا الياقوت - مارينا 5", normalPrice: 5000, holidayPrice: 7500, city: "الساحل الشمالي", location: "مارينا 5، الصف الأول", status: "active", description: "فيلا فاخرة تطل مباشرة على البحر مع حمام سباحة خاص وحديقة واسعة.", image: "https://picsum.photos/seed/beachfront1/800/600" },
       { name: "شاليه اللؤلؤة - هاسيندا", normalPrice: 3500, holidayPrice: 5000, city: "الساحل الشمالي", location: "هاسيندا باي، الساحل", status: "active", description: "شاليه مودرن بموقع متميز بالقرب من الكلوب هاوس.", image: "https://picsum.photos/seed/beachfront2/800/600" },
-      { name: "رويال سويت - العين السخنة", normalPrice: 2500, holidayPrice: 3500, city: "العين السخنة", location: "بورتو سخنة", status: "active", description: "جناح ملكي مع إطلالة بانورامية على الجبل والبحر.", image: "https://picsum.photos/seed/beachfront3/800/600" },
-      { name: "شاليه فينيسيا - سيدي عبد الرحمن", normalPrice: 4000, holidayPrice: 6000, city: "الساحل الشمالي", location: "مراسي، سيدي عبد الرحمن", status: "active", description: "تصميم إيطالي فريد وخصوصية تامة للعائلات.", image: "https://picsum.photos/seed/beachfront4/800/600" }
+      { name: "رويال سويت - العين السخنة", normalPrice: 2500, holidayPrice: 3500, city: "العين السخنة", location: "بورتو سخنة", status: "active", description: "جناح ملكي مع إطلالة بانورامية على الجبل والبحر.", image: "https://picsum.photos/seed/beachfront3/800/600" }
     ];
 
     const chaletRefs: string[] = [];
@@ -263,35 +221,13 @@ export function useAppStore() {
       chaletRefs.push(ref.id);
     }
 
-    const userData = [
-      { uid: "demo-broker-1", name: "أحمد السمسار", role: "broker", isApproved: true, assignedChaletIds: [chaletRefs[0], chaletRefs[1]], status: 'active', commissionRate: 10 },
-      { uid: "demo-super-1", name: "محمود المشرف", role: "supervisor", isApproved: true, assignedChaletIds: chaletRefs, status: 'active' }
-    ];
-
-    for (const u of userData) {
-      const ref = doc(db, 'users', u.uid);
-      batch.set(ref, { ...u, createdAt: serverTimestamp() });
-    }
-
     const bookingData = [
-      { chaletId: chaletRefs[0], clientName: "ياسر محمود", phoneNumber: "01011223344", guestCount: 4, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 86400000 * 3).toISOString(), status: "admin_approved", opStatus: "waiting", paymentStatus: "verified", totalAmount: 15000, brokerId: "demo-broker-1", paymentMethod: 'vodafone_cash', paymentReference: 'REF123', createdAt: serverTimestamp() },
-      { chaletId: chaletRefs[1], clientName: "سارة أحمد", phoneNumber: "01233445566", guestCount: 2, startDate: new Date(Date.now() - 86400000 * 5).toISOString(), endDate: new Date(Date.now() - 86400000 * 2).toISOString(), status: "confirmed", opStatus: "checked_out", paymentStatus: "verified", totalAmount: 7000, brokerId: "demo-broker-1", paymentMethod: 'instapay', paymentReference: 'REF456', createdAt: serverTimestamp() },
-      { chaletId: chaletRefs[2], clientName: "خالد علي", phoneNumber: "01144556677", guestCount: 6, startDate: new Date(Date.now() + 86400000 * 10).toISOString(), endDate: new Date(Date.now() + 86400000 * 15).toISOString(), status: "pending", opStatus: "waiting", paymentStatus: "pending", totalAmount: 12500, createdAt: serverTimestamp() }
+      { chaletId: chaletRefs[0], clientName: "ياسر محمود", phoneNumber: "01011223344", guestCount: 4, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 86400000 * 3).toISOString(), status: "admin_approved", opStatus: "waiting", paymentStatus: "verified", totalAmount: 15000, paymentMethod: 'vodafone_cash', paymentReference: 'REF123', createdAt: serverTimestamp() }
     ];
 
     for (const b of bookingData) {
       const ref = doc(collection(db, 'bookings'));
       batch.set(ref, b);
-    }
-
-    const couponData = [
-      { code: "PHARMA20", discountType: "percentage", value: 20, expiryDate: "2025-12-31", isActive: true },
-      { code: "SUMMER500", discountType: "fixed", value: 500, expiryDate: "2025-09-01", isActive: true }
-    ];
-
-    for (const cp of couponData) {
-      const ref = doc(collection(db, 'coupons'));
-      batch.set(ref, cp);
     }
 
     await batch.commit();
@@ -300,7 +236,7 @@ export function useAppStore() {
   return {
     role, currentUser, authUser, isAuthLoading,
     chalets, bookings, users, coupons,
-    addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser, updateUser, addCoupon, deleteCoupon, seedDatabase,
+    addBooking, updateBooking, addChalet, updateUser, seedDatabase,
     isLoaded: !isAuthLoading && !isDataLoading
   }
 }

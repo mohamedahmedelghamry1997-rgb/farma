@@ -66,24 +66,15 @@ export default function PharmaBeachApp() {
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
   const [aiAnalysisResult, setAiAnalysisResult] = useState<any>(null)
 
-  const handleAuth = async () => {
-    try {
-      if (isLoginView) {
-        await signInWithEmailAndPassword(auth, email, password)
-        toast({ title: "تم تسجيل الدخول بنجاح" })
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password)
-        toast({ title: "تم إنشاء الحساب بنجاح" })
-      }
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "خطأ في المصادقة", description: e.message })
-    }
-  }
-
   const stats = useMemo(() => {
-    const verifiedBookings = store.bookings.filter(b => b.paymentStatus === 'verified');
+    let relevantBookings = store.bookings;
+    if (store.role === 'broker') {
+      relevantBookings = store.bookings.filter(b => b.brokerId === store.currentUser?.uid);
+    }
+
+    const verifiedBookings = relevantBookings.filter(b => b.paymentStatus === 'verified');
     const totalRevenue = verifiedBookings.reduce((acc, b) => acc + (b.totalAmount || 0), 0);
-    const pendingTransfers = store.bookings.filter(b => b.paymentStatus === 'pending').length;
+    const pendingTransfers = relevantBookings.filter(b => b.paymentStatus === 'pending').length;
     const activeCoupons = store.coupons.filter(c => c.isActive).length;
     
     const today = new Date().toISOString().split('T')[0];
@@ -95,7 +86,7 @@ export default function PharmaBeachApp() {
     const occupancyRate = store.chalets.length > 0 ? Math.round((occupiedToday / store.chalets.length) * 100) : 0;
 
     return { totalRevenue, pendingTransfers, activeCoupons, occupancyRate };
-  }, [store.bookings, store.chalets, store.coupons]);
+  }, [store.bookings, store.chalets, store.coupons, store.role, store.currentUser]);
 
   const myChalets = useMemo(() => {
     let list = store.chalets || []
@@ -118,66 +109,30 @@ export default function PharmaBeachApp() {
     }
 
     if (searchQuery) {
-      list = list.filter(b => b.clientName.includes(searchQuery) || b.phoneNumber.includes(searchQuery) || b.paymentReference?.includes(searchQuery))
+      list = list.filter(b => b.clientName.includes(searchQuery) || b.phoneNumber.includes(searchQuery))
     }
     return list
   }, [store.role, store.bookings, searchQuery, statusFilter, store.currentUser]);
 
   const revenueData = useMemo(() => {
     const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو']
-    return months.map((m, i) => {
-      const base = stats.totalRevenue / 6;
-      return {
-        name: m,
-        revenue: Math.round(base + (i * 2000))
-      }
-    })
+    return months.map((m, i) => ({
+      name: m,
+      revenue: Math.round((stats.totalRevenue / 6) + (i * 2000))
+    }))
   }, [stats.totalRevenue]);
 
-  const handleSeed = async () => {
+  const handleAuth = async () => {
     try {
-      await store.seedDatabase();
-      toast({ title: "تم توليد البيانات التجريبية بنجاح" });
+      if (isLoginView) {
+        await signInWithEmailAndPassword(auth, email, password)
+        toast({ title: "تم تسجيل الدخول بنجاح" })
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password)
+        toast({ title: "تم إنشاء الحساب بنجاح" })
+      }
     } catch (e: any) {
-      toast({ variant: "destructive", title: "فشل توليد البيانات", description: e.message });
-    }
-  }
-
-  const handleExportPDF = () => {
-    toast({ title: "جاري إنشاء التقرير المالي...", description: "يتضمن التقرير كافة الحركات المالية وحالة الإشغال." });
-    setTimeout(() => {
-      toast({ title: "تم تصدير التقرير بنجاح", description: "تقرير_فارما_بيتش_الإجمالي.pdf جاهز في مجلد التحميلات." });
-    }, 2000);
-  }
-
-  const handleUpdateUserStatus = (userId: string, currentStatus: string) => {
-    const nextStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
-    store.updateUser(userId, { status: nextStatus as any });
-    toast({ 
-      title: nextStatus === 'suspended' ? "تم تعطيل الحساب" : "تم تفعيل الحساب",
-      description: "تم تحديث حالة الموظف وصلاحياته في النظام."
-    });
-  }
-
-  const handleAiGapAnalysis = async () => {
-    if (store.chalets.length === 0) return;
-    setIsAiAnalyzing(true);
-    try {
-      const firstChalet = store.chalets[0];
-      const result = await adminChaletBookingGapOptimizer({
-        chaletId: firstChalet.id,
-        currentDate: new Date().toISOString(),
-        bookings: store.bookings.filter(b => b.chaletId === firstChalet.id).map(b => ({
-          startDate: b.startDate,
-          endDate: b.endDate
-        }))
-      });
-      setAiAnalysisResult(result);
-      toast({ title: "تم الانتهاء من التحليل الذكي للجدول" });
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "فشل التحليل الذكي", description: e.message });
-    } finally {
-      setIsAiAnalyzing(false);
+      toast({ variant: "destructive", title: "خطأ في المصادقة", description: e.message })
     }
   }
 
@@ -198,7 +153,7 @@ export default function PharmaBeachApp() {
         }
       }
       await store.updateBooking(activeSupervisorBooking.id, updates);
-      toast({ title: "تم تسجيل الخروج وتحديث حالة الوحدة بنجاح" });
+      toast({ title: "تم تحديث حالة الوحدة بنجاح" });
       setIsSupervisorActionOpen(false);
     } catch (e: any) {
       toast({ variant: "destructive", title: "فشل تحديث الحالة", description: e.message });
@@ -255,7 +210,7 @@ export default function PharmaBeachApp() {
              <div className="bg-primary p-2.5 rounded-2xl shadow-lg shadow-primary/20"><Anchor className="text-white h-6 w-6" /></div>
              <div className="text-right">
                 <h1 className="text-2xl font-black text-slate-900 leading-none">فارما بيتش</h1>
-                <span className="text-[10px] text-primary font-bold tracking-widest uppercase">Integrated Management</span>
+                <span className="text-[10px] text-primary font-bold tracking-widest uppercase">Management System</span>
              </div>
           </div>
           <div className="flex items-center gap-4">
@@ -336,8 +291,6 @@ export default function PharmaBeachApp() {
                             <option value="pending">حوالات معلقة</option>
                             <option value="verified">دفع مؤكد</option>
                             <option value="admin_approved">موافق عليه</option>
-                            <option value="confirmed">مكتمل</option>
-                            <option value="cancelled">ملغي</option>
                         </select>
                     </div>
                     <div className="flex gap-4 w-full md:w-auto">
@@ -345,74 +298,34 @@ export default function PharmaBeachApp() {
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input placeholder="بحث بالاسم أو المرجع..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="rounded-xl pr-10 bg-slate-50 border-none" />
                       </div>
-                      <Button variant="outline" className="rounded-xl h-10 gap-2 border-slate-200" onClick={handleExportPDF}>
+                      <Button variant="outline" className="rounded-xl h-10 gap-2 border-slate-200" onClick={() => toast({ title: "جاري إنشاء التقرير المالي..." })}>
                         <Download className="h-4 w-4" /> تصدير
                       </Button>
                     </div>
                  </div>
 
                  <div className="space-y-6">
-                    {filteredBookings.length === 0 ? (
-                      <div className="py-32 text-center space-y-4 bg-white rounded-[3rem] border border-dashed">
-                        <div className="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto"><Search className="text-slate-300 h-10 w-10" /></div>
-                        <p className="text-slate-400 font-bold">لا توجد حجوزات تطابق معايير البحث</p>
-                      </div>
-                    ) : (
-                      filteredBookings.map(b => (
-                        <Card key={b.id} className="p-10 rounded-[3rem] border-none shadow-xl bg-white flex flex-col md:flex-row justify-between items-center gap-8 group hover:shadow-2xl transition-all">
-                            <div className="flex items-center gap-8 flex-1 w-full text-right flex-row-reverse">
-                               <div className={`p-8 rounded-[2rem] ${b.paymentStatus === 'verified' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'} shadow-inner`}><Receipt className="h-12 w-12" /></div>
-                               <div className="flex-1 space-y-2">
-                                 <p className="font-black text-3xl text-slate-900">{b.clientName}</p>
-                                 <p className="text-lg font-bold text-slate-500">{store.chalets.find(c => c.id === b.chaletId)?.name} | <span className="text-primary">{(b.totalAmount || 0).toLocaleString()} ج.م</span></p>
-                                 <div className="flex gap-3 justify-end mt-4">
-                                    <Badge className={b.paymentStatus === 'verified' ? 'bg-green-500 text-white border-none py-1.5 px-4' : 'bg-orange-500 text-white border-none py-1.5 px-4'}>
-                                      {b.paymentStatus === 'verified' ? 'دفع مؤكد' : 'انتظار المراجعة'}
-                                    </Badge>
-                                    <Badge variant="outline" className="border-slate-100 bg-slate-50 text-slate-500 font-bold py-1.5 px-4">مرجع: {b.paymentReference}</Badge>
-                                 </div>
+                    {filteredBookings.map(b => (
+                      <Card key={b.id} className="p-10 rounded-[3rem] border-none shadow-xl bg-white flex flex-col md:flex-row justify-between items-center gap-8 group hover:shadow-2xl transition-all">
+                          <div className="flex items-center gap-8 flex-1 w-full text-right flex-row-reverse">
+                             <div className={`p-8 rounded-[2rem] ${b.paymentStatus === 'verified' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'} shadow-inner`}><Receipt className="h-12 w-12" /></div>
+                             <div className="flex-1 space-y-2">
+                               <p className="font-black text-3xl text-slate-900">{b.clientName}</p>
+                               <p className="text-lg font-bold text-slate-500">{store.chalets.find(c => c.id === b.chaletId)?.name} | <span className="text-primary">{(b.totalAmount || 0).toLocaleString()} ج.م</span></p>
+                               <div className="flex gap-3 justify-end mt-4">
+                                  <Badge className={b.paymentStatus === 'verified' ? 'bg-green-500 text-white border-none py-1.5 px-4' : 'bg-orange-500 text-white border-none py-1.5 px-4'}>
+                                    {b.paymentStatus === 'verified' ? 'دفع مؤكد' : 'انتظار المراجعة'}
+                                  </Badge>
+                                  <Badge variant="outline" className="border-slate-100 bg-slate-50 text-slate-500 font-bold py-1.5 px-4">مرجع: {b.paymentReference}</Badge>
                                </div>
-                            </div>
-                            <div className="flex gap-4 w-full md:w-auto">
-                              {b.paymentStatus === 'pending' && (
-                                <Button className="flex-1 md:flex-none h-16 px-12 bg-green-600 hover:bg-green-700 font-black rounded-2xl shadow-xl shadow-green-100" onClick={() => store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })}>تأكيد الحوالة</Button>
-                              )}
-                              <Button variant="outline" className="flex-1 md:flex-none h-16 px-8 rounded-2xl font-black gap-2 border-slate-200" onClick={() => setViewingDetailsChalet(store.chalets.find(c => c.id === b.chaletId) || null)}><Eye className="h-5 w-5" /> عرض</Button>
-                            </div>
-                        </Card>
-                      ))
-                    )}
-                 </div>
-              </TabsContent>
-
-              <TabsContent value="chalets" className="space-y-8">
-                 <div className="flex flex-col md:flex-row justify-between items-center bg-white p-12 rounded-[3.5rem] border shadow-xl gap-8">
-                   <div className="text-right">
-                     <h3 className="text-4xl font-black text-slate-900">المحفظة العقارية</h3>
-                     <p className="text-slate-500 font-bold text-lg mt-2">تحكم في الأسعار، التوفر، وحالات الصيانة للوحدات</p>
-                   </div>
-                   <Button className="w-full md:w-auto rounded-[1.5rem] h-20 px-12 font-black gap-3 text-xl shadow-2xl shadow-primary/30" onClick={() => setIsAddChaletOpen(true)}><Plus className="h-6 w-6" /> إضافة شاليه</Button>
-                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {store.chalets.map(c => (
-                      <Card key={c.id} className="rounded-[3rem] overflow-hidden bg-white border-none shadow-xl hover:-translate-y-4 transition-all duration-500 group relative text-right">
-                         <div className="h-64 relative overflow-hidden">
-                           <Image src={c.image} alt={c.name} fill className="object-cover group-hover:scale-110 transition-transform duration-1000" />
-                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
-                           <Badge className="absolute top-6 right-6 bg-white/95 text-slate-900 font-black backdrop-blur-md border-none px-6 py-2.5 rounded-full shadow-xl">{c.city}</Badge>
-                         </div>
-                         <div className="p-10 space-y-8">
-                            <div className="flex justify-between items-center flex-row-reverse">
-                                <h4 className="font-black text-2xl text-slate-900">{c.name}</h4>
-                                <Badge className={c.status === 'active' ? 'bg-green-100 text-green-700 border-none' : 'bg-orange-100 text-orange-700 border-none'}>
-                                    {c.status === 'active' ? 'نشط' : 'تحت الصيانة'}
-                                </Badge>
-                            </div>
-                            <div className="flex gap-3">
-                               <Button variant="secondary" className="flex-1 h-14 rounded-2xl font-black bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setViewingDetailsChalet(c)}>السجل الكامل</Button>
-                               <Button variant="ghost" className="h-14 w-14 rounded-2xl text-destructive hover:bg-destructive/10" onClick={() => store.deleteChalet(c.id)}><Trash2 className="h-5 w-5" /></Button>
-                            </div>
-                         </div>
+                             </div>
+                          </div>
+                          <div className="flex gap-4 w-full md:w-auto">
+                            {b.paymentStatus === 'pending' && (
+                              <Button className="flex-1 md:flex-none h-16 px-12 bg-green-600 hover:bg-green-700 font-black rounded-2xl shadow-xl shadow-green-100" onClick={() => store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })}>تأكيد الحوالة</Button>
+                            )}
+                            <Button variant="outline" className="flex-1 md:flex-none h-16 px-8 rounded-2xl font-black gap-2 border-slate-200" onClick={() => setViewingDetailsChalet(store.chalets.find(c => c.id === b.chaletId) || null)}><Eye className="h-5 w-5" /> عرض</Button>
+                          </div>
                       </Card>
                     ))}
                  </div>
@@ -421,12 +334,25 @@ export default function PharmaBeachApp() {
               <TabsContent value="reports" className="space-y-12">
                  <div className="bg-primary/5 p-12 rounded-[3.5rem] border border-primary/10 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="text-right">
-                       <h3 className="text-3xl font-black text-slate-900 flex items-center gap-3 justify-end">محرك التحليلات الذكي <Brain className="text-primary h-8 w-8" /></h3>
+                       <h3 className="text-3xl font-black text-slate-900 flex items-center gap-3 justify-end">التحليلات الذكية <Brain className="text-primary h-8 w-8" /></h3>
                        <p className="text-slate-500 font-bold text-lg mt-2">استخدم الذكاء الاصطناعي لتحسين معدلات الإشغال وزيادة الأرباح</p>
                     </div>
                     <Button 
                       className="h-16 px-12 rounded-2xl font-black gap-2 bg-primary text-white text-xl shadow-xl shadow-primary/20"
-                      onClick={handleAiGapAnalysis}
+                      onClick={async () => {
+                        if (store.chalets[0]) {
+                          setIsAiAnalyzing(true);
+                          try {
+                            const res = await adminChaletBookingGapOptimizer({
+                              chaletId: store.chalets[0].id,
+                              currentDate: new Date().toISOString(),
+                              bookings: store.bookings.filter(b => b.chaletId === store.chalets[0].id).map(b => ({ startDate: b.startDate, endDate: b.endDate }))
+                            });
+                            setAiAnalysisResult(res);
+                          } catch(e) { toast({ variant: "destructive", title: "فشل التحليل" }) }
+                          finally { setIsAiAnalyzing(false); }
+                        }
+                      }}
                       disabled={isAiAnalyzing}
                     >
                       {isAiAnalyzing ? <Activity className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
@@ -436,17 +362,14 @@ export default function PharmaBeachApp() {
 
                  {aiAnalysisResult && (
                     <Card className="p-12 rounded-[3.5rem] bg-white border-2 border-primary/20 shadow-2xl space-y-8 animate-slide-up">
-                       <div className="flex justify-between items-center flex-row-reverse border-b pb-8">
-                          <h3 className="text-3xl font-black text-primary">نتائج تحليل GenAI</h3>
-                          <Badge className="bg-primary/10 text-primary py-2 px-6 rounded-full font-black">AI Insights</Badge>
-                       </div>
+                       <h3 className="text-3xl font-black text-primary text-right border-b pb-8">نتائج تحليل GenAI</h3>
                        <div className="space-y-8 text-right">
                           <div className="space-y-4">
                              <h4 className="font-black text-xl">التحليل الميداني:</h4>
                              <p className="text-lg text-slate-600 leading-loose">{aiAnalysisResult.analysis}</p>
                           </div>
                           <div className="space-y-4">
-                             <h4 className="font-black text-xl">توصيات رفع الإشغال:</h4>
+                             <h4 className="font-black text-xl">توصيات:</h4>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {aiAnalysisResult.suggestions.map((s: string, idx: number) => (
                                   <div key={idx} className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex items-center gap-4 flex-row-reverse">
@@ -462,10 +385,7 @@ export default function PharmaBeachApp() {
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
-                       <div className="flex justify-between items-center flex-row-reverse">
-                          <h3 className="text-3xl font-black">نمو الإيرادات</h3>
-                          <Badge className="bg-green-50 text-green-600 font-black">بيانات حية</Badge>
-                       </div>
+                       <h3 className="text-3xl font-black text-right">نمو الإيرادات</h3>
                        <div className="h-[350px] w-full">
                           <ChartContainer config={chartConfig}>
                             <BarChart data={revenueData}>
@@ -479,21 +399,15 @@ export default function PharmaBeachApp() {
                        </div>
                     </Card>
                     <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
-                       <h3 className="text-3xl font-black text-right">تحليل التدفق النقدي</h3>
+                       <h3 className="text-3xl font-black text-right">التدفق النقدي</h3>
                        <div className="h-[350px] w-full">
                           <ChartContainer config={chartConfig}>
                             <AreaChart data={revenueData}>
-                               <defs>
-                                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0}/>
-                                  </linearGradient>
-                               </defs>
                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                <XAxis dataKey="name" tickLine={false} axisLine={false} />
                                <YAxis tickLine={false} axisLine={false} />
                                <ChartTooltip content={<ChartTooltipContent />} />
-                               <Area type="monotone" dataKey="revenue" stroke="var(--color-revenue)" fillOpacity={1} fill="url(#colorRev)" />
+                               <Area type="monotone" dataKey="revenue" stroke="var(--color-revenue)" fill="var(--color-revenue)" fillOpacity={0.1} />
                             </AreaChart>
                           </ChartContainer>
                        </div>
@@ -505,123 +419,48 @@ export default function PharmaBeachApp() {
                  <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm gap-6">
                     <div className="text-right">
                        <h3 className="text-3xl font-black">فريق العمل</h3>
-                       <p className="text-slate-500 font-bold">إدارة الوسطاء والمشرفين الميدانيين</p>
+                       <p className="text-slate-500 font-bold">إدارة الوسطاء والمشرفين</p>
                     </div>
                     <Button className="rounded-2xl h-14 px-8 font-black gap-2" onClick={() => setIsAddUserOpen(true)}>
                        <UserPlus className="h-5 w-5" /> إضافة موظف
                     </Button>
                  </div>
 
-                 <Tabs defaultValue="brokers" className="w-full">
-                    <TabsList className="bg-slate-100 p-1.5 rounded-2xl mb-8 flex gap-2 h-auto w-fit">
-                       <TabsTrigger value="brokers" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all">الوسطاء (Brokers)</TabsTrigger>
-                       <TabsTrigger value="supervisors" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all">المشرفين (Supervisors)</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="brokers" className="space-y-6">
-                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {store.users.filter(u => u.role === 'broker').map(u => {
-                            const brokerBookings = store.bookings.filter(b => b.brokerId === u.uid);
-                            const totalSales = brokerBookings.filter(b => b.paymentStatus === 'verified').reduce((acc, b) => acc + (b.totalAmount || 0), 0);
-                            
-                            return (
-                              <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl space-y-6 text-right transition-all hover:shadow-2xl">
-                                 <div className="flex items-center justify-between flex-row-reverse">
-                                    <div className="flex items-center gap-4 flex-row-reverse text-right">
-                                       <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"><Briefcase className="h-8 w-8" /></div>
-                                       <div>
-                                          <p className="text-xl font-black">{u.name}</p>
-                                          <Badge variant="outline" className={`text-[10px] ${u.status === 'suspended' ? 'text-destructive border-destructive/20 bg-destructive/5' : 'text-primary'}`}>
-                                            {u.status === 'suspended' ? 'حساب معطل' : 'وسيط معتمد'}
-                                          </Badge>
-                                       </div>
-                                    </div>
-                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => { setEditingUser(u); setIsEditUserOpen(true); }}><Settings className="h-5 w-5" /></Button>
-                                 </div>
-                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-slate-50 p-4 rounded-2xl text-center">
-                                       <p className="text-[10px] font-black text-slate-400 uppercase">المبيعات</p>
-                                       <p className="text-lg font-black text-primary">{totalSales.toLocaleString()} ج.م</p>
-                                    </div>
-                                    <div className="bg-slate-50 p-4 rounded-2xl text-center">
-                                       <p className="text-[10px] font-black text-slate-400 uppercase">الحجوزات</p>
-                                       <p className="text-lg font-black">{brokerBookings.length}</p>
-                                    </div>
-                                 </div>
-                                 <Button 
-                                    variant="outline" 
-                                    className={`w-full h-12 rounded-xl font-black gap-2 ${u.status === 'suspended' ? 'text-green-600 border-green-100 hover:bg-green-50' : 'text-destructive border-destructive/10 hover:bg-destructive/5'}`}
-                                    onClick={() => handleUpdateUserStatus(u.id, u.status || 'active')}
-                                  >
-                                    {u.status === 'suspended' ? 'تفعيل الحساب' : 'تعطيل الحساب'}
-                                 </Button>
-                              </Card>
-                            )
-                          })}
-                       </div>
-                    </TabsContent>
-
-                    <TabsContent value="supervisors" className="space-y-6">
-                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {store.users.filter(u => u.role === 'supervisor').map(u => {
-                            const handledBookings = store.bookings.filter(b => b.opStatus === 'checked_out');
-                            const maintenanceReports = Math.floor(Math.random() * 5);
-
-                            return (
-                              <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl space-y-6 text-right transition-all hover:shadow-2xl">
-                                 <div className="flex items-center justify-between flex-row-reverse">
-                                    <div className="flex items-center gap-4 flex-row-reverse text-right">
-                                       <div className="h-14 w-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600"><ClipboardCheck className="h-8 w-8" /></div>
-                                       <div>
-                                          <p className="text-xl font-black">{u.name}</p>
-                                          <Badge variant="outline" className={`text-[10px] ${u.status === 'suspended' ? 'text-destructive border-destructive/20 bg-destructive/5' : 'text-orange-600 border-orange-100 bg-orange-50/50'}`}>
-                                            {u.status === 'suspended' ? 'حساب معطل' : 'مشرف ميداني'}
-                                          </Badge>
-                                       </div>
-                                    </div>
-                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => { setEditingUser(u); setIsEditUserOpen(true); }}><Settings className="h-5 w-5" /></Button>
-                                 </div>
-                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-slate-50 p-4 rounded-2xl text-center">
-                                       <p className="text-[10px] font-black text-slate-400 uppercase">عمليات الإخلاء</p>
-                                       <p className="text-lg font-black text-orange-600">{handledBookings.length}</p>
-                                    </div>
-                                    <div className="bg-slate-50 p-4 rounded-2xl text-center">
-                                       <p className="text-[10px] font-black text-slate-400 uppercase">بلاغات صيانة</p>
-                                       <p className="text-lg font-black">{maintenanceReports}</p>
-                                    </div>
-                                 </div>
-                                 <Button 
-                                    variant="outline" 
-                                    className={`w-full h-12 rounded-xl font-black gap-2 ${u.status === 'suspended' ? 'text-green-600 border-green-100 hover:bg-green-50' : 'text-destructive border-destructive/10 hover:bg-destructive/5'}`}
-                                    onClick={() => handleUpdateUserStatus(u.id, u.status || 'active')}
-                                  >
-                                    {u.status === 'suspended' ? 'تفعيل الحساب' : 'تعديل المهام'}
-                                 </Button>
-                              </Card>
-                            )
-                          })}
-                       </div>
-                    </TabsContent>
-                 </Tabs>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {store.users.filter(u => u.role !== 'admin' && u.role !== 'client').map(u => (
+                      <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl space-y-6 text-right">
+                         <div className="flex items-center justify-between flex-row-reverse">
+                            <div className="flex items-center gap-4 flex-row-reverse text-right">
+                               <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                  {u.role === 'broker' ? <Briefcase /> : <ClipboardCheck />}
+                               </div>
+                               <div>
+                                  <p className="text-xl font-black">{u.name}</p>
+                                  <Badge variant="outline" className={u.status === 'suspended' ? 'text-destructive border-destructive/20' : 'text-primary'}>
+                                    {u.role === 'broker' ? 'وسيط' : 'مشرف'} | {u.status === 'suspended' ? 'معطل' : 'نشط'}
+                                  </Badge>
+                               </div>
+                            </div>
+                            <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => { setEditingUser(u); setIsEditUserOpen(true); }}><Settings className="h-5 w-5" /></Button>
+                         </div>
+                         <Button 
+                            variant="outline" 
+                            className={`w-full h-12 rounded-xl font-black ${u.status === 'suspended' ? 'text-green-600 border-green-100' : 'text-destructive border-destructive/10'}`}
+                            onClick={() => store.updateUser(u.id, { status: u.status === 'suspended' ? 'active' : 'suspended' })}
+                          >
+                            {u.status === 'suspended' ? 'تفعيل الحساب' : 'تعطيل الحساب'}
+                         </Button>
+                      </Card>
+                    ))}
+                 </div>
               </TabsContent>
 
               <TabsContent value="settings" className="space-y-8">
-                 <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
-                    <div className="text-right space-y-4">
-                       <h3 className="text-3xl font-black">إعدادات المنظومة</h3>
-                       <p className="text-slate-500 font-bold">إدارة البيانات وتهيئة النظام للإطلاق</p>
-                    </div>
-                    
+                 <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8 text-right">
+                    <h3 className="text-3xl font-black">إعدادات النظام</h3>
                     <div className="p-8 bg-primary/5 rounded-[2rem] border border-primary/10 space-y-6">
-                       <div className="flex items-center gap-4 flex-row-reverse">
-                          <Database className="text-primary h-8 w-8" />
-                          <div className="text-right">
-                             <h4 className="font-black text-xl">توليد بيانات تجريبية (Demo Data)</h4>
-                             <p className="text-sm text-slate-500 font-bold">سيقوم هذا الإجراء بملء المنظومة ببيانات حية لتجربة كافة الوظائف.</p>
-                          </div>
-                       </div>
-                       <Button className="w-full h-16 rounded-2xl font-black gap-3 text-lg" variant="default" onClick={handleSeed}>
+                       <p className="text-slate-500 font-bold">توليد بيانات حقيقية لتجربة كافة وظائف المنظومة.</p>
+                       <Button className="w-full h-16 rounded-2xl font-black gap-3 text-lg" variant="default" onClick={() => { store.seedDatabase(); toast({ title: "تم توليد البيانات بنجاح" }); }}>
                           توليد البيانات الآن <Sparkles className="h-5 w-5" />
                        </Button>
                     </div>
@@ -635,52 +474,17 @@ export default function PharmaBeachApp() {
           <div className="container mx-auto px-4 py-12 space-y-12">
              <div className="flex justify-between items-center flex-row-reverse">
                 <div className="text-right">
-                   <h2 className="text-4xl font-black text-slate-900">لوحة تحكم البروكر</h2>
-                   <p className="text-slate-500 font-bold mt-2">مرحباً بك، تابع عمولاتك وحجوزاتك النشطة</p>
+                   <h2 className="text-4xl font-black text-slate-900">لوحة تحكم الوسيط</h2>
+                   <p className="text-slate-500 font-bold mt-2">تابع عمولاتك وحجوزاتك النشطة</p>
                 </div>
                 <div className="flex gap-4">
                   <StatCard title="عمولات محققة" val={(stats.totalRevenue * 0.1).toLocaleString() + " ج.م"} icon={TrendingUp} color="text-primary" />
                   <StatCard title="حجوزاتي" val={filteredBookings.length} icon={CalendarIcon} color="text-blue-600" />
                 </div>
              </div>
-
-             <Tabs defaultValue="my-units" className="w-full">
-                <TabsList className="bg-white p-2 rounded-[2rem] mb-10 flex flex-wrap justify-start border shadow-sm h-auto gap-2">
-                   <TabsTrigger value="my-units" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">وحداتي</TabsTrigger>
-                   <TabsTrigger value="my-bookings" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">حجوزاتي</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="my-units" className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                   {myChalets.map(c => (
-                     <ChaletCard key={c.id} chalet={c} onBook={(chalet) => setViewingDetailsChalet(chalet)} />
-                   ))}
-                </TabsContent>
-
-                <TabsContent value="my-bookings" className="space-y-6">
-                   {filteredBookings.length === 0 ? (
-                     <div className="py-24 text-center bg-white rounded-[3rem] border border-dashed">
-                        <CalendarIcon className="h-12 w-12 text-slate-200 mx-auto mb-4" />
-                        <p className="text-slate-400 font-bold">لا توجد حجوزات مسجلة باسمك حالياً</p>
-                     </div>
-                   ) : (
-                     filteredBookings.map(b => (
-                       <Card key={b.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl flex flex-col md:flex-row justify-between items-center gap-6 text-right flex-row-reverse">
-                          <div className="flex items-center gap-6 flex-row-reverse w-full">
-                             <div className="p-5 bg-primary/5 text-primary rounded-2xl"><CalendarIcon className="h-8 w-8" /></div>
-                             <div className="flex-1">
-                                <p className="text-xl font-black">{b.clientName}</p>
-                                <p className="text-sm font-bold text-slate-500">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
-                             </div>
-                             <div className="text-left">
-                                <Badge className="bg-primary">{b.status}</Badge>
-                                <p className="text-lg font-black mt-1">{(b.totalAmount || 0).toLocaleString()} ج.م</p>
-                             </div>
-                          </div>
-                       </Card>
-                     ))
-                   )}
-                </TabsContent>
-             </Tabs>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {myChalets.map(c => <ChaletCard key={c.id} chalet={c} onBook={(chalet) => setViewingDetailsChalet(chalet)} />)}
+             </div>
           </div>
         )}
 
@@ -693,65 +497,30 @@ export default function PharmaBeachApp() {
                 </div>
                 <StatCard title="مهام معلقة" val={filteredBookings.filter(b => b.opStatus === 'waiting').length} icon={ShieldAlert} color="text-orange-600" />
              </div>
-
-             <Tabs defaultValue="tasks" className="w-full">
-                <TabsList className="bg-white p-2 rounded-[2rem] mb-10 flex flex-wrap justify-start border shadow-sm h-auto gap-2">
-                   <TabsTrigger value="tasks" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">مهام اليوم</TabsTrigger>
-                   <TabsTrigger value="inventory" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">المخزون</TabsTrigger>
-                   <TabsTrigger value="maintenance" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">بلاغات الصيانة</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="tasks" className="space-y-6">
-                   {filteredBookings.length === 0 ? (
-                     <div className="py-24 text-center bg-white rounded-[3rem] border border-dashed">
-                        <UserCheck className="h-12 w-12 text-slate-200 mx-auto mb-4" />
-                        <p className="text-slate-400 font-bold">لا توجد عمليات فحص مطلوبة اليوم</p>
-                     </div>
-                   ) : (
-                     filteredBookings.map(b => (
-                       <Card key={b.id} className="p-8 rounded-[2.5rem] shadow-xl bg-white flex justify-between items-center flex-row-reverse">
-                           <div className="text-right flex items-center gap-6 flex-row-reverse">
-                             <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400"><ClipboardCheck /></div>
-                             <div>
-                                <p className="text-2xl font-black">{b.clientName}</p>
-                                <p className="text-slate-500 font-bold">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
-                             </div>
-                           </div>
-                           <div className="flex gap-3">
-                              <Button variant="outline" className="h-14 px-6 rounded-2xl font-black border-slate-200 gap-2" onClick={() => window.open(`tel:${b.phoneNumber}`)}><Phone className="h-4 w-4" /> اتصال</Button>
-                              <Button className="h-14 px-10 rounded-2xl font-black bg-primary text-white" onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>إجراء الفحص</Button>
-                           </div>
-                       </Card>
-                     ))
-                   )}
-                </TabsContent>
-
-                <TabsContent value="inventory" className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   {['طقم فوط فندقية', 'منظفات أرضية', 'أدوات مطبخ أساسية', 'شراشف سرير'].map(item => (
-                     <Card key={item} className="p-8 rounded-[2rem] bg-white border-none shadow-lg flex items-center justify-between flex-row-reverse text-right">
-                        <div className="flex items-center gap-4 flex-row-reverse text-right">
-                           <Box className="text-primary h-6 w-6" />
-                           <p className="font-black text-slate-800">{item}</p>
+             <div className="space-y-6">
+                {filteredBookings.map(b => (
+                  <Card key={b.id} className="p-8 rounded-[2.5rem] shadow-xl bg-white flex justify-between items-center flex-row-reverse">
+                      <div className="text-right flex items-center gap-6 flex-row-reverse">
+                        <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400"><ClipboardCheck /></div>
+                        <div>
+                           <p className="text-2xl font-black">{b.clientName}</p>
+                           <p className="text-slate-500 font-bold">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
                         </div>
-                        <div className="flex items-center gap-4">
-                           <Button variant="ghost" className="h-10 w-10 rounded-full border border-slate-100 text-lg font-black" onClick={() => toast({ title: "تحديث المخزون", description: `تم استهلاك كمية من ${item}` })}>-</Button>
-                           <span className="font-black text-xl">15</span>
-                           <Button variant="ghost" className="h-10 w-10 rounded-full border border-slate-100 text-lg font-black text-primary" onClick={() => toast({ title: "تحديث المخزون", description: `تمت إضافة كمية من ${item}` })}>+</Button>
-                        </div>
-                     </Card>
-                   ))}
-                </TabsContent>
-             </Tabs>
+                      </div>
+                      <div className="flex gap-3">
+                         <Button variant="outline" className="h-14 px-6 rounded-2xl font-black border-slate-200 gap-2" onClick={() => window.open(`tel:${b.phoneNumber}`)}><Phone className="h-4 w-4" /> اتصال</Button>
+                         <Button className="h-14 px-10 rounded-2xl font-black bg-primary text-white" onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>إجراء الفحص</Button>
+                      </div>
+                  </Card>
+                ))}
+             </div>
           </div>
         )}
 
       </main>
 
-      <footer className="bg-slate-900 text-white py-24 mt-24 border-t-8 border-primary">
-         <div className="container mx-auto px-4 text-center space-y-8">
-            <h3 className="text-4xl font-black">فارما بيتش ريزورت</h3>
-            <p className="text-slate-400 font-bold max-w-2xl mx-auto leading-loose text-lg">نظام الإدارة المركزي المتكامل لمنتجع فارما بيتش - STUDIO FIREBASS AI</p>
-         </div>
+      <footer className="bg-slate-900 text-white py-12 text-center border-t-8 border-primary">
+         <p className="text-slate-400 font-bold">فارما بيتش ريزورت - STUDIO FIREBASS AI</p>
       </footer>
 
       <ChaletDetailsDialog chalet={viewingDetailsChalet} isOpen={!!viewingDetailsChalet} onClose={() => setViewingDetailsChalet(null)} onBook={() => { setSelectedChalet(viewingDetailsChalet); setIsBookingOpen(true); setViewingDetailsChalet(null); }} existingBookings={store.bookings} userRole={store.role} />
@@ -761,36 +530,18 @@ export default function PharmaBeachApp() {
         isOpen={isBookingOpen} 
         onClose={() => setIsBookingOpen(false)} 
         onConfirm={(data) => { 
-          const bookingPayload = { ...data };
-          if (store.role === 'broker' && store.currentUser?.uid) {
-            (bookingPayload as any).brokerId = store.currentUser.uid;
-          }
-          store.addBooking(bookingPayload);
+          const payload = { ...data };
+          if (store.role === 'broker') (payload as any).brokerId = store.currentUser?.uid;
+          store.addBooking(payload);
           toast({ title: "تم إرسال طلب الحجز بنجاح" }); 
         }} 
         existingBookings={store.bookings} 
       />
 
       <AddChaletDialog isOpen={isAddChaletOpen} onClose={() => setIsAddChaletOpen(false)} onAdd={(data) => { store.addChalet(data); toast({ title: "تمت إضافة الشاليه بنجاح" }); }} />
-      <AddUserDialog isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} onAdd={(data) => { store.addUser(data); toast({ title: "تم إنشاء حساب الموظف بنجاح" }); }} chalets={store.chalets} />
-      
-      <EditUserDialog 
-        user={editingUser} 
-        isOpen={isEditUserOpen} 
-        onClose={() => { setIsEditUserOpen(false); setEditingUser(null); }} 
-        onUpdate={(userId, data) => { 
-          store.updateUser(userId, data); 
-          toast({ title: "تم تحديث بيانات الموظف بنجاح" }); 
-        }} 
-      />
-
-      <SupervisorActionDialog 
-        isOpen={isSupervisorActionOpen} 
-        onClose={() => setIsSupervisorActionOpen(false)} 
-        booking={activeSupervisorBooking} 
-        chalet={store.chalets.find(c => c.id === activeSupervisorBooking?.chaletId) || null}
-        onConfirm={handleSupervisorConfirm}
-      />
+      <AddUserDialog isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} onAdd={(data) => { store.updateUser(data.uid, data); toast({ title: "تم إنشاء حساب الموظف بنجاح" }); }} chalets={store.chalets} />
+      <EditUserDialog user={editingUser} isOpen={isEditUserOpen} onClose={() => { setIsEditUserOpen(false); setEditingUser(null); }} onUpdate={(userId, data) => { store.updateUser(userId, data); toast({ title: "تم تحديث بيانات الموظف بنجاح" }); }} />
+      <SupervisorActionDialog isOpen={isSupervisorActionOpen} onClose={() => setIsSupervisorActionOpen(false)} booking={activeSupervisorBooking} chalet={store.chalets.find(c => c.id === activeSupervisorBooking?.chaletId) || null} onConfirm={handleSupervisorConfirm} />
 
     </div>
   )
@@ -798,11 +549,11 @@ export default function PharmaBeachApp() {
 
 function StatCard({ title, val, icon: Icon, color }: any) {
   return (
-    <Card className="p-10 rounded-[3rem] bg-white border-none shadow-xl flex items-center gap-8 hover:-translate-y-2 transition-all duration-300">
-       <div className={`${color} bg-slate-50 p-6 rounded-[2rem] shadow-sm`}><Icon className="h-10 w-10" /></div>
+    <Card className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl flex items-center gap-6">
+       <div className={`${color} bg-slate-50 p-5 rounded-[1.5rem]`}><Icon className="h-8 w-8" /></div>
        <div className="text-right">
          <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{title}</p>
-         <p className="text-3xl font-black text-slate-900 tracking-tight">{val}</p>
+         <p className="text-2xl font-black text-slate-900 tracking-tight">{val}</p>
        </div>
     </Card>
   )
