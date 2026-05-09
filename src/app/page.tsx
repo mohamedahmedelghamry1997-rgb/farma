@@ -14,7 +14,7 @@ import {
   History, Sparkles, Box, AlertTriangle, MessageSquare, Tag, FileSpreadsheet,
   Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings, UserPlus,
   ArrowUpRight, Megaphone, Percent, Copy, Filter, Download, Calendar as CalendarIcon,
-  LogIn
+  LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -25,7 +25,7 @@ import { ChaletDetailsDialog } from '@/components/ChaletDetailsDialog'
 import { SupervisorActionDialog } from '@/components/SupervisorActionDialog'
 import Image from 'next/image'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart } from 'recharts'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
 
@@ -56,7 +56,8 @@ export default function PharmaBeachApp() {
         await signInWithEmailAndPassword(auth, email, password)
         toast({ title: "تم تسجيل الدخول بنجاح" })
       } else {
-        await createUserWithEmailAndPassword(auth, email, password)
+        const userCred = await createUserWithEmailAndPassword(auth, email, password)
+        // Profile creation is handled in store.ts useEffect
         toast({ title: "تم إنشاء الحساب بنجاح" })
       }
     } catch (e: any) {
@@ -94,7 +95,7 @@ export default function PharmaBeachApp() {
     const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو']
     return months.map((m, i) => ({
       name: m,
-      revenue: i === 4 ? store.bookings.filter(b => b.paymentStatus === 'verified').reduce((acc, b) => acc + b.totalAmount, 0) : (i * 15000 + 10000)
+      revenue: i === 4 ? store.bookings.filter(b => b.paymentStatus === 'verified').reduce((acc, b) => acc + (b.totalAmount || 0), 0) : (i * 15000 + 10000)
     }))
   }, [store.bookings])
 
@@ -151,7 +152,7 @@ export default function PharmaBeachApp() {
              <div className="bg-primary p-2.5 rounded-2xl shadow-lg shadow-primary/20"><Home className="text-white h-6 w-6" /></div>
              <div className="text-right">
                 <h1 className="text-2xl font-black text-slate-900 leading-none">فارما بيتش</h1>
-                <span className="text-[10px] text-primary font-bold tracking-widest">STUDIO FIREBASS AI</span>
+                <span className="text-[10px] text-primary font-bold tracking-widest uppercase">Management System</span>
              </div>
           </div>
           <div className="flex items-center gap-4">
@@ -231,32 +232,42 @@ export default function PharmaBeachApp() {
                             <option value="admin_approved">موافق عليه</option>
                         </select>
                     </div>
+                    <Button variant="outline" className="rounded-2xl h-12 gap-2 border-slate-200">
+                      <Download className="h-4 w-4" /> تصدير PDF
+                    </Button>
                  </div>
 
                  <div className="space-y-6">
-                    {filteredBookings.map(b => (
-                      <Card key={b.id} className="p-10 rounded-[3rem] border-none shadow-xl bg-white flex flex-col md:flex-row justify-between items-center gap-8 group hover:shadow-2xl transition-all">
-                          <div className="flex items-center gap-8 flex-1 w-full text-right flex-row-reverse">
-                             <div className={`p-8 rounded-[2rem] ${b.paymentStatus === 'verified' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'} shadow-inner`}><Receipt className="h-12 w-12" /></div>
-                             <div className="flex-1 space-y-2">
-                               <p className="font-black text-3xl text-slate-900">{b.clientName}</p>
-                               <p className="text-lg font-bold text-slate-500">{store.chalets.find(c => c.id === b.chaletId)?.name} | <span className="text-primary">{b.totalAmount.toLocaleString()} ج.م</span></p>
-                               <div className="flex gap-3 justify-end mt-4">
-                                  <Badge className={b.paymentStatus === 'verified' ? 'bg-green-500 text-white border-none py-1.5 px-4' : 'bg-orange-500 text-white border-none py-1.5 px-4'}>
-                                    {b.paymentStatus === 'verified' ? 'دفع مؤكد' : 'انتظار مراجعة الحوالة'}
-                                  </Badge>
-                                  <Badge variant="outline" className="border-slate-100 bg-slate-50 text-slate-500 font-bold py-1.5 px-4">مرجع: {b.paymentReference}</Badge>
+                    {filteredBookings.length === 0 ? (
+                      <div className="py-32 text-center space-y-4 bg-white rounded-[3rem] border border-dashed">
+                        <div className="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto"><Search className="text-slate-300 h-10 w-10" /></div>
+                        <p className="text-slate-400 font-bold">لا توجد حجوزات تطابق البحث حالياً</p>
+                      </div>
+                    ) : (
+                      filteredBookings.map(b => (
+                        <Card key={b.id} className="p-10 rounded-[3rem] border-none shadow-xl bg-white flex flex-col md:flex-row justify-between items-center gap-8 group hover:shadow-2xl transition-all">
+                            <div className="flex items-center gap-8 flex-1 w-full text-right flex-row-reverse">
+                               <div className={`p-8 rounded-[2rem] ${b.paymentStatus === 'verified' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'} shadow-inner`}><Receipt className="h-12 w-12" /></div>
+                               <div className="flex-1 space-y-2">
+                                 <p className="font-black text-3xl text-slate-900">{b.clientName}</p>
+                                 <p className="text-lg font-bold text-slate-500">{store.chalets.find(c => c.id === b.chaletId)?.name} | <span className="text-primary">{(b.totalAmount || 0).toLocaleString()} ج.م</span></p>
+                                 <div className="flex gap-3 justify-end mt-4">
+                                    <Badge className={b.paymentStatus === 'verified' ? 'bg-green-500 text-white border-none py-1.5 px-4' : 'bg-orange-500 text-white border-none py-1.5 px-4'}>
+                                      {b.paymentStatus === 'verified' ? 'دفع مؤكد' : 'انتظار مراجعة الحوالة'}
+                                    </Badge>
+                                    <Badge variant="outline" className="border-slate-100 bg-slate-50 text-slate-500 font-bold py-1.5 px-4">مرجع: {b.paymentReference}</Badge>
+                                 </div>
                                </div>
-                             </div>
-                          </div>
-                          <div className="flex gap-4 w-full md:w-auto">
-                            {b.paymentStatus === 'pending' && (
-                              <Button className="flex-1 md:flex-none h-16 px-12 bg-green-600 hover:bg-green-700 font-black rounded-2xl shadow-xl shadow-green-100" onClick={() => store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })}>تأكيد العملية</Button>
-                            )}
-                            <Button variant="outline" className="flex-1 md:flex-none h-16 px-8 rounded-2xl font-black gap-2 border-slate-200" onClick={() => setViewingDetailsChalet(store.chalets.find(c => c.id === b.chaletId) || null)}><History className="h-5 w-5" /> التفاصيل</Button>
-                          </div>
-                      </Card>
-                    ))}
+                            </div>
+                            <div className="flex gap-4 w-full md:w-auto">
+                              {b.paymentStatus === 'pending' && (
+                                <Button className="flex-1 md:flex-none h-16 px-12 bg-green-600 hover:bg-green-700 font-black rounded-2xl shadow-xl shadow-green-100" onClick={() => store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })}>تأكيد العملية</Button>
+                              )}
+                              <Button variant="outline" className="flex-1 md:flex-none h-16 px-8 rounded-2xl font-black gap-2 border-slate-200" onClick={() => setViewingDetailsChalet(store.chalets.find(c => c.id === b.chaletId) || null)}><History className="h-5 w-5" /> التفاصيل</Button>
+                            </div>
+                        </Card>
+                      ))
+                    )}
                  </div>
               </TabsContent>
 
@@ -296,19 +307,71 @@ export default function PharmaBeachApp() {
               <TabsContent value="reports" className="space-y-12">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
-                       <h3 className="text-3xl font-black text-right">نمو الإيرادات الشهري</h3>
+                       <div className="flex justify-between items-center flex-row-reverse">
+                          <h3 className="text-3xl font-black">نمو الإيرادات الشهري</h3>
+                          <Badge className="bg-green-50 text-green-600 font-black">+12% هذا الشهر</Badge>
+                       </div>
                        <div className="h-[350px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={revenueData}>
                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                <XAxis dataKey="name" />
                                <YAxis />
-                               <Tooltip />
+                               <Tooltip content={<ChartTooltipContent />} />
                                <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[12, 12, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
                        </div>
                     </Card>
+                    <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
+                       <h3 className="text-3xl font-black text-right">تحليل الإشغال</h3>
+                       <div className="h-[350px] w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={revenueData}>
+                               <defs>
+                                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                  </linearGradient>
+                               </defs>
+                               <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                               <XAxis dataKey="name" />
+                               <YAxis />
+                               <Tooltip />
+                               <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRev)" />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                       </div>
+                    </Card>
+                 </div>
+              </TabsContent>
+
+              <TabsContent value="users" className="space-y-8">
+                 <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm flex-row-reverse">
+                    <div className="text-right">
+                       <h3 className="text-3xl font-black">إدارة فريق العمل</h3>
+                       <p className="text-slate-500 font-bold">تحكم في الصلاحيات والعمولات</p>
+                    </div>
+                    <Button className="rounded-2xl h-14 px-8 font-black gap-2" onClick={() => setIsAddUserOpen(true)}>
+                       <UserPlus className="h-5 w-5" /> إضافة موظف
+                    </Button>
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {store.users.map(u => (
+                      <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl flex items-center justify-between flex-row-reverse">
+                         <div className="flex items-center gap-4 flex-row-reverse text-right">
+                            <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center text-primary"><UserCircle className="h-10 w-10" /></div>
+                            <div>
+                               <p className="text-xl font-black text-slate-900">{u.name}</p>
+                               <Badge variant="secondary" className="mt-1">{u.role}</Badge>
+                            </div>
+                         </div>
+                         <div className="flex gap-2">
+                            <Button variant="ghost" className="rounded-xl h-12 w-12 text-slate-400"><Settings className="h-5 w-5" /></Button>
+                            <Button variant="ghost" className="rounded-xl h-12 w-12 text-destructive"><Trash2 className="h-5 w-5" /></Button>
+                         </div>
+                      </Card>
+                    ))}
                  </div>
               </TabsContent>
             </Tabs>
@@ -316,30 +379,124 @@ export default function PharmaBeachApp() {
         )}
 
         {store.role === 'broker' && (
-          <div className="container mx-auto px-4 py-10">
-             <h2 className="text-4xl font-black text-slate-900 mb-10">لوحة تحكم البروكر</h2>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-               {myChalets.map(c => (
-                 <ChaletCard key={c.id} chalet={c} onBook={(chalet) => setViewingDetailsChalet(chalet)} />
-               ))}
+          <div className="container mx-auto px-4 py-12 space-y-12">
+             <div className="flex justify-between items-center flex-row-reverse">
+                <div className="text-right">
+                   <h2 className="text-4xl font-black text-slate-900">لوحة تحكم البروكر</h2>
+                   <p className="text-slate-500 font-bold mt-2">مرحباً بك مجدداً، إليك نظرة على أعمالك اليوم</p>
+                </div>
+                <div className="flex gap-4">
+                  <StatCard title="عمولات معلقة" val="4,500 ج.م" icon={TrendingUp} color="text-primary" />
+                  <StatCard title="حجوزات نشطة" val={filteredBookings.length} icon={CalendarIcon} color="text-blue-600" />
+                </div>
              </div>
+
+             <Tabs defaultValue="my-units" className="w-full">
+                <TabsList className="bg-white p-2 rounded-[2rem] mb-10 flex flex-wrap justify-start border shadow-sm h-auto gap-2">
+                   <TabsTrigger value="my-units" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">وحداتي</TabsTrigger>
+                   <TabsTrigger value="my-bookings" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">حجوزاتي</TabsTrigger>
+                   <TabsTrigger value="crm" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">إدارة العملاء</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="my-units" className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                   {myChalets.map(c => (
+                     <ChaletCard key={c.id} chalet={c} onBook={(chalet) => setViewingDetailsChalet(chalet)} />
+                   ))}
+                </TabsContent>
+
+                <TabsContent value="my-bookings" className="space-y-6">
+                   {filteredBookings.map(b => (
+                     <Card key={b.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl flex flex-col md:flex-row justify-between items-center gap-6 text-right flex-row-reverse">
+                        <div className="flex items-center gap-6 flex-row-reverse w-full">
+                           <div className="p-5 bg-primary/5 text-primary rounded-2xl"><CalendarIcon className="h-8 w-8" /></div>
+                           <div className="flex-1">
+                              <p className="text-xl font-black">{b.clientName}</p>
+                              <p className="text-sm font-bold text-slate-500">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
+                           </div>
+                           <div className="text-left">
+                              <Badge className="bg-primary">{b.status}</Badge>
+                              <p className="text-lg font-black mt-1">{(b.totalAmount || 0).toLocaleString()} ج.م</p>
+                           </div>
+                        </div>
+                     </Card>
+                   ))}
+                </TabsContent>
+
+                <TabsContent value="crm" className="py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
+                   <Users className="h-16 w-16 text-slate-200 mx-auto mb-4" />
+                   <h3 className="text-2xl font-black text-slate-900">نظام إدارة العملاء CRM</h3>
+                   <p className="text-slate-500 font-bold max-w-md mx-auto mt-2">قريباً: تواصل مباشر مع العملاء، حفظ التفضيلات، وإرسال عروض ترويجية مخصصة.</p>
+                   <Button className="mt-8 rounded-xl h-12 px-8 font-black">إضافة عميل جديد</Button>
+                </TabsContent>
+             </Tabs>
           </div>
         )}
 
         {store.role === 'supervisor' && (
-          <div className="container mx-auto px-4 py-10">
-             <h2 className="text-4xl font-black text-slate-900 mb-10">المهام الميدانية</h2>
-             <div className="grid grid-cols-1 gap-6">
-                {filteredBookings.map(b => (
-                  <Card key={b.id} className="p-8 rounded-[2rem] shadow-xl bg-white flex justify-between items-center flex-row-reverse">
-                      <div className="text-right">
-                        <p className="text-2xl font-black">{b.clientName}</p>
-                        <p className="text-slate-500 font-bold">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
-                      </div>
-                      <Button className="h-16 px-10 rounded-2xl font-black bg-primary" onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>إجراء فحص</Button>
-                  </Card>
-                ))}
+          <div className="container mx-auto px-4 py-12 space-y-12">
+             <div className="flex justify-between items-center flex-row-reverse">
+                <div className="text-right">
+                   <h2 className="text-4xl font-black text-slate-900">المهام الميدانية</h2>
+                   <p className="text-slate-500 font-bold mt-2">إدارة الاستلام والتسليم الميداني للوحدات</p>
+                </div>
+                <StatCard title="وحدات للمراجعة" val={filteredBookings.filter(b => b.opStatus === 'waiting').length} icon={ShieldAlert} color="text-orange-600" />
              </div>
+
+             <Tabs defaultValue="tasks" className="w-full">
+                <TabsList className="bg-white p-2 rounded-[2rem] mb-10 flex flex-wrap justify-start border shadow-sm h-auto gap-2">
+                   <TabsTrigger value="tasks" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">مهام اليوم</TabsTrigger>
+                   <TabsTrigger value="inventory" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">جرد المخزون</TabsTrigger>
+                   <TabsTrigger value="maintenance" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">بلاغات الصيانة</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="tasks" className="space-y-6">
+                   {filteredBookings.length === 0 ? (
+                     <div className="py-24 text-center bg-white rounded-[3rem] border border-dashed">
+                        <UserCheck className="h-12 w-12 text-slate-200 mx-auto mb-4" />
+                        <p className="text-slate-400 font-bold">لا توجد عمليات استلام أو تسليم اليوم</p>
+                     </div>
+                   ) : (
+                     filteredBookings.map(b => (
+                       <Card key={b.id} className="p-8 rounded-[2.5rem] shadow-xl bg-white flex justify-between items-center flex-row-reverse">
+                           <div className="text-right flex items-center gap-6 flex-row-reverse">
+                             <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400"><ClipboardCheck /></div>
+                             <div>
+                                <p className="text-2xl font-black">{b.clientName}</p>
+                                <p className="text-slate-500 font-bold">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
+                             </div>
+                           </div>
+                           <div className="flex gap-3">
+                              <Button variant="outline" className="h-14 px-6 rounded-2xl font-black border-slate-200 gap-2"><Phone className="h-4 w-4" /> اتصال</Button>
+                              <Button className="h-14 px-10 rounded-2xl font-black bg-primary" onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>إجراء فحص</Button>
+                           </div>
+                       </Card>
+                     ))
+                   )}
+                </TabsContent>
+
+                <TabsContent value="inventory" className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   {['طقم مناشف كامل', 'منظفات أرضيات', 'مستلزمات مطبخ', 'شراشف سرير'].map(item => (
+                     <Card key={item} className="p-8 rounded-[2rem] bg-white border-none shadow-lg flex items-center justify-between flex-row-reverse">
+                        <div className="flex items-center gap-4 flex-row-reverse text-right">
+                           <Box className="text-primary h-6 w-6" />
+                           <p className="font-black text-slate-800">{item}</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                           <Button variant="ghost" className="h-10 w-10 rounded-full border border-slate-100 text-lg font-black">-</Button>
+                           <span className="font-black text-xl">12</span>
+                           <Button variant="ghost" className="h-10 w-10 rounded-full border border-slate-100 text-lg font-black text-primary">+</Button>
+                        </div>
+                     </Card>
+                   ))}
+                </TabsContent>
+
+                <TabsContent value="maintenance" className="py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
+                   <Construction className="h-16 w-16 text-slate-200 mx-auto mb-4" />
+                   <h3 className="text-2xl font-black text-slate-900">نظام بلاغات الصيانة</h3>
+                   <p className="text-slate-500 font-bold max-w-md mx-auto mt-2">سجل أي عطل فني فوراً ليتم تحويله للفريق المختص ومتابعته من الأدمن.</p>
+                   <Button className="mt-8 rounded-xl h-14 px-10 font-black bg-orange-600 text-white">إبلاغ عن عطل جديد</Button>
+                </TabsContent>
+             </Tabs>
           </div>
         )}
 
