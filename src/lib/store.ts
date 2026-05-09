@@ -10,13 +10,16 @@ import {
   deleteDoc, 
   query, 
   orderBy, 
-  serverTimestamp
+  serverTimestamp,
+  where,
+  Timestamp
 } from 'firebase/firestore'
-import { useFirestore, useCollection } from '@/firebase'
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth'
+import { useFirestore, useCollection, useAuth } from '@/firebase'
 
 export type UserRole = 'client' | 'broker' | 'supervisor' | 'admin'
 
-export interface User {
+export interface UserProfile {
   id: string
   uid: string
   name: string
@@ -58,12 +61,15 @@ export interface Booking {
   paymentReference?: string
   paymentStatus?: 'pending' | 'verified' | 'rejected'
   totalAmount?: number
+  createdAt?: any
 }
 
 export function useAppStore() {
   const db = useFirestore()
+  const auth = useAuth()
   const [role, setRole] = useState<UserRole | null>(null)
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
   
   // Real-time collections
   const { data: chaletsData, loading: chaletsLoading } = useCollection<Chalet>(
@@ -74,22 +80,33 @@ export function useAppStore() {
     query(collection(db, 'bookings'), orderBy('createdAt', 'desc'))
   )
   
-  const { data: usersData, loading: usersLoading } = useCollection<User>(
+  const { data: usersData, loading: usersLoading } = useCollection<UserProfile>(
     collection(db, 'users')
   )
 
   useEffect(() => {
-    const savedRole = localStorage.getItem('pb_role') as UserRole
-    if (savedRole) setRole(savedRole)
-  }, [])
-
-  useEffect(() => {
-    if (role && usersData) {
-      localStorage.setItem('pb_role', role)
-      const user = usersData.find(u => u.role === role)
-      setCurrentUser(user || null)
-    }
-  }, [role, usersData])
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // Find user profile in users collection
+        const profile = usersData?.find(u => u.uid === firebaseUser.uid)
+        if (profile) {
+          setCurrentUser(profile)
+          setRole(profile.role)
+          localStorage.setItem('pb_role', profile.role)
+        } else {
+          // Default for new users or clients
+          setRole('client')
+        }
+      } else {
+        const savedRole = localStorage.getItem('pb_role') as UserRole
+        if (savedRole) setRole(savedRole)
+        else setRole(null)
+        setCurrentUser(null)
+      }
+      setAuthLoading(false)
+    })
+    return () => unsubscribe()
+  }, [auth, usersData])
 
   const addBooking = (bookingData: Omit<Booking, 'id' | 'status' | 'opStatus' | 'paymentStatus'>) => {
     addDoc(collection(db, 'bookings'), {
@@ -126,7 +143,7 @@ export function useAppStore() {
     updateDoc(doc(db, 'chalets', id), updates)
   }
 
-  const addUser = (userData: Omit<User, 'id' | 'isApproved'>) => {
+  const addUser = (userData: Omit<UserProfile, 'id' | 'isApproved'>) => {
     addDoc(collection(db, 'users'), {
       ...userData,
       isApproved: role === 'admin',
@@ -134,7 +151,7 @@ export function useAppStore() {
     })
   }
 
-  const updateUser = (id: string, updates: Partial<User>) => {
+  const updateUserProfile = (id: string, updates: Partial<UserProfile>) => {
     updateDoc(doc(db, 'users', id), updates)
   }
 
@@ -152,7 +169,7 @@ export function useAppStore() {
     deleteChalet,
     updateChalet,
     addUser,
-    updateUser,
-    isLoaded: !chaletsLoading && !bookingsLoading && !usersLoading
+    updateUser: updateUserProfile,
+    isLoaded: !chaletsLoading && !bookingsLoading && !usersLoading && !authLoading
   }
 }
