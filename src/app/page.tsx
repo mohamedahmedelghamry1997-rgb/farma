@@ -39,7 +39,8 @@ import {
   Copy,
   CheckCircle,
   TrendingUp,
-  Briefcase
+  Briefcase,
+  ClipboardCheck
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
