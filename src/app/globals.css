@@ -24,7 +24,7 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 271 91% 65%;
-    --radius: 1rem;
+    --radius: 1.5rem;
   }
 }
 
@@ -33,17 +33,18 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-slate-50 text-foreground;
     font-family: 'Cairo', sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
 .top-bar-gradient {
-  background: linear-gradient(90deg, #9333ea 0%, #7e22ce 100%);
+  background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
 }
 
 .filter-container {
-  @apply bg-[#e0f2fe] p-8 rounded-[2.5rem] shadow-xl border border-blue-100 mb-12;
+  @apply bg-blue-50/50 p-6 rounded-[2.5rem] shadow-sm border border-blue-100/50 mb-10;
 }
 
 /* RTL Support for Lucide Icons */
@@ -52,14 +53,58 @@
 }
 
 .glass {
-  @apply bg-white/80 backdrop-blur-md border border-white/20;
+  @apply bg-white/90 backdrop-blur-md border border-white/20;
 }
 
-/* Calendar Fixes for v9 */
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-300;
+}
+
+/* Calendar Styling V9 */
+.rdp-month_grid {
+  @apply w-full border-collapse !important;
+}
+
 .rdp-day {
-  cursor: pointer !important;
+  @apply h-10 w-10 flex items-center justify-center rounded-xl transition-all cursor-pointer font-bold text-sm !important;
 }
 
-.rdp-button_next, .rdp-button_previous {
-  position: absolute !important;
+.rdp-day:hover {
+  @apply bg-primary/10 text-primary !important;
+}
+
+.rdp-selected {
+  @apply bg-primary text-white hover:bg-primary/90 !important;
+}
+
+.rdp-range_start, .rdp-range_end {
+  @apply bg-primary text-white !important;
+}
+
+.rdp-range_middle {
+  @apply bg-primary/10 text-primary !important;
+}
+
+.rdp-disabled {
+  @apply opacity-20 cursor-not-allowed pointer-events-none !important;
+}
+
+/* Animation */
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
 }

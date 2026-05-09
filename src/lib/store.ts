@@ -63,8 +63,8 @@ const generateChalets = (): Chalet[] => {
 const INITIAL_CHALETS: Chalet[] = generateChalets()
 
 const INITIAL_USERS: User[] = [
-  { id: 'u1', name: 'المدير العام', role: 'admin', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
-  { id: 'u2', name: 'أحمد السيلز (بروكر)', role: 'broker', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
+  { id: 'u1', name: 'المدير العام (الأدمن)', role: 'admin', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
+  { id: 'u2', name: 'أحمد البروكر', role: 'broker', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
   { id: 'u3', name: 'محمد المشرف', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true }
 ]
 
