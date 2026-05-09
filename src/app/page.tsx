@@ -14,7 +14,8 @@ import {
   History, Sparkles, Box, AlertTriangle, MessageSquare, Tag, FileSpreadsheet,
   Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings, UserPlus,
   ArrowUpRight, Megaphone, Percent, Copy, Filter, Download, Calendar as CalendarIcon,
-  LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle, Database
+  LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle, Database,
+  ArrowRightLeft, Eye
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -25,7 +26,7 @@ import { ChaletDetailsDialog } from '@/components/ChaletDetailsDialog'
 import { SupervisorActionDialog } from '@/components/SupervisorActionDialog'
 import Image from 'next/image'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart } from 'recharts'
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart, Pie, PieChart, Cell } from 'recharts'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
 
@@ -366,32 +367,101 @@ export default function PharmaBeachApp() {
               </TabsContent>
 
               <TabsContent value="users" className="space-y-8">
-                 <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm flex-row-reverse">
+                 <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm gap-6">
                     <div className="text-right">
-                       <h3 className="text-3xl font-black">إدارة فريق العمل</h3>
-                       <p className="text-slate-500 font-bold">تحكم في الصلاحيات والعمولات</p>
+                       <h3 className="text-3xl font-black">إدارة فريق العمل الميداني والإداري</h3>
+                       <p className="text-slate-500 font-bold">تتبع أداء المشرفين والوسطاء بشكل تفصيلي</p>
                     </div>
                     <Button className="rounded-2xl h-14 px-8 font-black gap-2" onClick={() => setIsAddUserOpen(true)}>
-                       <UserPlus className="h-5 w-5" /> إضافة موظف
+                       <UserPlus className="h-5 w-5" /> إضافة موظف جديد
                     </Button>
                  </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {store.users.map(u => (
-                      <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl flex items-center justify-between flex-row-reverse">
-                         <div className="flex items-center gap-4 flex-row-reverse text-right">
-                            <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center text-primary"><UserCircle className="h-10 w-10" /></div>
-                            <div>
-                               <p className="text-xl font-black text-slate-900">{u.name}</p>
-                               <Badge variant="secondary" className="mt-1">{u.role}</Badge>
-                            </div>
-                         </div>
-                         <div className="flex gap-2">
-                            <Button variant="ghost" className="rounded-xl h-12 w-12 text-slate-400"><Settings className="h-5 w-5" /></Button>
-                            <Button variant="ghost" className="rounded-xl h-12 w-12 text-destructive"><Trash2 className="h-5 w-5" /></Button>
-                         </div>
-                      </Card>
-                    ))}
-                 </div>
+
+                 <Tabs defaultValue="brokers" className="w-full">
+                    <TabsList className="bg-slate-100 p-1.5 rounded-2xl mb-8 flex gap-2 h-auto w-fit">
+                       <TabsTrigger value="brokers" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-white data-[state=active]:shadow-sm">متابعة الوسطاء (Brokers)</TabsTrigger>
+                       <TabsTrigger value="supervisors" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-white data-[state=active]:shadow-sm">متابعة المشرفين (Supervisors)</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="brokers" className="space-y-6">
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {store.users.filter(u => u.role === 'broker').map(u => {
+                            const brokerBookings = store.bookings.filter(b => b.brokerId === u.uid);
+                            const totalSales = brokerBookings.filter(b => b.paymentStatus === 'verified').reduce((acc, b) => acc + (b.totalAmount || 0), 0);
+                            
+                            return (
+                              <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl space-y-6">
+                                 <div className="flex items-center justify-between flex-row-reverse">
+                                    <div className="flex items-center gap-4 flex-row-reverse text-right">
+                                       <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"><Briefcase className="h-8 w-8" /></div>
+                                       <div>
+                                          <p className="text-xl font-black">{u.name}</p>
+                                          <Badge variant="outline" className="text-[10px]">وسيط معتمد</Badge>
+                                       </div>
+                                    </div>
+                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10"><Eye className="h-5 w-5" /></Button>
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-slate-50 p-4 rounded-2xl text-center">
+                                       <p className="text-[10px] font-black text-slate-400 uppercase">إجمالي المبيعات</p>
+                                       <p className="text-lg font-black text-primary">{totalSales.toLocaleString()} ج.م</p>
+                                    </div>
+                                    <div className="bg-slate-50 p-4 rounded-2xl text-center">
+                                       <p className="text-[10px] font-black text-slate-400 uppercase">عدد الحجوزات</p>
+                                       <p className="text-lg font-black">{brokerBookings.length}</p>
+                                    </div>
+                                 </div>
+                                 <Button variant="outline" className="w-full h-12 rounded-xl font-black gap-2">تعديل الصلاحيات</Button>
+                              </Card>
+                            )
+                          })}
+                       </div>
+                    </TabsContent>
+
+                    <TabsContent value="supervisors" className="space-y-6">
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {store.users.filter(u => u.role === 'supervisor').map(u => {
+                            const handledBookings = store.bookings.filter(b => b.opStatus === 'checked_out');
+                            // Mocking maintenance reports for UI
+                            const maintenanceReports = Math.floor(Math.random() * 5);
+
+                            return (
+                              <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl space-y-6">
+                                 <div className="flex items-center justify-between flex-row-reverse">
+                                    <div className="flex items-center gap-4 flex-row-reverse text-right">
+                                       <div className="h-14 w-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600"><ClipboardCheck className="h-8 w-8" /></div>
+                                       <div>
+                                          <p className="text-xl font-black">{u.name}</p>
+                                          <Badge variant="outline" className="text-[10px] text-orange-600 border-orange-100 bg-orange-50/50">مشرف ميداني</Badge>
+                                       </div>
+                                    </div>
+                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10"><Settings className="h-5 w-5" /></Button>
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-slate-50 p-4 rounded-2xl text-center">
+                                       <p className="text-[10px] font-black text-slate-400 uppercase">عمليات الإخلاء</p>
+                                       <p className="text-lg font-black text-orange-600">{handledBookings.length}</p>
+                                    </div>
+                                    <div className="bg-slate-50 p-4 rounded-2xl text-center">
+                                       <p className="text-[10px] font-black text-slate-400 uppercase">بلاغات صيانة</p>
+                                       <p className="text-lg font-black">{maintenanceReports}</p>
+                                    </div>
+                                 </div>
+                                 <div className="space-y-2">
+                                    <div className="flex justify-between text-[10px] font-black uppercase text-slate-400 flex-row-reverse">
+                                       <span>معدل الالتزام</span>
+                                       <span>95%</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                       <div className="h-full bg-green-500 w-[95%]"></div>
+                                    </div>
+                                 </div>
+                              </Card>
+                            )
+                          })}
+                       </div>
+                    </TabsContent>
+                 </Tabs>
               </TabsContent>
 
               <TabsContent value="settings" className="space-y-8">
