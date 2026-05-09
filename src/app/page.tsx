@@ -37,7 +37,11 @@ import {
   Search,
   Instagram,
   Facebook,
-  Twitter
+  Twitter,
+  ArrowRightLeft,
+  Activity,
+  CreditCard,
+  ShieldCheck
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
@@ -61,6 +65,7 @@ export default function PharmaBeachApp() {
   const [conditionText, setConditionText] = useState('')
   const [depositText, setDepositText] = useState('')
   const [refCode, setRefCode] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Capture Referral from URL
   useEffect(() => {
@@ -72,24 +77,30 @@ export default function PharmaBeachApp() {
   // Filtering Logic
   const filteredChalets = useMemo(() => {
     if (!store.isLoaded) return []
-    if (store.role === 'client') return store.chalets.filter(c => c.status === 'active')
-    if (store.role === 'admin') return store.chalets
-    if (store.role === 'broker') {
-      return store.chalets // Broker can see everything to manage
+    let list = store.chalets
+    if (store.role === 'client') list = list.filter(c => c.status === 'active')
+    if (searchQuery) {
+      list = list.filter(c => c.name.includes(searchQuery) || c.location.includes(searchQuery))
     }
-    return store.chalets
-  }, [store.isLoaded, store.role, store.chalets])
+    return list
+  }, [store.isLoaded, store.role, store.chalets, searchQuery])
 
   const filteredBookings = useMemo(() => {
     if (!store.isLoaded) return []
-    if (store.role === 'admin' || store.role === 'broker') return store.bookings
+    let list = store.bookings
     if (store.role === 'supervisor') {
       const assignedIds = store.currentUser?.assignedChaletIds || []
-      return store.bookings.filter(b => assignedIds.includes(b.chaletId) && b.status === 'confirmed')
+      list = list.filter(b => assignedIds.includes(b.chaletId) && b.status === 'confirmed')
+    } else if (store.role === 'broker') {
+      // Broker sees all to manage but primarily focuses on their assigned or overall resort status
+      list = store.bookings
     }
-    if (store.role === 'client') return store.bookings.filter(b => b.phoneNumber === '0123456789') 
-    return []
-  }, [store.isLoaded, store.role, store.bookings, store.currentUser])
+    
+    if (searchQuery) {
+      list = list.filter(b => b.clientName.includes(searchQuery) || b.phoneNumber.includes(searchQuery))
+    }
+    return list
+  }, [store.isLoaded, store.role, store.bookings, store.currentUser, searchQuery])
 
   const handleBookingConfirm = (data: any) => {
     store.addBooking({
@@ -104,6 +115,15 @@ export default function PharmaBeachApp() {
     navigator.clipboard.writeText(link)
     toast({ title: "تم نسخ الرابط", description: "رابط الإحالة الخاص بك جاهز للمشاركة." })
   }
+
+  // Financial Stats
+  const stats = useMemo(() => {
+    const confirmed = store.bookings.filter(b => b.status === 'confirmed')
+    const totalRevenue = confirmed.reduce((acc, b) => acc + (b.totalAmount || 0), 0)
+    const pendingFinance = store.bookings.filter(b => b.paymentStatus === 'pending').length
+    const activeGuests = store.bookings.filter(b => b.opStatus === 'checked_in').length
+    return { totalRevenue, pendingFinance, activeGuests }
+  }, [store.bookings])
 
   if (!store.isLoaded) {
     return (
@@ -191,7 +211,12 @@ export default function PharmaBeachApp() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
                     <div className="relative">
                       <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-                      <Input placeholder="ابحث عن شاليه..." className="bg-white rounded-xl h-12 pr-10 border-none shadow-sm" />
+                      <Input 
+                        placeholder="ابحث عن شاليه..." 
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="bg-white rounded-xl h-12 pr-10 border-none shadow-sm" 
+                      />
                     </div>
                     <Select><SelectTrigger className="bg-white rounded-xl h-12 text-right"><SelectValue placeholder="المدينة" /></SelectTrigger>
                       <SelectContent><SelectItem value="sc">الساحل الشمالي</SelectItem><SelectItem value="sh">العين السخنة</SelectItem></SelectContent>
@@ -218,29 +243,29 @@ export default function PharmaBeachApp() {
                    <Card className="p-6 rounded-[2rem] bg-white border-none shadow-sm flex items-center gap-4">
                       <div className="bg-blue-100 p-3 rounded-2xl text-blue-600"><Home className="h-6 w-6" /></div>
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">إجمالي الشاليهات</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">إجمالي الوحدات</p>
                         <p className="text-2xl font-black text-slate-800">{store.chalets.length}</p>
                       </div>
                    </Card>
                    <Card className="p-6 rounded-[2rem] bg-white border-none shadow-sm flex items-center gap-4">
-                      <div className="bg-green-100 p-3 rounded-2xl text-green-600"><CalendarIcon className="h-6 w-6" /></div>
+                      <div className="bg-green-100 p-3 rounded-2xl text-green-600"><Activity className="h-6 w-6" /></div>
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">الحجوزات المؤكدة</p>
-                        <p className="text-2xl font-black text-slate-800">{store.bookings.filter(b => b.status === 'confirmed').length}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">نزلاء بالداخل</p>
+                        <p className="text-2xl font-black text-slate-800">{stats.activeGuests}</p>
                       </div>
                    </Card>
                    <Card className="p-6 rounded-[2rem] bg-white border-none shadow-sm flex items-center gap-4">
                       <div className="bg-orange-100 p-3 rounded-2xl text-orange-600"><Wallet className="h-6 w-6" /></div>
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">بانتظار تأكيد مالي</p>
-                        <p className="text-2xl font-black text-slate-800">{store.bookings.filter(b => b.paymentStatus === 'pending').length}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">مالية معلقة</p>
+                        <p className="text-2xl font-black text-slate-800">{stats.pendingFinance}</p>
                       </div>
                    </Card>
                    <Card className="p-6 rounded-[2rem] bg-white border-none shadow-sm flex items-center gap-4">
-                      <div className="bg-purple-100 p-3 rounded-2xl text-purple-600"><Briefcase className="h-6 w-6" /></div>
+                      <div className="bg-purple-100 p-3 rounded-2xl text-purple-600"><Receipt className="h-6 w-6" /></div>
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">فريق العمل</p>
-                        <p className="text-2xl font-black text-slate-800">{store.users.length}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">إجمالي الإيرادات</p>
+                        <p className="text-2xl font-black text-slate-800">{stats.totalRevenue.toLocaleString()} <span className="text-xs">ج.م</span></p>
                       </div>
                    </Card>
                 </div>
@@ -249,25 +274,36 @@ export default function PharmaBeachApp() {
                     <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -ml-32 -mt-32 blur-3xl"></div>
                     <div className="text-right relative z-10">
                       <h3 className="text-3xl font-black">أهلاً بك، {store.currentUser?.name}</h3>
-                      <p className="opacity-90 font-medium mt-1">لوحة الإدارة والمتابعة اليدوية</p>
+                      <p className="opacity-90 font-medium mt-1">لوحة الإدارة والمتابعة اليدوية المتكاملة</p>
                     </div>
-                    {store.role === 'broker' && (
-                      <Button onClick={copyRefLink} variant="secondary" className="bg-white text-primary hover:bg-white/90 rounded-2xl h-14 px-8 gap-3 font-black text-base shadow-lg relative z-10">
-                        <Copy className="h-5 w-5" /> نسخ رابط الإحالة الخاص بك
-                      </Button>
-                    )}
+                    <div className="flex gap-4 relative z-10">
+                       <div className="relative">
+                          <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                          <Input 
+                            placeholder="بحث سريع (عميل/شاليه)..." 
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-2xl h-14 pr-10 w-64" 
+                          />
+                       </div>
+                       {store.role === 'broker' && (
+                        <Button onClick={copyRefLink} variant="secondary" className="bg-white text-primary hover:bg-white/90 rounded-2xl h-14 px-8 gap-3 font-black shadow-lg">
+                          <Copy className="h-5 w-5" /> رابط التسويق
+                        </Button>
+                       )}
+                    </div>
                 </div>
 
                 <Tabs dir="rtl" defaultValue="bookings" className="w-full">
                   <TabsList className="bg-white p-1 rounded-2xl shadow-sm h-14 border border-slate-100 mb-8 w-full md:w-auto">
                     <TabsTrigger value="bookings" className="rounded-xl px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-black">الحجوزات والمالية</TabsTrigger>
                     <TabsTrigger value="chalets" className="rounded-xl px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-black">إدارة الشاليهات</TabsTrigger>
-                    <TabsTrigger value="users" className="rounded-xl px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-black">إدارة الموظفين</TabsTrigger>
+                    <TabsTrigger value="users" className="rounded-xl px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-black">فريق العمل</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="bookings" className="space-y-6">
                     {filteredBookings.length === 0 ? (
-                      <Card className="py-24 text-center border-dashed rounded-[3rem] bg-white"><p className="text-slate-400 font-bold text-lg">لا توجد سجلات حجوزات حالياً</p></Card>
+                      <Card className="py-24 text-center border-dashed rounded-[3rem] bg-white"><p className="text-slate-400 font-bold text-lg">لا توجد سجلات حالياً</p></Card>
                     ) : (
                       filteredBookings.map(b => (
                         <Card key={b.id} className="p-6 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-6 bg-white border-none shadow-sm relative overflow-hidden hover:shadow-md transition-all">
@@ -282,19 +318,20 @@ export default function PharmaBeachApp() {
                                   </Badge>
                                   <span className="flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full"><Wallet className="h-3 w-3" /> {b.totalAmount} ج.م</span>
                                   <span className="text-primary font-black bg-primary/5 px-3 py-1 rounded-full">{store.chalets.find(c => c.id === b.chaletId)?.name}</span>
+                                  <span className="text-slate-500">{format(new Date(b.startDate), 'dd MMM')} - {format(new Date(b.endDate), 'dd MMM')}</span>
                                 </div>
                              </div>
                           </div>
                           <div className="flex items-center gap-3">
                              <Button variant="outline" className="rounded-2xl h-12 gap-2 border-slate-200 font-bold" onClick={() => setReviewingBooking(b)}>
-                                <Eye className="h-5 w-5" /> تفاصيل الحجز والدفع
+                                <Eye className="h-5 w-5" /> تفاصيل الحجز
                              </Button>
                              
                              {store.role === 'admin' && b.paymentStatus === 'pending' && (
                                <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-12 px-8 font-black shadow-lg shadow-blue-100" onClick={() => {
                                  store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })
                                  toast({ title: "تم تأكيد الدفع", description: "تم مراجعة رقم التحويل واعتماده مالياً." })
-                               }}>تأكيد استلام المبلغ</Button>
+                               }}>تأكيد المبلغ</Button>
                              )}
 
                              {(store.role === 'broker' || store.role === 'admin') && b.status === 'admin_approved' && (
@@ -304,6 +341,12 @@ export default function PharmaBeachApp() {
                                }}>
                                  <CheckCircle className="h-5 w-5" /> تأكيد وإرسال للمشرف
                                </Button>
+                             )}
+
+                             {store.role === 'admin' && (
+                               <Button size="icon" variant="ghost" className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl h-12 w-12" onClick={() => {
+                                 if(confirm('هل أنت متأكد من حذف هذا الحجز؟')) store.deleteBooking(b.id)
+                               }}><Trash2 className="h-5 w-5" /></Button>
                              )}
                           </div>
                         </Card>
@@ -360,7 +403,7 @@ export default function PharmaBeachApp() {
 
                   <TabsContent value="users" className="space-y-8">
                     <div className="flex justify-between items-center bg-white p-6 rounded-[2rem] shadow-sm">
-                       <h3 className="text-2xl font-black text-slate-800">إدارة فريق العمل</h3>
+                       <h3 className="text-2xl font-black text-slate-800">إدارة الفريق</h3>
                        <Button className="rounded-2xl gap-3 h-14 px-8 bg-primary text-white font-black text-lg" onClick={() => setIsAddUserOpen(true)}>
                          <Plus className="h-6 w-6" /> إضافة موظف جديد
                        </Button>
@@ -396,12 +439,12 @@ export default function PharmaBeachApp() {
                 <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 text-right relative overflow-hidden">
                    <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full -ml-16 -mt-16"></div>
                    <h2 className="text-3xl font-black text-slate-900">مرحباً كابتن {store.currentUser?.name}</h2>
-                   <p className="text-slate-400 font-bold mt-2 text-lg">لديك حجوزات مؤكدة ومدفوعة بالكامل تتطلب التسليم والمتابعة الميدانية.</p>
+                   <p className="text-slate-400 font-bold mt-2 text-lg">لديك حجوزات مؤكدة تتطلب المتابعة الميدانية.</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6">
                   {filteredBookings.length === 0 ? (
-                    <Card className="py-24 text-center border-dashed rounded-[3rem] bg-white"><p className="text-slate-400 font-bold text-lg">لا توجد مهام تسليم حالياً.</p></Card>
+                    <Card className="py-24 text-center border-dashed rounded-[3rem] bg-white"><p className="text-slate-400 font-bold text-lg">لا توجد مهام حالياً.</p></Card>
                   ) : (
                     filteredBookings.map(b => (
                       <Card key={b.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-sm overflow-hidden relative hover:shadow-md transition-all">
@@ -428,12 +471,12 @@ export default function PharmaBeachApp() {
                           <div className="flex gap-4 w-full md:w-auto">
                              {b.opStatus === 'waiting' && (
                                <Button className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white rounded-[2rem] h-16 px-12 font-black gap-3 shadow-xl shadow-blue-200" onClick={() => store.updateBooking(b.id, { opStatus: 'checked_in', checkInTime: new Date().toISOString() })}>
-                                 <LogInIcon className="h-6 w-6" /> تسجيل الدخول (تسليم)
+                                 <LogInIcon className="h-6 w-6" /> تسجيل الدخول
                                </Button>
                              )}
                              {b.opStatus === 'checked_in' && (
                                <Button className="flex-1 md:flex-none bg-orange-600 hover:bg-orange-700 text-white rounded-[2rem] h-16 px-12 font-black gap-3 shadow-xl shadow-orange-200" onClick={() => setOpReportBooking(b)}>
-                                 <LogOutIcon className="h-6 w-6" /> تسجيل الخروج (استلام)
+                                 <LogOutIcon className="h-6 w-6" /> تسجيل الخروج والفحص
                                </Button>
                              )}
                           </div>
@@ -448,13 +491,13 @@ export default function PharmaBeachApp() {
         )}
       </main>
 
-      {/* Booking Details Dialog (Financial & Review) */}
+      {/* Booking Details Dialog */}
       <Dialog open={!!reviewingBooking} onOpenChange={() => setReviewingBooking(null)}>
         <DialogContent className="rounded-[3rem] border-none text-right max-w-2xl p-0 overflow-hidden shadow-2xl">
           <div className="bg-slate-900 p-8 text-white relative">
-            <DialogTitle className="text-2xl font-black text-right mb-2">مراجعة بيانات الدفع</DialogTitle>
+            <DialogTitle className="text-2xl font-black text-right mb-2">مراجعة بيانات الحجز</DialogTitle>
             <div className="absolute top-0 left-0 p-8 opacity-10 pointer-events-none">
-              <Wallet size={100} />
+              <ShieldCheck size={100} />
             </div>
           </div>
           {reviewingBooking && (
@@ -472,9 +515,9 @@ export default function PharmaBeachApp() {
 
                <div className="p-6 bg-blue-50 border border-blue-100 rounded-[2rem] space-y-4">
                   <div className="flex justify-between items-center border-b border-blue-200 pb-3">
-                     <p className="font-black text-blue-700 flex items-center gap-2"><Receipt className="h-5 w-5" /> تفاصيل التحويل المالي</p>
+                     <p className="font-black text-blue-700 flex items-center gap-2"><CreditCard className="h-5 w-5" /> التفاصيل المالية</p>
                      <Badge className={reviewingBooking.paymentStatus === 'verified' ? 'bg-green-600' : 'bg-orange-500'}>
-                        {reviewingBooking.paymentStatus === 'verified' ? 'تم تأكيد المبلغ' : 'بانتظار التأكيد'}
+                        {reviewingBooking.paymentStatus === 'verified' ? 'المبلغ مستلم' : 'بانتظار التأكيد'}
                      </Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-6 pt-2">
@@ -483,21 +526,18 @@ export default function PharmaBeachApp() {
                         <p className="text-2xl font-black text-slate-900">{reviewingBooking.totalAmount} ج.م</p>
                      </div>
                      <div>
-                        <p className="text-[10px] text-slate-400 font-black uppercase">رقم المرجع / العملية</p>
-                        <p className="text-xl font-black text-blue-600 tracking-widest">{reviewingBooking.paymentReference}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase">المرجع البنكي</p>
+                        <p className="text-xl font-black text-blue-600">{reviewingBooking.paymentReference}</p>
                      </div>
-                  </div>
-                  <div className="text-xs text-slate-500 font-bold bg-white p-3 rounded-lg border border-blue-100">
-                    وسيلة الدفع: {reviewingBooking.paymentMethod === 'vodafone_cash' ? 'فودافون كاش (محفظة)' : reviewingBooking.paymentMethod}
                   </div>
                </div>
 
                {reviewingBooking.conditionReport && (
                  <div className="p-5 bg-orange-50 rounded-[2rem] border border-orange-100">
-                    <p className="text-[10px] text-orange-600 font-black mb-1">تقرير استلام المشرف (يدوي):</p>
+                    <p className="text-[10px] text-orange-600 font-black mb-1">تقرير استلام المشرف:</p>
                     <p className="text-sm font-medium text-slate-700 leading-relaxed">{reviewingBooking.conditionReport}</p>
                     <div className="mt-3 flex justify-between items-center">
-                       <p className="text-xs font-black text-slate-500">تأمين مسترد تم صرفه: {reviewingBooking.securityDeposit} ج.م</p>
+                       <p className="text-xs font-black text-slate-500">تأمين مسترد: {reviewingBooking.securityDeposit} ج.م</p>
                     </div>
                  </div>
                )}
@@ -505,10 +545,10 @@ export default function PharmaBeachApp() {
           )}
           <DialogFooter className="p-8 pt-0 gap-4 flex flex-row-reverse">
              {store.role === 'admin' && reviewingBooking?.paymentStatus === 'pending' && (
-               <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-2xl h-16 font-black gap-2 shadow-xl shadow-green-100" onClick={() => {
+               <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-2xl h-16 font-black gap-2 shadow-xl" onClick={() => {
                  store.updateBooking(reviewingBooking.id, { paymentStatus: 'verified', status: 'admin_approved' })
                  setReviewingBooking(null)
-                 toast({ title: "تم تأكيد المالية", description: "يمكن الآن للبروكر إجراء التأكيد النهائي لإرسال الحجز للمشرف." })
+                 toast({ title: "تم تأكيد المالية" })
                }}>
                  <CheckCircle className="h-6 w-6" /> تأكيد استلام المبلغ
                </Button>
@@ -518,7 +558,7 @@ export default function PharmaBeachApp() {
         </DialogContent>
       </Dialog>
 
-      {/* Checkout Report Dialog (Supervisor Only) */}
+      {/* Checkout Report Dialog */}
       <Dialog open={!!opReportBooking} onOpenChange={() => setOpReportBooking(null)}>
         <DialogContent className="rounded-[3rem] border-none text-right p-0 overflow-hidden shadow-2xl">
           <div className="bg-orange-600 p-8 text-white relative">
@@ -531,14 +571,14 @@ export default function PharmaBeachApp() {
              <div className="space-y-3">
                 <Label className="font-black text-slate-600 flex items-center gap-2 justify-end text-sm">الحالة الفنية والملاحظات <FileText className="h-4 w-4" /></Label>
                 <Textarea 
-                  placeholder="سجل يدوياً حالة الشاليه، أي تلفيات، أو مفقودات..." 
+                  placeholder="سجل حالة الوحدة، أي تلفيات أو مفقودات..." 
                   className="rounded-[2rem] min-h-[140px] text-right border-slate-100 bg-slate-50 focus:bg-white p-5"
                   value={conditionText}
                   onChange={e => setConditionText(e.target.value)}
                 />
              </div>
              <div className="space-y-3">
-                <Label className="font-black text-slate-600 flex items-center gap-2 justify-end text-sm">مبلغ التأمين المسترد للعميل</Label>
+                <Label className="font-black text-slate-600 flex items-center gap-2 justify-end text-sm">مبلغ التأمين المسترد</Label>
                 <Input 
                   type="number"
                   placeholder="0.00" 
@@ -549,7 +589,7 @@ export default function PharmaBeachApp() {
              </div>
           </div>
           <DialogFooter className="p-8 pt-0 gap-4 flex flex-row-reverse">
-             <Button className="flex-1 rounded-2xl h-16 font-black bg-orange-600 text-white shadow-xl shadow-orange-100 text-lg" onClick={() => {
+             <Button className="flex-1 rounded-2xl h-16 font-black bg-orange-600 text-white shadow-xl text-lg" onClick={() => {
                if (!opReportBooking) return
                store.updateBooking(opReportBooking.id, { 
                  opStatus: 'checked_out', 
@@ -560,7 +600,7 @@ export default function PharmaBeachApp() {
                setOpReportBooking(null)
                setConditionText('')
                setDepositText('')
-               toast({ title: "تم تسجيل الخروج", description: "تم حفظ تقرير الفحص اليدوي بنجاح." })
+               toast({ title: "تم تسجيل الخروج", description: "تم حفظ التقرير بنجاح." })
              }}>حفظ التقرير والانتهاء</Button>
              <Button variant="ghost" className="rounded-2xl h-16 font-bold text-slate-400 px-8" onClick={() => setOpReportBooking(null)}>إلغاء</Button>
           </DialogFooter>
@@ -570,7 +610,7 @@ export default function PharmaBeachApp() {
       <AddChaletDialog 
         isOpen={isAddChaletOpen} 
         onClose={() => setIsAddChaletOpen(false)} 
-        onAdd={(data) => { store.addChalet(data); setIsAddChaletOpen(false); toast({ title: "تمت الإضافة بنجاح" }) }}
+        onAdd={(data) => { store.addChalet(data); setIsAddChaletOpen(false); toast({ title: "تمت الإضافة" }) }}
       />
       <AddUserDialog 
         isOpen={isAddUserOpen} 
@@ -586,32 +626,50 @@ export default function PharmaBeachApp() {
         existingBookings={store.bookings}
       />
       
-      {/* History Dialog */}
+      {/* History Dialog (The Master Log) */}
       <Dialog open={!!viewingHistoryChalet} onOpenChange={() => setViewingHistoryChalet(null)}>
         <DialogContent className="rounded-[3rem] border-none text-right max-w-3xl p-0 overflow-hidden">
-          <div className="bg-slate-100 p-8 border-b border-slate-200">
-            <DialogTitle className="text-2xl font-black text-right text-slate-800">سجل عمليات {viewingHistoryChalet?.name}</DialogTitle>
+          <div className="bg-slate-900 p-8 text-white relative">
+            <DialogTitle className="text-2xl font-black text-right mb-2">سجل العمليات (الصندوق الأسود)</DialogTitle>
+            <p className="text-white/60 text-sm font-medium">{viewingHistoryChalet?.name}</p>
+            <div className="absolute top-0 left-0 p-8 opacity-10 pointer-events-none">
+              <Activity size={100} />
+            </div>
           </div>
-          <div className="p-8 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+          <div className="p-8 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-50">
              {store.bookings.filter(b => b.chaletId === viewingHistoryChalet?.id).length === 0 ? (
-               <div className="text-center py-20 bg-slate-50 rounded-[2.5rem]">
-                 <p className="text-slate-400 font-bold text-lg">لا يوجد سجل عمليات لهذا الشاليه.</p>
+               <div className="text-center py-20 bg-white rounded-[2.5rem] border-dashed border-2 border-slate-100">
+                 <p className="text-slate-400 font-bold text-lg">لا توجد عمليات مسجلة حالياً.</p>
                </div>
              ) : (
                store.bookings.filter(b => b.chaletId === viewingHistoryChalet?.id).map(b => (
-                 <div key={b.id} className="p-5 bg-white rounded-3xl border border-slate-100 flex justify-between items-center shadow-sm">
-                    <div className="text-right">
-                       <p className="font-black text-slate-800 text-lg">{b.clientName}</p>
-                       <p className="text-xs text-primary font-black">الفترة: {format(new Date(b.startDate), 'dd MMM')} - {format(new Date(b.endDate), 'dd MMM')}</p>
-                       {b.conditionReport && <p className="text-[10px] text-slate-400 mt-1 line-clamp-1">تقرير المشرف: {b.conditionReport}</p>}
+                 <div key={b.id} className="p-6 bg-white rounded-[2rem] border border-slate-100 flex flex-col gap-4 shadow-sm hover:shadow-md transition-all">
+                    <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+                       <div className="text-right">
+                          <p className="font-black text-slate-800 text-lg">{b.clientName}</p>
+                          <p className="text-xs text-primary font-black uppercase">{format(new Date(b.startDate), 'dd MMM yyyy')} - {format(new Date(b.endDate), 'dd MMM yyyy')}</p>
+                       </div>
+                       <Badge variant="outline" className={`font-black px-4 py-1 rounded-full ${b.status === 'confirmed' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-slate-50 border-slate-200'}`}>
+                          {b.status === 'confirmed' ? 'عملية مكتملة' : 'قيد المعالجة'}
+                       </Badge>
                     </div>
-                    <Badge variant="outline" className={`font-black px-4 py-1 rounded-full ${b.status === 'confirmed' ? 'bg-green-50 text-green-600' : 'bg-slate-50'}`}>
-                       {b.status === 'confirmed' ? 'مكتمل' : 'سابق'}
-                    </Badge>
+                    <div className="grid grid-cols-2 gap-4 text-xs font-bold text-slate-500">
+                       <div className="flex items-center gap-2"><Wallet className="h-4 w-4" /> المبلغ المحصل: {b.totalAmount} ج.م</div>
+                       <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> تأمين مسترد: {b.securityDeposit || 0} ج.م</div>
+                    </div>
+                    {b.conditionReport && (
+                      <div className="p-4 bg-orange-50/50 rounded-xl border border-orange-100">
+                         <p className="text-[10px] text-orange-600 font-black mb-1 flex items-center gap-1"><FileText className="h-3 w-3" /> ملاحظات المشرف الميدانية:</p>
+                         <p className="text-xs font-medium text-slate-700 leading-relaxed italic">"{b.conditionReport}"</p>
+                      </div>
+                    )}
                  </div>
                ))
              )}
           </div>
+          <DialogFooter className="p-6 bg-white border-t border-slate-100">
+             <Button variant="ghost" className="w-full rounded-2xl h-12 font-bold text-slate-400" onClick={() => setViewingHistoryChalet(null)}>إغلاق السجل</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -619,7 +677,7 @@ export default function PharmaBeachApp() {
       <footer className="bg-slate-900 text-white py-20 mt-20 relative overflow-hidden">
          <div className="container mx-auto px-4 text-center space-y-8 relative z-10">
             <h3 className="text-4xl font-black tracking-tight">منتجع فارما بيتش</h3>
-            <p className="text-slate-400 font-medium max-w-xl mx-auto leading-relaxed text-lg">نظام الإدارة اليدوي لضمان أقصى درجات الرقابة والجودة في التشغيل الفندقي.</p>
+            <p className="text-slate-400 font-medium max-w-xl mx-auto leading-relaxed text-lg">نظام الإدارة المتكامل لضمان أقصى درجات الرقابة والجودة في التشغيل الفندقي والمالي.</p>
             <div className="pt-10 border-t border-white/5 max-w-2xl mx-auto">
                <p className="text-xs text-slate-600 font-bold uppercase tracking-widest">© {new Date().getFullYear()} كافة الحقوق محفوظة</p>
             </div>

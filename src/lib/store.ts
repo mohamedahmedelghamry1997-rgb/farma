@@ -124,6 +124,10 @@ export function useAppStore() {
     setBookings(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b))
   }
 
+  const deleteBooking = (id: string) => {
+    setBookings(prev => prev.filter(b => b.id !== id))
+  }
+
   const addChalet = (chalet: Omit<Chalet, 'id' | 'status'>) => {
     const newChalet: Chalet = { 
       ...chalet, 
@@ -164,6 +168,7 @@ export function useAppStore() {
     users,
     addBooking,
     updateBooking,
+    deleteBooking,
     addChalet,
     deleteChalet,
     updateChalet,
