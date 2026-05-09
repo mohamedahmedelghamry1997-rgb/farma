@@ -1,28 +1,28 @@
 {
   "placeholderImages": [
     {
-      "id": "chalet-1",
-      "description": "Luxurious beachfront chalet with infinity pool",
-      "imageUrl": "https://picsum.photos/seed/chalet1/800/600",
-      "imageHint": "beachfront chalet"
+      "id": "chalet-beach-1",
+      "description": "Luxury beachfront villa with turquoise water view",
+      "imageUrl": "https://picsum.photos/seed/beachfront1/800/600",
+      "imageHint": "luxury beachfront"
     },
     {
-      "id": "chalet-2",
-      "description": "Modern desert oasis chalet with golden accents",
-      "imageUrl": "https://picsum.photos/seed/chalet2/800/600",
-      "imageHint": "modern chalet"
+      "id": "chalet-beach-2",
+      "description": "Modern resort chalet overlooking the mediterranean sea",
+      "imageUrl": "https://picsum.photos/seed/beachfront2/800/600",
+      "imageHint": "sea resort"
     },
     {
-      "id": "chalet-3",
+      "id": "chalet-beach-3",
       "description": "Elegant coastal retreat with panoramic sea views",
-      "imageUrl": "https://picsum.photos/seed/chalet3/800/600",
-      "imageHint": "coastal resort"
+      "imageUrl": "https://picsum.photos/seed/beachfront3/800/600",
+      "imageHint": "coastal view"
     },
     {
-      "id": "chalet-4",
-      "description": "Minimalist luxury suite overlooking the beach",
-      "imageUrl": "https://picsum.photos/seed/chalet4/800/600",
-      "imageHint": "luxury suite"
+      "id": "chalet-beach-4",
+      "description": "Private beach house with golden sands",
+      "imageUrl": "https://picsum.photos/seed/beachfront4/800/600",
+      "imageHint": "beach house"
     }
   ]
 }

@@ -15,7 +15,7 @@ import {
   Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings, UserPlus,
   ArrowUpRight, Megaphone, Percent, Copy, Filter, Download, Calendar as CalendarIcon,
   LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle, Database,
-  ArrowRightLeft, Eye, Brain
+  ArrowRightLeft, Eye, Brain, Waves, Sun, Anchor, Palmtree
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -80,14 +80,12 @@ export default function PharmaBeachApp() {
     }
   }
 
-  // ديناميكية إحصائيات لوحة التحكم
   const stats = useMemo(() => {
     const verifiedBookings = store.bookings.filter(b => b.paymentStatus === 'verified');
     const totalRevenue = verifiedBookings.reduce((acc, b) => acc + (b.totalAmount || 0), 0);
     const pendingTransfers = store.bookings.filter(b => b.paymentStatus === 'pending').length;
     const activeCoupons = store.coupons.filter(c => c.isActive).length;
     
-    // حساب الإشغال التقديري (نسبة الوحدات المحجوزة اليوم)
     const today = new Date().toISOString().split('T')[0];
     const occupiedToday = store.bookings.filter(b => 
       b.status === 'confirmed' && 
@@ -128,7 +126,6 @@ export default function PharmaBeachApp() {
   const revenueData = useMemo(() => {
     const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو']
     return months.map((m, i) => {
-      // محاكاة بيانات حقيقية بناءً على الإيراد الإجمالي
       const base = stats.totalRevenue / 6;
       return {
         name: m,
@@ -186,15 +183,12 @@ export default function PharmaBeachApp() {
 
   const handleSupervisorConfirm = async (updates: Partial<Booking>) => {
     if (!activeSupervisorBooking) return;
-    
     try {
-      // تحليل ملاحظات المشرف بالذكاء الاصطناعي قبل الحفظ
       if (updates.conditionReport) {
         const aiAnalysis = await analyzeChaletConditionNotes({
           notes: updates.conditionReport,
           chaletId: activeSupervisorBooking.chaletId
         });
-        
         if (aiAnalysis.urgentFlag) {
           toast({ 
             variant: "destructive", 
@@ -203,7 +197,6 @@ export default function PharmaBeachApp() {
           });
         }
       }
-
       await store.updateBooking(activeSupervisorBooking.id, updates);
       toast({ title: "تم تسجيل الخروج وتحديث حالة الوحدة بنجاح" });
       setIsSupervisorActionOpen(false);
@@ -223,7 +216,6 @@ export default function PharmaBeachApp() {
              <h2 className="text-3xl font-black text-slate-900">{isLoginView ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}</h2>
              <p className="text-slate-500 font-bold">مرحباً بك في منظومة فارما بيتش الإدارية</p>
           </div>
-          
           <div className="space-y-4">
              {!isLoginView && (
                <div className="space-y-2">
@@ -240,11 +232,9 @@ export default function PharmaBeachApp() {
                <Input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none text-right" />
              </div>
           </div>
-
           <Button className="w-full h-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/20" onClick={handleAuth}>
             {isLoginView ? 'دخول للنظام' : 'تسجيل حساب جديد'}
           </Button>
-
           <p className="text-center text-sm font-bold text-slate-400">
             {isLoginView ? 'ليس لديك حساب؟ ' : 'لديك حساب بالفعل؟ '}
             <button className="text-primary font-black" onClick={() => setIsLoginView(!isLoginView)}>
@@ -262,7 +252,7 @@ export default function PharmaBeachApp() {
       <header className="bg-white border-b sticky top-0 z-50 py-4 px-6 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
-             <div className="bg-primary p-2.5 rounded-2xl shadow-lg shadow-primary/20"><Home className="text-white h-6 w-6" /></div>
+             <div className="bg-primary p-2.5 rounded-2xl shadow-lg shadow-primary/20"><Anchor className="text-white h-6 w-6" /></div>
              <div className="text-right">
                 <h1 className="text-2xl font-black text-slate-900 leading-none">فارما بيتش</h1>
                 <span className="text-[10px] text-primary font-bold tracking-widest uppercase">Integrated Management</span>
@@ -285,10 +275,13 @@ export default function PharmaBeachApp() {
         {(!store.role || store.role === 'client') && (
           <div className="space-y-0">
             <div className="bg-white py-32 border-b relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-               <div className="container mx-auto px-4 text-center space-y-10 relative z-10">
-                  <Badge variant="secondary" className="px-8 py-2.5 rounded-full font-black text-primary bg-primary/5 border-primary/20 animate-bounce">الريادة في الساحل الشمالي</Badge>
-                  <h2 className="text-5xl md:text-7xl font-black text-slate-900 leading-tight">فخامة <span className="text-primary">الإقامة</span><br/>بين يديك الآن</h2>
+               <div className="container mx-auto px-4 text-center space-y-12 relative z-10">
+                  <div className="flex justify-center gap-8 mb-4">
+                    <div className="bg-primary/5 p-6 rounded-[2rem] text-primary animate-bounce delay-75"><Waves size={48} /></div>
+                    <div className="bg-primary/5 p-6 rounded-[2rem] text-primary animate-bounce delay-150"><Sun size={48} /></div>
+                    <div className="bg-primary/5 p-6 rounded-[2rem] text-primary animate-bounce delay-300"><Palmtree size={48} /></div>
+                  </div>
+                  <h2 className="text-5xl md:text-7xl font-black text-slate-900 leading-tight">فخامة <span className="text-primary">الإقامة الساحلية</span><br/>بين يديك الآن</h2>
                   <p className="text-xl md:text-2xl font-bold text-slate-500 max-w-3xl mx-auto leading-relaxed">استكشف أفخم شاليهات فارما بيتش واحجز عطلتك القادمة بضغطة زر. نظام إدارة ذكي لضمان راحتك.</p>
                   <div className="flex flex-col sm:flex-row justify-center gap-6">
                     <Button size="lg" className="rounded-[2rem] h-20 px-16 text-2xl font-black shadow-2xl shadow-primary/30 transition-transform hover:scale-105" onClick={() => document.getElementById('units')?.scrollIntoView({behavior: 'smooth'})}>تصفح الشاليهات</Button>
@@ -299,8 +292,8 @@ export default function PharmaBeachApp() {
             <div id="units" className="container mx-auto px-4 py-32">
                <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
                   <div className="space-y-3 text-right">
-                    <h3 className="text-5xl font-black text-slate-900">الوحدات المختارة</h3>
-                    <p className="text-slate-400 font-bold text-lg">اختر وحدتك المثالية من مجموعتنا الحصرية</p>
+                    <h3 className="text-5xl font-black text-slate-900">الوحدات المتاحة</h3>
+                    <p className="text-slate-400 font-bold text-lg">اختر وحدتك المثالية من مجموعتنا الحصرية المطلة على البحر</p>
                   </div>
                   <div className="w-full md:w-[450px] relative">
                     <Search className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 h-6 w-6" />
