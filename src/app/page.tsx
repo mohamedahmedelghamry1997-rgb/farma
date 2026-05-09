@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo } from 'react'
@@ -34,7 +35,8 @@ import {
   Clock,
   LayoutDashboard,
   Star,
-  ChevronLeft
+  ChevronLeft,
+  Calendar as CalendarIcon
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
@@ -42,6 +44,7 @@ import { BookingDialog } from '@/components/BookingDialog'
 import { ChaletCard } from '@/components/ChaletCard'
 import { AddChaletDialog } from '@/components/AddChaletDialog'
 import { AddUserDialog } from '@/components/AddUserDialog'
+import { RoleSwitcher } from '@/components/RoleSwitcher'
 import Image from 'next/image'
 
 export default function PharmaBeachApp() {
@@ -113,7 +116,7 @@ export default function PharmaBeachApp() {
             </div>
             <div>
               <h1 className="text-xl font-black text-slate-800 leading-none">فارما بيتش</h1>
-              <p className="text-[10px] text-primary font-bold uppercase tracking-widest mt-1">Luxury Management</p>
+              <p className="text-[10px] text-primary font-bold uppercase tracking-widest mt-1">Luxury Management System</p>
             </div>
           </div>
           
@@ -134,7 +137,7 @@ export default function PharmaBeachApp() {
 
       <main className="flex-1 pb-20">
         
-        {/* LANDING PAGE */}
+        {/* LANDING PAGE / CLIENT VIEW */}
         {(!store.role || store.role === 'client') && (
           <div className="space-y-0 animate-slide-up">
             <div className="relative h-[80vh] flex items-center justify-center text-white overflow-hidden">
@@ -444,6 +447,8 @@ export default function PharmaBeachApp() {
           </div>
         )}
       </main>
+
+      <RoleSwitcher currentRole={store.role} onRoleChange={store.setRole} />
 
       {/* FOOTER */}
       <footer className="bg-slate-900 text-white py-24 mt-20">
