@@ -74,7 +74,7 @@ export default function PharmaBeachApp() {
     if (ref) setRefCode(ref)
   }, [])
 
-  // Filtering Logic
+  // Filtering Logic - Move Hooks after all initial states to avoid order issues
   const filteredChalets = useMemo(() => {
     if (!store.isLoaded) return []
     let list = store.chalets
@@ -92,7 +92,6 @@ export default function PharmaBeachApp() {
       const assignedIds = store.currentUser?.assignedChaletIds || []
       list = list.filter(b => assignedIds.includes(b.chaletId) && b.status === 'confirmed')
     } else if (store.role === 'broker') {
-      // Broker sees all to manage but primarily focuses on their assigned or overall resort status
       list = store.bookings
     }
     
@@ -116,7 +115,6 @@ export default function PharmaBeachApp() {
     toast({ title: "تم نسخ الرابط", description: "رابط الإحالة الخاص بك جاهز للمشاركة." })
   }
 
-  // Financial Stats
   const stats = useMemo(() => {
     const confirmed = store.bookings.filter(b => b.status === 'confirmed')
     const totalRevenue = confirmed.reduce((acc, b) => acc + (b.totalAmount || 0), 0)

@@ -41,7 +41,6 @@ export interface Booking {
   conditionReport?: string
   securityDeposit?: string
   brokerId?: string 
-  // Financial Fields
   paymentMethod?: string
   paymentReference?: string
   paymentStatus?: 'pending' | 'verified' | 'rejected'
@@ -61,7 +60,7 @@ const generateChalets = (): Chalet[] => {
     image: `https://picsum.photos/seed/${i + 200}/800/600`,
     location: locations[i % locations.length],
     city: cities[i % cities.length],
-    status: i < 5 ? 'active' : (Math.random() > 0.3 ? 'active' : 'pending')
+    status: i < 10 ? 'active' : (Math.random() > 0.3 ? 'active' : 'pending')
   }))
 }
 
