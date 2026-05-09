@@ -78,7 +78,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                 selected={dateRange}
                 onSelect={setDateRange}
                 disabled={isDateDisabled}
-                className="rounded-xl"
+                className="rounded-xl w-full flex justify-center"
                 locale={ar}
               />
             </div>

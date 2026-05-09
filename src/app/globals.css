@@ -84,3 +84,19 @@
 [dir="rtl"] .rdp-nav_button_next {
   transform: rotate(180deg);
 }
+
+/* Ensure DayPicker doesn't break into single column */
+.rdp-month_grid {
+  display: table !important;
+}
+
+.rdp-week {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+}
+
+.rdp-day {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
