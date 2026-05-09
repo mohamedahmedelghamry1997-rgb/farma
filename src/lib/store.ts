@@ -12,9 +12,10 @@ import {
   orderBy, 
   serverTimestamp,
   where,
-  Timestamp
+  Timestamp,
+  onSnapshot
 } from 'firebase/firestore'
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth'
+import { onAuthStateChanged } from 'firebase/auth'
 import { useFirestore, useCollection, useAuth } from '@/firebase'
 
 export type UserRole = 'client' | 'broker' | 'supervisor' | 'admin'
@@ -25,7 +26,11 @@ export interface UserProfile {
   name: string
   role: UserRole
   assignedChaletIds: string[]
-  isApproved: boolean 
+  isApproved: boolean
+  phone?: string
+  email?: string
+  commissionRate?: number // نسبة عمولة البروكر
+  status?: 'active' | 'suspended'
 }
 
 export interface Chalet {
@@ -33,14 +38,24 @@ export interface Chalet {
   name: string
   normalPrice: number
   holidayPrice: number
+  weeklyPrice?: number
+  monthlyPrice?: number
   description: string
   image: string
   gallery?: string[]
   videoUrl?: string
   location: string
   city: string
-  status: 'pending' | 'active'
+  status: 'active' | 'maintenance' | 'closed' | 'pending'
   addedBy?: string
+  ownerBrokerId?: string
+  maxGuests?: number
+  amenities?: string[]
+  inventory?: {
+    towels: number
+    sheets: number
+    soap: number
+  }
 }
 
 export interface Booking {
@@ -48,6 +63,7 @@ export interface Booking {
   chaletId: string
   clientName: string
   phoneNumber: string
+  clientEmail?: string
   guestCount: number
   startDate: string
   endDate: string
@@ -59,11 +75,25 @@ export interface Booking {
   conditionReport?: string
   securityDeposit?: string
   brokerId?: string 
+  supervisorId?: string
   paymentMethod?: string
   paymentReference?: string
   paymentStatus?: 'pending' | 'verified' | 'rejected'
-  totalAmount?: number
+  totalAmount: number
+  brokerCommission?: number
+  couponCode?: string
+  electricityReading?: string
+  waterReading?: string
   createdAt?: any
+}
+
+export interface Coupon {
+  id: string
+  code: string
+  discountType: 'percentage' | 'fixed'
+  value: number
+  expiryDate: string
+  isActive: boolean
 }
 
 export function useAppStore() {
@@ -73,162 +103,83 @@ export function useAppStore() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
   
-  const { data: chaletsData, loading: chaletsLoading } = useCollection<Chalet>(
+  const { data: chalets, loading: chaletsLoading } = useCollection<Chalet>(
     collection(db, 'chalets')
   )
   
-  const { data: bookingsData, loading: bookingsLoading } = useCollection<Booking>(
+  const { data: bookings, loading: bookingsLoading } = useCollection<Booking>(
     query(collection(db, 'bookings'), orderBy('createdAt', 'desc'))
   )
   
-  const { data: usersData, loading: usersLoading } = useCollection<UserProfile>(
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
     collection(db, 'users')
   )
 
-  // Injecting Large Mock Data
+  const { data: coupons } = useCollection<Coupon>(
+    collection(db, 'coupons')
+  )
+
   useEffect(() => {
-    if (!chaletsLoading && chaletsData?.length === 0) {
+    // Inject Demo Data if empty
+    if (!chaletsLoading && chalets?.length === 0) {
       const demoChalets = [
         { 
-          name: "لؤلؤة الساحل 1", normalPrice: 3500, holidayPrice: 4500, city: "الساحل الشمالي", location: "مارينا 7", 
-          description: "شاليه فاخر مكيف بالكامل بفيو مباشر على البحر، يحتوي على 3 غرف نوم وريسبشن واسع.", status: "active", 
-          image: "https://picsum.photos/seed/p1/800/600",
-          gallery: ["https://picsum.photos/seed/p1a/800/600", "https://picsum.photos/seed/p1b/800/600"],
-          videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+          name: "فيلا الملكة هاسيندا", normalPrice: 8000, holidayPrice: 10000, city: "الساحل الشمالي", location: "سيدي عبد الرحمن", 
+          description: "فيلا صف أول بحر بحديقة خاصة وحمام سباحة إنفينيتي.", status: "active", maxGuests: 10,
+          image: "https://picsum.photos/seed/h1/800/600", amenities: ["واي فاي", "تكييف", "مسبح"],
+          ownerBrokerId: "broker_uid_1"
         },
         { 
-          name: "ماونتن فيو السخنة", normalPrice: 2800, holidayPrice: 3500, city: "العين السخنة", location: "بلو باي", 
-          description: "شاليه مودرن بتشطيبات فندقية وقريب من حمامات السباحة ومنطقة المطاعم.", status: "active", 
-          image: "https://picsum.photos/seed/p2/800/600"
-        },
-        { 
-          name: "هاسيندا باي لاكشري", normalPrice: 6000, holidayPrice: 7500, city: "الساحل الشمالي", location: "سيدي عبد الرحمن", 
-          description: "فيلا مستقلة صف أول بحر بحديقة خاصة وحمام سباحة، قمة الرفاهية والخصوصية.", status: "active", 
-          image: "https://picsum.photos/seed/p3/800/600"
-        },
-        { name: "أمواج سيدي عبد الرحمن", normalPrice: 4000, holidayPrice: 5000, city: "الساحل الشمالي", location: "أمواج ريزورت", description: "شاليه دور أرضي بحديقة خاصة.", status: "active", image: "https://picsum.photos/seed/p4/800/600" },
-        { name: "تلال السخنة", normalPrice: 3200, holidayPrice: 4000, city: "العين السخنة", location: "تلال", description: "شاليه بفيو بانورامي على البحر.", status: "active", image: "https://picsum.photos/seed/p5/800/600" }
+          name: "لؤلؤة السخنة 7", normalPrice: 3000, holidayPrice: 4500, city: "العين السخنة", location: "تلال", 
+          description: "شاليه مودرن بفيو بانورامي على البحر الأحمر.", status: "active", maxGuests: 4,
+          image: "https://picsum.photos/seed/s1/800/600", ownerBrokerId: "broker_uid_1"
+        }
       ]
       demoChalets.forEach(c => addDoc(collection(db, 'chalets'), { ...c, createdAt: serverTimestamp() }))
     }
 
-    if (!bookingsLoading && bookingsData?.length === 0 && chaletsData && chaletsData.length > 0) {
-      const demoBookings = [
-        { 
-          chaletId: chaletsData[0]?.id, clientName: "أحمد علي", phoneNumber: "01012345678", guestCount: 4, 
-          startDate: new Date().toISOString(), endDate: new Date(Date.now() + 86400000 * 3).toISOString(),
-          status: 'confirmed', opStatus: 'checked_in', paymentStatus: 'verified', totalAmount: 10500, paymentMethod: 'vodafone_cash', paymentReference: 'REF123456',
-          checkInTime: new Date().toISOString()
-        },
-        { 
-          chaletId: chaletsData[1]?.id, clientName: "سارة محمد", phoneNumber: "01198765432", guestCount: 2, 
-          startDate: new Date(Date.now() + 86400000).toISOString(), endDate: new Date(Date.now() + 86400000 * 4).toISOString(),
-          status: 'pending', opStatus: 'waiting', paymentStatus: 'pending', totalAmount: 8400, paymentMethod: 'instapay', paymentReference: 'INSTA987'
-        },
-        { 
-          chaletId: chaletsData[2]?.id, clientName: "محمود حسن", phoneNumber: "01234567890", guestCount: 5, 
-          startDate: new Date(Date.now() - 86400000 * 5).toISOString(), endDate: new Date(Date.now() - 86400000 * 2).toISOString(),
-          status: 'confirmed', opStatus: 'checked_out', paymentStatus: 'verified', totalAmount: 18000, paymentMethod: 'bank', paymentReference: 'BNK001',
-          conditionReport: "الشاليه تم استلامه بحالة ممتازة، لا توجد تلفيات.", securityDeposit: "1000"
-        }
-      ]
-      demoBookings.forEach(b => addDoc(collection(db, 'bookings'), { ...b, createdAt: serverTimestamp() }))
-    }
-
-    if (!usersLoading && usersData?.length === 0) {
+    if (!usersLoading && users?.length === 0) {
       const demoUsers = [
-        { uid: "admin_uid", name: "مدير فارما", role: "admin", assignedChaletIds: [], isApproved: true },
-        { uid: "broker_uid", name: "أحمد البروكر", role: "broker", assignedChaletIds: [], isApproved: true },
-        { uid: "super_uid", name: "كابتن هاني المشرف", role: "supervisor", assignedChaletIds: [], isApproved: true }
+        { uid: "admin_uid", name: "أدمن فارما", role: "admin", isApproved: true, status: 'active' },
+        { uid: "broker_uid_1", name: "محمود البروكر", role: "broker", isApproved: true, commissionRate: 10, status: 'active' },
+        { uid: "super_uid_1", name: "كابتن شريف", role: "supervisor", isApproved: true, status: 'active' }
       ]
       demoUsers.forEach(u => addDoc(collection(db, 'users'), { ...u, createdAt: serverTimestamp() }))
     }
-  }, [chaletsLoading, bookingsLoading, usersLoading, chaletsData, bookingsData, usersData, db])
+  }, [chaletsLoading, usersLoading, db])
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        const profile = usersData?.find(u => u.uid === firebaseUser.uid)
-        if (profile) {
-          setCurrentUser(profile)
-          setRole(profile.role)
-          localStorage.setItem('pb_role', profile.role)
-        } else {
-          setRole('client')
-        }
-      } else {
-        const savedRole = localStorage.getItem('pb_role') as UserRole
-        if (savedRole) setRole(savedRole)
-        else setRole(null)
-        setCurrentUser(null)
-      }
-      setAuthLoading(false)
-    })
-    return () => unsubscribe()
-  }, [auth, usersData])
-
-  const addBooking = (bookingData: Omit<Booking, 'id' | 'status' | 'opStatus' | 'paymentStatus'>) => {
-    addDoc(collection(db, 'bookings'), {
-      ...bookingData,
-      status: 'pending',
-      opStatus: 'waiting',
-      paymentStatus: 'pending',
-      createdAt: serverTimestamp()
-    })
+  const addBooking = (data: Omit<Booking, 'id' | 'createdAt'>) => {
+    addDoc(collection(db, 'bookings'), { ...data, createdAt: serverTimestamp() })
   }
 
   const updateBooking = (id: string, updates: Partial<Booking>) => {
     updateDoc(doc(db, 'bookings', id), updates)
   }
 
-  const deleteBooking = (id: string) => {
-    deleteDoc(doc(db, 'bookings', id))
-  }
-
-  const addChalet = (chalet: Omit<Chalet, 'id' | 'status'>) => {
-    addDoc(collection(db, 'chalets'), {
-      ...chalet,
-      status: role === 'admin' ? 'active' : 'pending',
-      addedBy: currentUser?.uid || 'anonymous',
-      createdAt: serverTimestamp()
-    })
-  }
-
-  const deleteChalet = (id: string) => {
-    deleteDoc(doc(db, 'chalets', id))
+  const addChalet = (data: Omit<Chalet, 'id'>) => {
+    addDoc(collection(db, 'chalets'), { ...data, createdAt: serverTimestamp() })
   }
 
   const updateChalet = (id: string, updates: Partial<Chalet>) => {
     updateDoc(doc(db, 'chalets', id), updates)
   }
 
-  const addUser = (userData: Omit<UserProfile, 'id' | 'isApproved'>) => {
-    addDoc(collection(db, 'users'), {
-      ...userData,
-      isApproved: role === 'admin',
-      createdAt: serverTimestamp()
-    })
+  const deleteChalet = (id: string) => {
+    deleteDoc(doc(db, 'chalets', id))
   }
 
-  const updateUserProfile = (id: string, updates: Partial<UserProfile>) => {
+  const addUser = (data: Omit<UserProfile, 'id'>) => {
+    addDoc(collection(db, 'users'), { ...data, createdAt: serverTimestamp() })
+  }
+
+  const updateUser = (id: string, updates: Partial<UserProfile>) => {
     updateDoc(doc(db, 'users', id), updates)
   }
 
   return {
-    role,
-    currentUser,
-    setRole,
-    chalets: chaletsData || [],
-    bookings: bookingsData || [],
-    users: usersData || [],
-    addBooking,
-    updateBooking,
-    deleteBooking,
-    addChalet,
-    deleteChalet,
-    updateChalet,
-    addUser,
-    updateUser: updateUserProfile,
-    isLoaded: !chaletsLoading && !bookingsLoading && !usersLoading && !authLoading
+    role, setRole, currentUser, users: users || [],
+    chalets: chalets || [], bookings: bookings || [], coupons: coupons || [],
+    addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser, updateUser,
+    isLoaded: !chaletsLoading && !bookingsLoading && !usersLoading
   }
 }
