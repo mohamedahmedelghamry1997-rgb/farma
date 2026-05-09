@@ -131,9 +131,12 @@ export default function PharmaBeachApp() {
   }
 
   const handleUpdateUserStatus = (userId: string, currentStatus: string) => {
-    const nextStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    const nextStatus = currentStatus === 'active' || !currentStatus ? 'suspended' : 'active';
     store.updateUser(userId, { status: nextStatus as any });
-    toast({ title: "تم تحديث حالة الموظف بنجاح" });
+    toast({ 
+      title: nextStatus === 'suspended' ? "تم تعطيل الحساب" : "تم تفعيل الحساب",
+      description: "تم تحديث حالة الموظف في النظام بنجاح."
+    });
   }
 
   const handleAiGapAnalysis = async () => {
@@ -519,7 +522,9 @@ export default function PharmaBeachApp() {
                                        <div className="h-14 w-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600"><ClipboardCheck className="h-8 w-8" /></div>
                                        <div>
                                           <p className="text-xl font-black">{u.name}</p>
-                                          <Badge variant="outline" className="text-[10px] text-orange-600 border-orange-100 bg-orange-50/50">مشرف ميداني</Badge>
+                                          <Badge variant="outline" className={`text-[10px] ${u.status === 'suspended' ? 'text-destructive border-destructive/20 bg-destructive/5' : 'text-orange-600 border-orange-100 bg-orange-50/50'}`}>
+                                            {u.status === 'suspended' ? 'حساب معطل' : 'مشرف ميداني'}
+                                          </Badge>
                                        </div>
                                     </div>
                                     <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => toast({ title: "الإعدادات", description: "فتح إعدادات المشرف الميداني." })}><Settings className="h-5 w-5" /></Button>
@@ -543,7 +548,13 @@ export default function PharmaBeachApp() {
                                        <div className="h-full bg-green-500 w-[95%]"></div>
                                     </div>
                                  </div>
-                                 <Button variant="outline" className="w-full h-12 rounded-xl font-black gap-2 border-slate-200" onClick={() => handleUpdateUserStatus(u.id, u.status || 'active')}>تعديل المهام</Button>
+                                 <Button 
+                                    variant="outline" 
+                                    className={`w-full h-12 rounded-xl font-black gap-2 ${u.status === 'suspended' ? 'text-green-600 border-green-100 hover:bg-green-50' : 'text-destructive border-destructive/10 hover:bg-destructive/5'}`}
+                                    onClick={() => handleUpdateUserStatus(u.id, u.status || 'active')}
+                                  >
+                                    {u.status === 'suspended' ? 'تفعيل الحساب' : 'تعطيل الحساب'}
+                                 </Button>
                               </Card>
                             )
                           })}
