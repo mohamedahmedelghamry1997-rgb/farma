@@ -191,9 +191,21 @@ export function useAppStore() {
 
   const addChalet = async (data: Omit<Chalet, 'id'>) => {
     try {
-      await addDoc(collection(db, 'chalets'), { ...data, createdAt: serverTimestamp() });
+      await addDoc(collection(db, 'chalets'), { 
+        ...data, 
+        status: data.status || 'active',
+        createdAt: serverTimestamp() 
+      });
     } catch (e) {
       console.error("Error adding chalet:", e);
+    }
+  }
+
+  const updateChalet = async (id: string, updates: Partial<Chalet>) => {
+    try {
+      await updateDoc(doc(db, 'chalets', id), updates);
+    } catch (e) {
+      console.error("Error updating chalet:", e);
     }
   }
 
@@ -276,7 +288,7 @@ export function useAppStore() {
   return {
     role, currentUser, authUser, isAuthLoading,
     chalets, bookings, users, coupons,
-    addBooking, updateBooking, addChalet, updateUser, seedDatabase,
+    addBooking, updateBooking, addChalet, updateChalet, updateUser, seedDatabase,
     isLoaded: !isAuthLoading && !isDataLoading
   }
 }

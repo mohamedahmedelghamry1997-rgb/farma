@@ -81,7 +81,8 @@ export default function PharmaBeachApp() {
       todayStr <= b.endDate.split('T')[0]
     ).length;
     
-    const occupancyRate = store.chalets.length > 0 ? Math.round((occupiedToday / store.chalets.length) * 100) : 0;
+    const totalChaletsCount = store.chalets.length;
+    const occupancyRate = totalChaletsCount > 0 ? Math.round((occupiedToday / totalChaletsCount) * 100) : 0;
 
     return { totalRevenue, pendingTransfers, activeCoupons, occupancyRate };
   }, [store.bookings, store.chalets, store.coupons, store.role, store.currentUser]);
@@ -282,6 +283,49 @@ export default function PharmaBeachApp() {
                             )}
                             <Button variant="outline" className="flex-1 md:flex-none h-16 px-8 rounded-2xl font-black gap-2 border-slate-200" onClick={() => setViewingDetailsChalet(store.chalets.find(c => c.id === b.chaletId) || null)}><Eye className="h-5 w-5" /> عرض</Button>
                           </div>
+                      </Card>
+                    ))}
+                 </div>
+              </TabsContent>
+
+              <TabsContent value="chalets" className="space-y-8">
+                 <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm gap-6">
+                    <div className="text-right">
+                       <h3 className="text-3xl font-black">إدارة الأصول العقارية</h3>
+                       <p className="text-slate-500 font-bold">إضافة وتعديل بيانات الشاليهات يدوياً</p>
+                    </div>
+                    <Button className="rounded-2xl h-14 px-8 font-black gap-2" onClick={() => setIsAddChaletOpen(true)}>
+                       <Plus className="h-5 w-5" /> إضافة شاليه جديد
+                    </Button>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {store.chalets.map(c => (
+                      <Card key={c.id} className="overflow-hidden rounded-[2.5rem] border-none shadow-xl bg-white flex flex-col text-right group">
+                         <div className="relative h-48">
+                            <Image src={c.image} alt={c.name} fill className="object-cover" />
+                            <div className="absolute top-4 right-4">
+                               <Badge className={`${c.status === 'active' ? 'bg-green-500' : c.status === 'maintenance' ? 'bg-orange-500' : 'bg-slate-500'} text-white border-none px-4 py-1 rounded-full font-black`}>
+                                 {c.status === 'active' ? 'نشط' : c.status === 'maintenance' ? 'صيانة' : 'مغلق'}
+                               </Badge>
+                            </div>
+                         </div>
+                         <div className="p-6 space-y-4">
+                            <h4 className="text-xl font-black">{c.name}</h4>
+                            <div className="flex items-center gap-2 justify-end text-slate-500 font-bold text-sm">
+                               {c.location} <MapPin className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="flex justify-between items-center flex-row-reverse border-t pt-4">
+                               <div className="text-right">
+                                  <p className="text-[10px] text-slate-400 font-black uppercase">السعر الأساسي</p>
+                                  <p className="text-lg font-black text-primary">{c.normalPrice.toLocaleString()} ج.م</p>
+                               </div>
+                               <div className="flex gap-2">
+                                  <Button variant="ghost" size="icon" className="rounded-full bg-slate-50" onClick={() => setViewingDetailsChalet(c)}><Settings className="h-4 w-4" /></Button>
+                                  <Button variant="ghost" size="icon" className="rounded-full bg-red-50 text-red-600" onClick={() => store.updateChalet(c.id, { status: c.status === 'active' ? 'closed' : 'active' })}><Trash2 className="h-4 w-4" /></Button>
+                               </div>
+                            </div>
+                         </div>
                       </Card>
                     ))}
                  </div>
