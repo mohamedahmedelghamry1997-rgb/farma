@@ -46,22 +46,6 @@
   @apply bg-[#e0f2fe] p-8 rounded-[2.5rem] shadow-xl border border-blue-100 mb-12;
 }
 
-/* Hide AI indicators */
-[data-ai-hint] {
-  pointer-events: none;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  @apply bg-slate-100;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-primary/20 rounded-full hover:bg-primary/40;
-}
-
 /* RTL Support for Lucide Icons */
 .rtl-flip {
   transform: scaleX(-1);
@@ -69,4 +53,30 @@
 
 .glass {
   @apply bg-white/80 backdrop-blur-md border border-white/20;
+}
+
+/* Calendar Fixes for v9 and RTL */
+.rdp-month_grid {
+  width: 100% !important;
+}
+
+.rdp-weekdays {
+  display: flex !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+}
+
+.rdp-week {
+  display: flex !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+}
+
+.rdp-day {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 !important;
+  aspect-ratio: 1/1 !important;
+  max-width: 40px !important;
 }
