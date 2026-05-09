@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from 'react'
@@ -43,7 +42,10 @@ import {
   ClipboardCheck,
   Wallet,
   Receipt,
-  ShieldAlert
+  ShieldAlert,
+  Sparkles,
+  Search,
+  ChevronLeft
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
@@ -52,6 +54,8 @@ import { BookingDialog } from '@/components/BookingDialog'
 import { ChaletCard } from '@/components/ChaletCard'
 import { AddChaletDialog } from '@/components/AddChaletDialog'
 import { AddUserDialog } from '@/components/AddUserDialog'
+import { adminChaletBookingGapOptimizer, AdminChaletBookingGapOptimizerOutput } from '@/ai/flows/admin-chalet-booking-gap-optimizer'
+import { analyzeChaletConditionNotes, AdminChaletConditionAnalyzerOutput } from '@/ai/flows/admin-chalet-condition-analyzer'
 
 export default function PharmaBeachApp() {
   const store = useAppStore()
@@ -68,6 +72,12 @@ export default function PharmaBeachApp() {
   const [conditionText, setConditionText] = useState('')
   const [depositText, setDepositText] = useState('')
   const [refCode, setRefCode] = useState('')
+
+  // AI States
+  const [isAnalyzingGaps, setIsAnalyzingGaps] = useState(false)
+  const [gapAnalysisResult, setGapAnalysisResult] = useState<AdminChaletBookingGapOptimizerOutput | null>(null)
+  const [isAnalyzingCondition, setIsAnalyzingCondition] = useState(false)
+  const [conditionAnalysisResult, setConditionAnalysisResult] = useState<AdminChaletConditionAnalyzerOutput | null>(null)
 
   // Capture Referral from URL
   useEffect(() => {
@@ -93,10 +103,9 @@ export default function PharmaBeachApp() {
     if (store.role === 'admin' || store.role === 'broker') return store.bookings
     if (store.role === 'supervisor') {
       const assignedIds = store.currentUser?.assignedChaletIds || []
-      // Supervisor sees confirmed bookings for assigned chalets
       return store.bookings.filter(b => assignedIds.includes(b.chaletId) && b.status === 'confirmed')
     }
-    if (store.role === 'client') return store.bookings.filter(b => b.phoneNumber === '0123456789') // Mock client check
+    if (store.role === 'client') return store.bookings.filter(b => b.phoneNumber === '0123456789') 
     return []
   }, [store.isLoaded, store.role, store.bookings, store.currentUser])
 
@@ -114,6 +123,36 @@ export default function PharmaBeachApp() {
     toast({ title: "تم نسخ الرابط", description: "رابط الإحالة الخاص بك جاهز للمشاركة." })
   }
 
+  // AI Actions
+  const handleAnalyzeGaps = async (chaletId: string) => {
+    setIsAnalyzingGaps(true)
+    try {
+      const chaletBookings = store.bookings.filter(b => b.chaletId === chaletId && b.status !== 'cancelled')
+      const result = await adminChaletBookingGapOptimizer({
+        chaletId,
+        currentDate: new Date().toISOString(),
+        bookings: chaletBookings.map(b => ({ startDate: b.startDate, endDate: b.endDate }))
+      })
+      setGapAnalysisResult(result)
+    } catch (error) {
+      toast({ variant: "destructive", title: "خطأ في التحليل الذكي", description: "لم نتمكن من تحليل التقويم حالياً." })
+    } finally {
+      setIsAnalyzingGaps(false)
+    }
+  }
+
+  const handleAnalyzeCondition = async (notes: string) => {
+    setIsAnalyzingCondition(true)
+    try {
+      const result = await analyzeChaletConditionNotes({ notes })
+      setConditionAnalysisResult(result)
+    } catch (error) {
+      toast({ variant: "destructive", title: "خطأ في التحليل الذكي", description: "لم نتمكن من تحليل التقرير حالياً." })
+    } finally {
+      setIsAnalyzingCondition(false)
+    }
+  }
+
   if (!store.isLoaded) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
@@ -124,7 +163,6 @@ export default function PharmaBeachApp() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-right" dir="rtl">
-      {/* Navbar & Header omitted for brevity as per instructions to be concise but the full page content is provided below */}
       
       {/* Top Bar */}
       <div className="top-bar-gradient text-white py-2 px-4 shadow-md">
@@ -199,14 +237,17 @@ export default function PharmaBeachApp() {
               <div className="space-y-12">
                 <div className="filter-container">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
+                    <div className="relative">
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                      <Input placeholder="ابحث عن شاليه..." className="bg-white rounded-xl h-12 pr-10 border-none shadow-sm" />
+                    </div>
                     <Select><SelectTrigger className="bg-white rounded-xl h-12 text-right"><SelectValue placeholder="المدينة" /></SelectTrigger>
                       <SelectContent><SelectItem value="sc">الساحل الشمالي</SelectItem><SelectItem value="sh">العين السخنة</SelectItem></SelectContent>
                     </Select>
                     <Select><SelectTrigger className="bg-white rounded-xl h-12 text-right"><SelectValue placeholder="السعر" /></SelectTrigger>
                       <SelectContent><SelectItem value="low">اقتصادي</SelectItem><SelectItem value="high">فاخر</SelectItem></SelectContent>
                     </Select>
-                    <Button className="bg-primary hover:bg-primary/90 h-12 rounded-xl gap-2 font-bold text-white col-span-1 lg:col-span-2">تصفية الشاليهات</Button>
-                    <Button variant="ghost" className="h-12 font-bold text-slate-400">إعادة تعيين</Button>
+                    <Button className="bg-primary hover:bg-primary/90 h-12 rounded-xl gap-2 font-bold text-white col-span-1 lg:col-span-1">بحث</Button>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -256,7 +297,7 @@ export default function PharmaBeachApp() {
                     <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -ml-32 -mt-32 blur-3xl"></div>
                     <div className="text-right relative z-10">
                       <h3 className="text-3xl font-black">أهلاً بك، {store.currentUser?.name}</h3>
-                      <p className="opacity-90 font-medium mt-1">لوحة الإدارة المالية والتشغيلية - فارما بيتش</p>
+                      <p className="opacity-90 font-medium mt-1">لوحة الإدارة الذكية - فارما بيتش</p>
                     </div>
                     {store.role === 'broker' && (
                       <Button onClick={copyRefLink} variant="secondary" className="bg-white text-primary hover:bg-white/90 rounded-2xl h-14 px-8 gap-3 font-black text-base shadow-lg relative z-10">
@@ -297,6 +338,15 @@ export default function PharmaBeachApp() {
                                 <Eye className="h-5 w-5" /> مراجعة الطلب والدفع
                              </Button>
                              
+                             {b.conditionReport && (
+                               <Button variant="outline" className="rounded-2xl h-12 gap-2 border-primary/20 text-primary font-bold" onClick={() => {
+                                 setOpReportBooking(b);
+                                 handleAnalyzeCondition(b.conditionReport || "");
+                               }}>
+                                 <Sparkles className="h-4 w-4" /> تحليل بلاغ المشرف
+                               </Button>
+                             )}
+
                              {store.role === 'admin' && b.paymentStatus === 'pending' && (
                                <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-12 px-8 font-black shadow-lg shadow-blue-100" onClick={() => {
                                  store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })
@@ -318,7 +368,6 @@ export default function PharmaBeachApp() {
                     )}
                   </TabsContent>
 
-                  {/* Other Tabs content omitted for focus on finance but fully provided below */}
                   <TabsContent value="chalets" className="space-y-8">
                     <div className="flex justify-between items-center bg-white p-6 rounded-[2rem] shadow-sm">
                        <h3 className="text-2xl font-black text-slate-800">قائمة الشاليهات والوحدات</h3>
@@ -359,7 +408,12 @@ export default function PharmaBeachApp() {
                                  <p className="font-black text-red-600">{c.holidayPrice} <span className="text-[10px]">ج.م</span></p>
                                </div>
                              </div>
-                             <Button variant="secondary" className="w-full rounded-2xl h-12 gap-2 font-black text-xs bg-slate-50 hover:bg-primary/5 text-primary border border-primary/10" onClick={() => setViewingHistoryChalet(c)}>عرض سجل الحجوزات</Button>
+                             <div className="flex gap-2">
+                               <Button variant="secondary" className="flex-1 rounded-2xl h-12 gap-2 font-black text-xs bg-slate-50 hover:bg-primary/5 text-primary border border-primary/10" onClick={() => setViewingHistoryChalet(c)}>السجل</Button>
+                               <Button variant="outline" className="flex-1 rounded-2xl h-12 gap-2 font-black text-xs border-primary/10 text-primary" onClick={() => handleAnalyzeGaps(c.id)}>
+                                 <Sparkles className="h-3 w-3" /> تحليل الذكاء
+                               </Button>
+                             </div>
                            </div>
                         </Card>
                       ))}
@@ -457,6 +511,96 @@ export default function PharmaBeachApp() {
         )}
       </main>
 
+      {/* AI Gap Analysis Dialog */}
+      <Dialog open={!!gapAnalysisResult || isAnalyzingGaps} onOpenChange={() => { setGapAnalysisResult(null); setIsAnalyzingGaps(false); }}>
+        <DialogContent className="rounded-[3rem] border-none text-right max-w-2xl p-0 overflow-hidden shadow-2xl">
+          <div className="bg-purple-600 p-8 text-white relative">
+            <DialogTitle className="text-2xl font-black text-right mb-2">تحليل الإشغال الذكي</DialogTitle>
+            <DialogDescription className="text-white/80 text-right">تحليل التقويم واقتراح استراتيجيات لزيادة الإشغال.</DialogDescription>
+            <div className="absolute top-0 left-0 p-8 opacity-10 pointer-events-none">
+              <Sparkles size={100} />
+            </div>
+          </div>
+          <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto">
+             {isAnalyzingGaps ? (
+               <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                 <p className="font-bold text-slate-400">جاري تحليل التقويم بالذكاء الاصطناعي...</p>
+               </div>
+             ) : gapAnalysisResult && (
+               <>
+                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                    <p className="font-black text-slate-800 text-lg mb-3">التحليل:</p>
+                    <p className="text-sm leading-relaxed text-slate-600">{gapAnalysisResult.analysis}</p>
+                 </div>
+                 <div className="space-y-4">
+                    <p className="font-black text-slate-800 text-lg">اقتراحات زيادة الإشغال:</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {gapAnalysisResult.suggestions.map((s, i) => (
+                        <div key={i} className="p-4 bg-green-50 text-green-700 rounded-2xl border border-green-100 text-sm font-bold flex items-center gap-3">
+                           <CheckCircle className="h-4 w-4 shrink-0" /> {s}
+                        </div>
+                      ))}
+                    </div>
+                 </div>
+               </>
+             )}
+          </div>
+          <DialogFooter className="p-8 pt-0">
+             <Button className="w-full rounded-2xl h-14 font-black bg-purple-600" onClick={() => setGapAnalysisResult(null)}>فهمت، شكراً</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Condition Analysis (integrated with Checkout report) */}
+      <Dialog open={!!conditionAnalysisResult || isAnalyzingCondition} onOpenChange={() => { setConditionAnalysisResult(null); setIsAnalyzingCondition(false); }}>
+        <DialogContent className="rounded-[3rem] border-none text-right max-w-2xl p-0 overflow-hidden shadow-2xl">
+          <div className="bg-primary p-8 text-white relative">
+            <DialogTitle className="text-2xl font-black text-right mb-2">تحليل تقرير المشرف</DialogTitle>
+            <DialogDescription className="text-white/80 text-right">معالجة البلاغ وتصنيفه وتحديد الإجراءات المطلوبة.</DialogDescription>
+            <div className="absolute top-0 left-0 p-8 opacity-10 pointer-events-none">
+              <ClipboardCheck size={100} />
+            </div>
+          </div>
+          <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto">
+             {isAnalyzingCondition ? (
+               <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                 <p className="font-bold text-slate-400">جاري تحليل البلاغ...</p>
+               </div>
+             ) : conditionAnalysisResult && (
+               <>
+                 <div className="flex justify-between items-center">
+                    <Badge className={conditionAnalysisResult.urgentFlag ? 'bg-red-500' : 'bg-blue-500'}>
+                       الأولوية: {conditionAnalysisResult.priority}
+                    </Badge>
+                    <div className="flex gap-2">
+                      {conditionAnalysisResult.categories.map(c => <Badge key={c} variant="outline">{c}</Badge>)}
+                    </div>
+                 </div>
+                 <div className="p-6 bg-slate-50 rounded-3xl">
+                    <p className="font-black text-slate-800 mb-2">ملخص البلاغ:</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">{conditionAnalysisResult.summary}</p>
+                 </div>
+                 <div className="space-y-4">
+                    <p className="font-black text-slate-800">إجراءات مقترحة:</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {conditionAnalysisResult.suggestedActions.map((a, i) => (
+                        <div key={i} className="p-4 bg-primary/5 text-primary rounded-2xl border border-primary/10 text-sm font-bold">
+                           - {a}
+                        </div>
+                      ))}
+                    </div>
+                 </div>
+               </>
+             )}
+          </div>
+          <DialogFooter className="p-8 pt-0">
+             <Button className="w-full rounded-2xl h-14 font-black bg-primary" onClick={() => setConditionAnalysisResult(null)}>إغلاق</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Booking Details Dialog (Financial & Review) */}
       <Dialog open={!!reviewingBooking} onOpenChange={() => setReviewingBooking(null)}>
         <DialogContent className="rounded-[3rem] border-none text-right max-w-2xl p-0 overflow-hidden shadow-2xl">
@@ -503,10 +647,16 @@ export default function PharmaBeachApp() {
                   </div>
                </div>
 
-               {reviewingBooking.notes && (
-                 <div className="p-5 bg-slate-50 rounded-[2rem] text-right">
-                    <p className="text-[10px] text-slate-400 font-black mb-1">ملاحظات العميل</p>
-                    <p className="text-sm font-medium text-slate-700 leading-relaxed">{reviewingBooking.notes}</p>
+               {reviewingBooking.conditionReport && (
+                 <div className="p-5 bg-orange-50 rounded-[2rem] border border-orange-100">
+                    <p className="text-[10px] text-orange-600 font-black mb-1">بلاغ المشرف (خروج):</p>
+                    <p className="text-sm font-medium text-slate-700 leading-relaxed">{reviewingBooking.conditionReport}</p>
+                    <div className="mt-3 flex justify-between items-center">
+                       <p className="text-xs font-black text-slate-500">تأمين مسترد: {reviewingBooking.securityDeposit} ج.م</p>
+                       <Button size="sm" variant="ghost" className="text-primary gap-1 font-bold" onClick={() => handleAnalyzeCondition(reviewingBooking.conditionReport || "")}>
+                         <Sparkles className="h-3 w-3" /> تحليل البلاغ
+                       </Button>
+                    </div>
                  </div>
                )}
             </div>
@@ -526,7 +676,7 @@ export default function PharmaBeachApp() {
         </DialogContent>
       </Dialog>
 
-      {/* Other Helper Dialogs Omitted for Focus but included in store logic */}
+      {/* Checkout Report Dialog (Supervisor Only) */}
       <Dialog open={!!opReportBooking} onOpenChange={() => setOpReportBooking(null)}>
         <DialogContent className="rounded-[3rem] border-none text-right p-0 overflow-hidden shadow-2xl">
           <div className="bg-orange-600 p-8 text-white relative">
