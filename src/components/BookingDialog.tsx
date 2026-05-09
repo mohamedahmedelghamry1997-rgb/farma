@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
 import { Chalet, Booking } from "@/lib/store"
-import { format, isBefore, startOfDay } from "date-fns"
+import { format, isBefore, startOfDay, isSameDay, isWithinInterval } from "date-fns"
 import { ar } from "date-fns/locale"
 import { CalendarIcon, Users, Phone, User } from "lucide-react"
+import { DateRange } from "react-day-picker"
 
 interface BookingDialogProps {
   chalet: Chalet | null
@@ -21,29 +22,38 @@ interface BookingDialogProps {
 }
 
 export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBookings }: BookingDialogProps) {
-  const [date, setDate] = useState<{ from: Date; to: Date } | undefined>()
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [guests, setGuests] = useState(1)
 
   const handleConfirm = () => {
-    if (!chalet || !date?.from || !date?.to || !name || !phone) return
+    if (!chalet || !dateRange?.from || !dateRange?.to || !name || !phone) return
     onConfirm({
       chaletId: chalet.id,
       clientName: name,
       phoneNumber: phone,
       guestCount: guests,
-      startDate: date.from.toISOString(),
-      endDate: date.to.toISOString(),
+      startDate: dateRange.from.toISOString(),
+      endDate: dateRange.to.toISOString(),
     })
+    // Reset state after confirm
+    setDateRange(undefined)
+    setName('')
+    setPhone('')
+    setGuests(1)
     onClose()
   }
 
   const isDateDisabled = (day: Date) => {
-    return isBefore(day, startOfDay(new Date())) || existingBookings.some(b => {
-      const start = new Date(b.startDate)
-      const end = new Date(b.endDate)
-      return day >= start && day <= end && b.chaletId === chalet?.id && b.status !== 'cancelled'
+    const today = startOfDay(new Date())
+    if (isBefore(day, today)) return true
+
+    return existingBookings.some(b => {
+      if (b.chaletId !== chalet?.id || b.status === 'cancelled') return false
+      const start = startOfDay(new Date(b.startDate))
+      const end = startOfDay(new Date(b.endDate))
+      return (isSameDay(day, start) || isSameDay(day, end) || isWithinInterval(day, { start, end }))
     })
   }
 
@@ -51,8 +61,8 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-3xl border-none shadow-2xl text-right">
         <div className="bg-primary p-6 text-white">
-          <DialogTitle className="font-headline text-2xl">حجز {chalet?.name}</DialogTitle>
-          <DialogDescription className="text-white/80 mt-1">
+          <DialogTitle className="font-headline text-2xl text-right">حجز {chalet?.name}</DialogTitle>
+          <DialogDescription className="text-white/80 mt-1 text-right">
             أكمل البيانات أدناه لطلب حجز إقامتك الفاخرة.
           </DialogDescription>
         </div>
@@ -65,16 +75,16 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
             <div className="flex justify-center border rounded-2xl p-2 bg-muted/5">
               <Calendar
                 mode="range"
-                selected={{ from: date?.from, to: date?.to }}
-                onSelect={(range: any) => setDate(range)}
+                selected={dateRange}
+                onSelect={setDateRange}
                 disabled={isDateDisabled}
                 className="rounded-xl"
                 locale={ar}
               />
             </div>
-            {date?.from && date?.to && (
+            {dateRange?.from && dateRange?.to && (
               <p className="text-sm text-primary font-bold text-center bg-primary/5 py-2 rounded-lg">
-                {format(date.from, "dd MMMM", { locale: ar })} - {format(date.to, "dd MMMM y", { locale: ar })}
+                {format(dateRange.from, "dd MMMM", { locale: ar })} - {format(dateRange.to, "dd MMMM y", { locale: ar })}
               </p>
             )}
           </div>
@@ -113,7 +123,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                   min={1} 
                   max={10} 
                   value={guests} 
-                  onChange={e => setGuests(parseInt(e.target.value))}
+                  onChange={e => setGuests(parseInt(e.target.value) || 1)}
                   className="rounded-xl border-muted h-12 text-right"
                 />
               </div>
@@ -121,10 +131,10 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
           </div>
         </div>
 
-        <DialogFooter className="p-6 pt-0 bg-white gap-2 flex-row-reverse">
+        <DialogFooter className="p-6 pt-0 bg-white gap-2 flex flex-row-reverse">
           <Button 
             onClick={handleConfirm} 
-            disabled={!date?.to || !name || !phone}
+            disabled={!dateRange?.from || !dateRange?.to || !name || !phone}
             className="rounded-xl h-12 bg-primary text-white flex-1 font-bold text-lg"
           >
             تأكيد الطلب
