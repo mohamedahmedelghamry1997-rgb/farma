@@ -12,7 +12,7 @@ import {
   Users, Home, CheckCircle2, XCircle, Plus, Trash2, MapPin, Phone, LogOut, 
   Wallet, Receipt, Search, Activity, BarChart3, TrendingUp, Clock, Star,
   History, Sparkles, Box, AlertTriangle, MessageSquare, Tag, FileSpreadsheet,
-  Zap, Droplets, ShieldAlert
+  Zap, Droplets, ShieldAlert, ClipboardCheck
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -170,7 +170,7 @@ export default function PharmaBeachApp() {
                         {b.paymentStatus === 'pending' && (
                           <Button className="flex-1 md:flex-none h-14 px-8 bg-green-600 font-black rounded-2xl shadow-lg shadow-green-200" onClick={() => store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })}>تأكيد الحوالة</Button>
                         )}
-                        <Button variant="outline" className="flex-1 md:flex-none h-14 px-6 rounded-2xl font-black gap-2 border-slate-200"><FileSpreadsheet className="h-4 w-4" /> تصدير PDF</Button>
+                        <Button variant="outline" className="flex-1 md:flex-none h-14 px-6 rounded-2xl font-black gap-2 border-slate-200" onClick={() => toast({ title: "جاري تصدير التقرير المالي..." })}><FileSpreadsheet className="h-4 w-4" /> تصدير PDF</Button>
                       </div>
                    </Card>
                  ))}
@@ -257,7 +257,7 @@ export default function PharmaBeachApp() {
                             <p className="font-black text-xl">{u.name}</p>
                             <Badge className="mt-1 bg-slate-50 text-slate-600 border-none">{u.role === 'broker' ? 'وسيط' : 'مشرف'}</Badge>
                          </div>
-                         <Button variant="ghost" className="h-10 w-10 text-destructive hover:bg-destructive/10"><XCircle /></Button>
+                         <Button variant="ghost" className="h-10 w-10 text-destructive hover:bg-destructive/10" onClick={() => toast({ title: "لا يمكن حذف موظف تجريبي" })}><XCircle /></Button>
                       </Card>
                     ))}
                  </div>
@@ -297,7 +297,7 @@ export default function PharmaBeachApp() {
                         <p className="text-lg font-bold text-slate-500">{b.phoneNumber} | {store.chalets.find(c => c.id === b.chaletId)?.name}</p>
                       </div>
                       <div className="flex gap-3 w-full md:w-auto">
-                        <Button className="flex-1 md:flex-none rounded-2xl h-14 px-8 font-black bg-blue-600 shadow-lg shadow-blue-100 gap-2"><MessageSquare className="h-5 w-5" /> دردشة العميل</Button>
+                        <Button className="flex-1 md:flex-none rounded-2xl h-14 px-8 font-black bg-blue-600 shadow-lg shadow-blue-100 gap-2" onClick={() => toast({ title: "سيتم تفعيل الدردشة قريباً" })}><MessageSquare className="h-5 w-5" /> دردشة العميل</Button>
                         <Button variant="outline" className="flex-1 md:flex-none rounded-2xl h-14 px-6 font-black gap-2 border-slate-200" onClick={() => setViewingDetailsChalet(store.chalets.find(c => c.id === b.chaletId) || null)}><History className="h-5 w-5" /> سجل الوحدة</Button>
                       </div>
                    </Card>
