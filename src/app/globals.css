@@ -5,47 +5,26 @@
 
 @layer base {
   :root {
-    --background: 202 57% 95%;
-    --foreground: 211 68% 10%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 211 68% 10%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 211 68% 10%;
-    --primary: 211 68% 44%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 41 79% 52%;
-    --secondary-foreground: 211 68% 10%;
-    --muted: 202 30% 90%;
-    --muted-foreground: 211 20% 40%;
-    --accent: 41 79% 52%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 211 30% 85%;
-    --input: 211 30% 85%;
-    --ring: 211 68% 44%;
-    --radius: 0.75rem;
-  }
-  .dark {
-    --background: 211 68% 5%;
-    --foreground: 202 57% 95%;
-    --card: 211 68% 8%;
-    --card-foreground: 202 57% 95%;
-    --popover: 211 68% 8%;
-    --popover-foreground: 202 57% 95%;
-    --primary: 211 68% 55%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 41 79% 52%;
-    --secondary-foreground: 211 68% 10%;
-    --muted: 211 30% 15%;
-    --muted-foreground: 211 20% 70%;
-    --accent: 41 79% 52%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 211 30% 20%;
-    --input: 211 30% 20%;
-    --ring: 211 68% 55%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%; /* Royal Blue */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 45 93% 47%; /* Gold Accent */
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221 83% 53%;
+    --radius: 1rem;
   }
 }
 
@@ -55,48 +34,15 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Cairo', sans-serif;
   }
 }
 
-.font-headline {
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-}
-
-.font-body {
-  font-family: 'Inter', sans-serif;
-}
-
-/* Glassmorphism utility */
 .glass {
-  @apply bg-white/70 backdrop-blur-md border border-white/20;
+  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
 }
 
-/* Fix for Calendar and RTL */
-[dir="rtl"] .rdp-month {
-  direction: rtl;
-}
-
-[dir="rtl"] .rdp-nav_button_previous {
-  transform: rotate(180deg);
-}
-
-[dir="rtl"] .rdp-nav_button_next {
-  transform: rotate(180deg);
-}
-
-/* Ensure DayPicker doesn't break into single column */
-.rdp-month_grid {
-  display: table !important;
-}
-
-.rdp-week {
-  display: grid !important;
-  grid-template-columns: repeat(7, 1fr) !important;
-}
-
-.rdp-day {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+/* Hide AI indicators */
+[data-ai-hint] {
+  pointer-events: none;
 }

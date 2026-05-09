@@ -4,8 +4,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'استوديو فايربايس AI - قرية فارما بيتش',
-  description: 'نظام إدارة حجز الشاليهات الفاخرة',
+  title: 'فارما بيتش - نظام الإدارة المتكامل',
+  description: 'نظام إدارة حجز شاليهات قرية فارما بيتش الفاخرة',
 };
 
 export default function RootLayout({
@@ -18,9 +18,9 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Kufi+Arabic:wght@100..900&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased">
+      <body className="font-sans antialiased bg-slate-50 text-slate-900">
         {children}
         <Toaster />
       </body>
