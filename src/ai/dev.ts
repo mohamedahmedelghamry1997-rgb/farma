@@ -1,1 +1,5 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/admin-chalet-condition-analyzer.ts';
+import '@/ai/flows/admin-chalet-booking-gap-optimizer.ts';
