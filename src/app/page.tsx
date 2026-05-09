@@ -12,7 +12,8 @@ import {
   Users, Home, CheckCircle2, XCircle, Plus, Trash2, MapPin, Phone, LogOut, 
   Wallet, Receipt, Search, Activity, BarChart3, TrendingUp, Clock, Star,
   History, Sparkles, Box, AlertTriangle, MessageSquare, Tag, FileSpreadsheet,
-  Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings
+  Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings, UserPlus,
+  ArrowUpRight, Megaphone, Percent
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -273,40 +274,125 @@ export default function PharmaBeachApp() {
 
         {store.role === 'broker' && (
           <div className="container mx-auto px-4 py-10 space-y-10">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                <StatCard title="عمولاتي المستحقة" val={store.bookings.filter(b => b.brokerId === store.currentUser?.uid && b.paymentStatus === 'verified').reduce((acc, b) => acc + (b.brokerCommission || 0), 0).toLocaleString() + ' ج.م'} icon={Wallet} color="text-green-600" />
                <StatCard title="طلبات معلقة" val={myBookings.filter(b => b.status === 'pending').length} icon={Clock} color="text-orange-600" />
                <StatCard title="إجمالي مبيعاتي" val={myBookings.reduce((acc, b) => acc + b.totalAmount, 0).toLocaleString() + ' ج.م'} icon={TrendingUp} color="text-blue-600" />
+               <StatCard title="قوة الأداء" val="92%" icon={Zap} color="text-yellow-600" />
             </div>
 
             <Tabs defaultValue="inventory" className="w-full">
-              <TabsList className="bg-white p-2 rounded-[2rem] mb-8 flex border shadow-sm h-auto">
-                <TabsTrigger value="inventory" className="rounded-xl px-10 py-3 font-black">الوحدات المتاحة</TabsTrigger>
-                <TabsTrigger value="crm" className="rounded-xl px-10 py-3 font-black">العملاء والحجوزات</TabsTrigger>
+              <TabsList className="bg-white p-2 rounded-[2rem] mb-8 flex flex-wrap justify-start border shadow-sm h-auto gap-2">
+                <TabsTrigger value="inventory" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">الوحدات والتشغيل</TabsTrigger>
+                <TabsTrigger value="crm" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">العملاء والطلبات</TabsTrigger>
+                <TabsTrigger value="broker_reports" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">تقارير أدائي</TabsTrigger>
+                <TabsTrigger value="actions" className="rounded-xl px-8 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">طلبات إدارية</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="inventory" className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                 {myChalets.map(c => (
-                   <ChaletCard key={c.id} chalet={c} onBook={() => setViewingDetailsChalet(c)} />
-                 ))}
+              <TabsContent value="inventory" className="space-y-8">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {myChalets.map(c => (
+                      <Card key={c.id} className="rounded-[3rem] overflow-hidden bg-white border-none shadow-xl hover:-translate-y-2 transition-all duration-500 group">
+                         <div className="h-56 relative overflow-hidden">
+                           <Image src={c.image} alt={c.name} fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                           <Badge className={`absolute top-6 right-6 font-black px-4 py-2 rounded-full ${c.status === 'active' ? 'bg-green-500 text-white' : 'bg-orange-500 text-white'}`}>
+                              {c.status === 'active' ? 'جاهز للسكن' : 'تحت الصيانة'}
+                           </Badge>
+                         </div>
+                         <div className="p-8 space-y-4">
+                            <h4 className="font-black text-xl text-right">{c.name}</h4>
+                            <div className="flex gap-2">
+                               <Button variant="secondary" className="flex-1 h-12 rounded-xl font-black bg-slate-100 text-slate-900" onClick={() => setViewingDetailsChalet(c)}>السجل الكامل</Button>
+                               <Button variant="outline" className="h-12 w-12 rounded-xl text-orange-600 border-orange-200 hover:bg-orange-50" onClick={() => toast({ title: "تم إرسال بلاغ صيانة عاجل للأدمن" })}><AlertTriangle className="h-5 w-5" /></Button>
+                            </div>
+                         </div>
+                      </Card>
+                    ))}
+                 </div>
               </TabsContent>
 
               <TabsContent value="crm" className="space-y-6">
+                 <div className="flex justify-between items-center bg-white p-8 rounded-[2.5rem] border shadow-sm mb-6 flex-row-reverse">
+                    <h3 className="text-2xl font-black">إدارة العملاء والطلبات</h3>
+                    <Button className="rounded-xl font-black gap-2 h-12 px-6" onClick={() => toast({ title: "سيتم تفعيل إضافة عميل يدوياً قريباً" })}><UserPlus className="h-4 w-4" /> إضافة عميل جديد</Button>
+                 </div>
                  {myBookings.map(b => (
                    <Card key={b.id} className="p-10 rounded-[3rem] border-none shadow-xl bg-white flex flex-col md:flex-row justify-between items-center gap-8">
                       <div className="text-right flex-1 space-y-3 w-full">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-row-reverse">
                           <p className="font-black text-2xl">{b.clientName}</p>
-                          <Badge className="bg-blue-50 text-blue-700 border-none">{b.status === 'pending' ? 'بانتظار موافقة الأدمن' : 'حجز مؤكد'}</Badge>
+                          <Badge className={b.status === 'pending' ? 'bg-orange-50 text-orange-700' : 'bg-green-50 text-green-700'}>
+                             {b.status === 'pending' ? 'بانتظار موافقة الأدمن' : 'حجز معتمد'}
+                          </Badge>
                         </div>
                         <p className="text-lg font-bold text-slate-500">{b.phoneNumber} | {store.chalets.find(c => c.id === b.chaletId)?.name}</p>
+                        <div className="flex gap-4 justify-end">
+                           <span className="text-xs font-bold text-slate-400">مرجع الدفع: {b.paymentReference || 'لا يوجد'}</span>
+                           <span className="text-xs font-bold text-slate-400">القيمة: {b.totalAmount} ج.م</span>
+                        </div>
                       </div>
                       <div className="flex gap-3 w-full md:w-auto">
-                        <Button className="flex-1 md:flex-none rounded-2xl h-14 px-8 font-black bg-blue-600 shadow-lg shadow-blue-100 gap-2" onClick={() => toast({ title: "سيتم تفعيل الدردشة قريباً" })}><MessageSquare className="h-5 w-5" /> دردشة العميل</Button>
+                        <Button className="flex-1 md:flex-none rounded-2xl h-14 px-8 font-black bg-blue-600 shadow-lg shadow-blue-100 gap-2" onClick={() => toast({ title: "تذكير SMS: تم إرسال رسالة تذكير للعميل بموعد الحجز" })}><Megaphone className="h-5 w-5" /> تذكير العميل</Button>
                         <Button variant="outline" className="flex-1 md:flex-none rounded-2xl h-14 px-6 font-black gap-2 border-slate-200" onClick={() => setViewingDetailsChalet(store.chalets.find(c => c.id === b.chaletId) || null)}><History className="h-5 w-5" /> سجل الوحدة</Button>
                       </div>
                    </Card>
                  ))}
+              </TabsContent>
+
+              <TabsContent value="broker_reports" className="space-y-8">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <Card className="p-10 rounded-[3rem] bg-white border-none shadow-xl space-y-6">
+                       <h3 className="text-2xl font-black text-right flex items-center justify-end gap-2">مبيعاتي الشهرية <TrendingUp className="text-blue-500" /></h3>
+                       <div className="h-[300px] w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={revenueData}>
+                               <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                               <XAxis dataKey="name" />
+                               <YAxis />
+                               <Tooltip content={<ChartTooltipContent />} />
+                               <Bar dataKey="revenue" fill="#2563eb" radius={[10, 10, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                       </div>
+                    </Card>
+                    <Card className="p-10 rounded-[3rem] bg-white border-none shadow-xl space-y-6">
+                       <h3 className="text-2xl font-black text-right">أداء المشرفين الميدانيين</h3>
+                       <div className="space-y-6">
+                          {store.users.filter(u => u.role === 'supervisor').map(s => (
+                            <div key={s.id} className="flex flex-row-reverse justify-between items-center p-6 bg-slate-50 rounded-3xl">
+                               <div className="text-right">
+                                  <p className="font-black">{s.name}</p>
+                                  <p className="text-xs text-slate-500 font-bold">نسبة تسليم دقيقة: 98%</p>
+                               </div>
+                               <Badge className="bg-primary/10 text-primary border-none font-black px-4">12 عملية دخول</Badge>
+                            </div>
+                          ))}
+                       </div>
+                    </Card>
+                 </div>
+              </TabsContent>
+
+              <TabsContent value="actions" className="space-y-6">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <ActionRequestCard 
+                       title="طلب زيادة عمولة" 
+                       desc="رفع طلب للأدمن لزيادة نسبة العمولة بناءً على حجم المبيعات" 
+                       icon={ArrowUpRight} 
+                       onClick={() => toast({ title: "تم إرسال طلب زيادة العمولة للمراجعة الإدارية" })} 
+                    />
+                    <ActionRequestCard 
+                       title="إضافة شاليه جديد" 
+                       desc="طلب إضافة وحدة عقارية جديدة تحت إدارتي وتسويقي" 
+                       icon={Plus} 
+                       onClick={() => setIsAddChaletOpen(true)} 
+                    />
+                    <ActionRequestCard 
+                       title="إنشاء كوبون خاص" 
+                       desc="إنشاء رمز خصم حصري لعملائي المميزين لزيادة المبيعات" 
+                       icon={Percent} 
+                       onClick={() => toast({ title: "سيتم تفعيل لوحة إدارة الكوبونات قريباً" })} 
+                    />
+                 </div>
               </TabsContent>
             </Tabs>
           </div>
@@ -468,3 +554,16 @@ function StatCard({ title, val, icon: Icon, color }: any) {
     </Card>
   )
 }
+
+function ActionRequestCard({ title, desc, icon: Icon, onClick }: any) {
+  return (
+    <Card className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl space-y-4 hover:bg-slate-50 transition-colors cursor-pointer" onClick={onClick}>
+       <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><Icon className="h-6 w-6" /></div>
+       <div className="text-right">
+          <h4 className="font-black text-xl mb-2">{title}</h4>
+          <p className="text-xs text-slate-500 font-bold leading-relaxed">{desc}</p>
+       </div>
+    </Card>
+  )
+}
+
