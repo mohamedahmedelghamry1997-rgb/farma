@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { Calendar } from "@/components/ui/calendar"
-import { Chalet, Booking } from "@/lib/store"
-import { MapPin, Star, Waves, CheckCircle2, Video, CalendarIcon, Info, ShieldAlert } from "lucide-react"
+import { Chalet, Booking, UserRole } from "@/lib/store"
+import { MapPin, Star, CheckCircle2, CalendarIcon, Info, ShieldAlert, History, User } from "lucide-react"
 import { ar } from "date-fns/locale"
 import Image from "next/image"
-import { startOfDay, isSameDay, isWithinInterval } from "date-fns"
+import { startOfDay, isSameDay, isWithinInterval, format } from "date-fns"
 
 interface ChaletDetailsDialogProps {
   chalet: Chalet | null
@@ -18,9 +18,10 @@ interface ChaletDetailsDialogProps {
   onClose: () => void
   onBook: () => void
   existingBookings: Booking[]
+  userRole?: UserRole | null
 }
 
-export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingBookings }: ChaletDetailsDialogProps) {
+export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingBookings, userRole }: ChaletDetailsDialogProps) {
   if (!chalet) return null
 
   const isDateDisabled = (day: Date) => {
@@ -35,13 +36,14 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
     })
   }
 
+  const chaletHistory = existingBookings.filter(b => b.chaletId === chalet.id)
   const images = chalet.gallery && chalet.gallery.length > 0 ? [chalet.image, ...chalet.gallery] : [chalet.image]
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-[3rem] border-none shadow-2xl bg-white text-right max-h-[90vh] overflow-y-auto custom-scrollbar">
         
-        <DialogHeader className="p-8 pb-0">
+        <DialogHeader className="p-8 pb-4">
           <DialogTitle className="text-3xl font-black text-slate-900">{chalet.name}</DialogTitle>
           <DialogDescription className="text-slate-500 font-bold">{chalet.location} | {chalet.city}</DialogDescription>
         </DialogHeader>
@@ -75,6 +77,39 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
 
         <div className="p-10 space-y-12">
            
+           {/* LOG SECTION FOR ADMIN/BROKER */}
+           {(userRole === 'admin' || userRole === 'broker') && (
+             <div className="space-y-6">
+                <div className="flex items-center gap-3 text-primary justify-end">
+                   <h3 className="text-2xl font-black text-slate-900">سجل التشغيل التاريخي</h3>
+                   <History className="h-6 w-6" />
+                </div>
+                <div className="space-y-4">
+                   {chaletHistory.length === 0 ? (
+                     <p className="text-center py-10 bg-slate-50 rounded-2xl text-slate-400 font-bold">لا توجد سجلات سابقة لهذه الوحدة</p>
+                   ) : (
+                     chaletHistory.map(h => (
+                       <div key={h.id} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row-reverse justify-between items-center gap-4">
+                          <div className="flex items-center gap-4 flex-row-reverse text-right">
+                             <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center text-primary"><User /></div>
+                             <div>
+                                <p className="font-black text-slate-900">{h.clientName}</p>
+                                <p className="text-xs font-bold text-slate-500">{format(new Date(h.startDate), 'yyyy/MM/dd')} - {format(new Date(h.endDate), 'yyyy/MM/dd')}</p>
+                             </div>
+                          </div>
+                          <div className="flex gap-3 items-center">
+                             <Badge variant="outline" className="rounded-full px-4">{h.totalAmount} ج.م</Badge>
+                             <Badge className={h.status === 'confirmed' ? 'bg-green-100 text-green-700 border-none' : 'bg-orange-100 text-orange-700 border-none'}>
+                                {h.status === 'confirmed' ? 'تمت بنجاح' : 'معلق'}
+                             </Badge>
+                          </div>
+                       </div>
+                     ))
+                   )}
+                </div>
+             </div>
+           )}
+
            {/* DESCRIPTION & PRICING */}
            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               <div className="md:col-span-2 space-y-6">
@@ -92,14 +127,6 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
                        </Badge>
                     ))}
                  </div>
-                 
-                 <div className="p-6 bg-orange-50 rounded-3xl border border-orange-100 flex items-center gap-4 flex-row-reverse">
-                    <ShieldAlert className="text-orange-600 h-8 w-8" />
-                    <div className="text-right">
-                       <p className="font-black text-orange-800">سياسة التأمين والرسوم</p>
-                       <p className="text-sm text-orange-600 font-bold">يتم دفع مبلغ تأمين مسترد عند الاستلام لضمان سلامة الوحدة.</p>
-                    </div>
-                 </div>
               </div>
 
               <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 flex flex-col justify-center gap-6">
@@ -111,9 +138,11 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
                     <p className="text-xs font-black text-primary uppercase tracking-widest">نهاية الأسبوع</p>
                     <p className="text-3xl font-black text-primary">{chalet.holidayPrice.toLocaleString()} <span className="text-sm">ج.م</span></p>
                  </div>
-                 <Button className="w-full h-16 rounded-2xl bg-slate-950 text-white font-black text-lg hover:bg-primary transition-colors mt-4" onClick={onBook}>
-                   احجز الآن
-                 </Button>
+                 {(!userRole || userRole === 'client') && (
+                   <Button className="w-full h-16 rounded-2xl bg-slate-950 text-white font-black text-lg hover:bg-primary transition-colors mt-4" onClick={onBook}>
+                     احجز الآن
+                   </Button>
+                 )}
               </div>
            </div>
 
@@ -137,16 +166,6 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
                     <div className="space-y-2">
                        <h4 className="font-black text-xl text-slate-900">التقويم المباشر</h4>
                        <p className="text-slate-500 font-bold leading-relaxed">يمكنك مراجعة الأيام المتاحة (باللون الفاتح) والأيام المحجوزة بالفعل (باللون الرمادي) لتخطيط عطلتك.</p>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                       <div className="flex items-center gap-3 justify-end">
-                          <span className="font-bold text-slate-700">متاح للحجز</span>
-                          <div className="w-6 h-6 rounded-lg border border-slate-200"></div>
-                       </div>
-                       <div className="flex items-center gap-3 justify-end">
-                          <span className="font-bold text-slate-700">محجوز بالفعل</span>
-                          <div className="w-6 h-6 rounded-lg bg-slate-200 opacity-50"></div>
-                       </div>
                     </div>
                  </div>
               </div>

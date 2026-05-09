@@ -121,21 +121,18 @@ export function useAppStore() {
         { 
           name: "فيلا رويال هاسيندا", normalPrice: 12000, holidayPrice: 15000, city: "الساحل الشمالي", location: "سيدي عبد الرحمن", 
           description: "فيلا ملكية صف أول على البحر مباشرة مع حمام سباحة خاص وجاكوزي خارجي. خصوصية تامة.", status: "active", maxGuests: 12,
-          image: "https://picsum.photos/seed/h1/800/600", amenities: ["واي فاي", "تكييف مركزي", "مسبح", "شطاف"],
-          gallery: ["https://picsum.photos/seed/h2/800/600", "https://picsum.photos/seed/h3/800/600"],
-          inventory: { towels: 10, sheets: 6, soap: 12 }
+          image: "https://picsum.photos/seed/h1/800/600", amenities: ["تكييف مركزي", "مسبح", "فيو بحر"],
+          gallery: ["https://picsum.photos/seed/h2/800/600", "https://picsum.photos/seed/h3/800/600"]
         },
         { 
           name: "شاليه لؤلؤة السخنة", normalPrice: 3500, holidayPrice: 5000, city: "العين السخنة", location: "تلال", 
           description: "إطلالة بانورامية ساحرة على البحر الأحمر. تصميم مودرن وأثاث فاخر ونظيف.", status: "active", maxGuests: 5,
-          image: "https://picsum.photos/seed/s1/800/600", amenities: ["تكييف", "مطبخ كامل", "فيو بحر"],
-          inventory: { towels: 4, sheets: 3, soap: 6 }
+          image: "https://picsum.photos/seed/s1/800/600", amenities: ["تكييف", "مطبخ كامل", "فيو بحر"]
         },
         { 
           name: "جناح المارينا الملكي", normalPrice: 8000, holidayPrice: 10000, city: "الساحل الشمالي", location: "مارينا 7", 
           description: "جناح فاخر يطل على البحيرة مباشرة. خصوصية تامة وخدمة فندقية راقية.", status: "active", maxGuests: 8,
-          image: "https://picsum.photos/seed/m1/800/600", amenities: ["تكييف", "فيو بحيرة", "حديقة خاصة"],
-          inventory: { towels: 8, sheets: 4, soap: 10 }
+          image: "https://picsum.photos/seed/m1/800/600", amenities: ["تكييف", "فيو بحيرة", "حديقة خاصة"]
         }
       ]
       demoChalets.forEach(c => addDoc(collection(db, 'chalets'), { ...c, createdAt: serverTimestamp() }))
@@ -150,10 +147,47 @@ export function useAppStore() {
       demoUsers.forEach(u => addDoc(collection(db, 'users'), { ...u, createdAt: serverTimestamp() }))
     }
 
+    if (!bookingsLoading && bookings?.length === 0 && chalets?.length! > 0) {
+        const demoBookings: Omit<Booking, 'id'>[] = [
+            {
+                chaletId: chalets![0].id,
+                clientName: "ياسر القحطاني",
+                phoneNumber: "01099999999",
+                guestCount: 4,
+                startDate: "2024-05-01T00:00:00.000Z",
+                endDate: "2024-05-05T00:00:00.000Z",
+                status: 'confirmed',
+                opStatus: 'checked_out',
+                paymentStatus: 'verified',
+                paymentMethod: 'vodafone_cash',
+                paymentReference: 'VF-12345',
+                totalAmount: 48000,
+                brokerId: 'broker_1',
+                supervisorId: 'super_1'
+            },
+            {
+                chaletId: chalets![1].id,
+                clientName: "سارة أحمد",
+                phoneNumber: "01122222222",
+                guestCount: 2,
+                startDate: "2024-05-10T00:00:00.000Z",
+                endDate: "2024-05-12T00:00:00.000Z",
+                status: 'confirmed',
+                opStatus: 'checked_in',
+                paymentStatus: 'verified',
+                paymentMethod: 'instapay',
+                paymentReference: 'IP-887766',
+                totalAmount: 7000,
+                brokerId: 'broker_1'
+            }
+        ]
+        demoBookings.forEach(b => addDoc(collection(db, 'bookings'), { ...b, createdAt: serverTimestamp() }))
+    }
+
     if (coupons?.length === 0) {
       addDoc(collection(db, 'coupons'), { code: "PHARMA20", discountType: "percentage", value: 20, isActive: true, expiryDate: "2025-12-31" })
     }
-  }, [chaletsLoading, usersLoading, db, coupons])
+  }, [chaletsLoading, usersLoading, bookingsLoading, chalets, db, coupons])
 
   const setRole = (newRole: UserRole | null) => {
     setRoleState(newRole);
