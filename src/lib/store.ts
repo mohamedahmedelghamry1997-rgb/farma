@@ -37,6 +37,7 @@ export interface UserProfile {
 export interface Chalet {
   id: string
   name: string
+  code: string // كود الشاليه
   normalPrice: number
   holidayPrice: number
   description: string
@@ -65,6 +66,8 @@ export interface Booking {
   paymentReference?: string
   totalAmount: number
   brokerId?: string
+  brokerName?: string // اسم البروكر للحجز
+  brokerCommission: number // عمولة البروكر (عدد الليالي * 200)
   supervisorId?: string
   notes?: string
   createdAt?: any
@@ -118,12 +121,12 @@ export function useAppStore() {
 
             const newProfile: Omit<UserProfile, 'id'> = {
               uid: user.uid,
-              name: user.displayName || 'مستخدم جديد',
+              name: user.displayName || (user.email === 'admin@gmail.com' ? 'المدير العام' : user.email === 'admin1@gmail.com' ? 'أحمد البروكر' : 'محمود المشرف'),
               role: assignedRole,
               isApproved: true,
               assignedChaletIds: [],
               status: 'active',
-              commissionRate: assignedRole === 'broker' ? 10 : 0
+              commissionRate: assignedRole === 'broker' ? 200 : 0
             };
             await setDoc(userDocRef, newProfile);
             setCurrentUser({ ...newProfile, id: user.uid } as UserProfile);
@@ -221,9 +224,9 @@ export function useAppStore() {
     const batch = writeBatch(db);
 
     const chaletData = [
-      { name: "فيلا الياقوت - مارينا 5", normalPrice: 5000, holidayPrice: 7500, city: "الساحل الشمالي", location: "مارينا 5، الصف الأول", status: "active", description: "فيلا فاخرة تطل مباشرة على البحر مع حمام سباحة خاص وحديقة واسعة.", image: "https://picsum.photos/seed/beachfront1/800/600" },
-      { name: "شاليه اللؤلؤة - هاسيندا", normalPrice: 3500, holidayPrice: 5000, city: "الساحل الشمالي", location: "هاسيندا باي، الساحل", status: "active", description: "شاليه مودرن بموقع متميز بالقرب من الكلوب هاوس.", image: "https://picsum.photos/seed/beachfront2/800/600" },
-      { name: "رويال سويت - العين السخنة", normalPrice: 2500, holidayPrice: 3500, city: "العين السخنة", location: "بورتو سخنة", status: "active", description: "جناح ملكي مع إطلالة بانورامية على الجبل والبحر.", image: "https://picsum.photos/seed/beachfront3/800/600" }
+      { code: "CH-101", name: "فيلا الياقوت - مارينا 5", normalPrice: 5000, holidayPrice: 7500, city: "الساحل الشمالي", location: "مارينا 5، الصف الأول", status: "active", description: "فيلا فاخرة تطل مباشرة على البحر مع حمام سباحة خاص وحديقة واسعة.", image: "https://picsum.photos/seed/beachfront1/800/600" },
+      { code: "CH-102", name: "شاليه اللؤلؤة - هاسيندا", normalPrice: 3500, holidayPrice: 5000, city: "الساحل الشمالي", location: "هاسيندا باي، الساحل", status: "active", description: "شاليه مودرن بموقع متميز بالقرب من الكلوب هاوس.", image: "https://picsum.photos/seed/beachfront2/800/600" },
+      { code: "CH-103", name: "رويال سويت - العين السخنة", normalPrice: 2500, holidayPrice: 3500, city: "العين السخنة", location: "بورتو سخنة", status: "active", description: "جناح ملكي مع إطلالة بانورامية على الجبل والبحر.", image: "https://picsum.photos/seed/beachfront3/800/600" }
     ];
 
     const chaletRefs: string[] = [];
@@ -241,28 +244,16 @@ export function useAppStore() {
         phoneNumber: "01011223344", 
         guestCount: 4, 
         startDate: today.toISOString(), 
-        endDate: new Date(today.getTime() + 86400000 * 3).toISOString(), 
+        endDate: new Date(today.getTime() + 86400000 * 2).toISOString(), 
         status: "confirmed", 
         opStatus: "waiting", 
         paymentStatus: "verified", 
         totalAmount: 15000, 
+        brokerId: "admin1_uid",
+        brokerName: "أحمد البروكر",
+        brokerCommission: 600, // 3 nights * 200
         paymentMethod: 'vodafone_cash', 
         paymentReference: 'REF123', 
-        createdAt: serverTimestamp() 
-      },
-      { 
-        chaletId: chaletRefs[1], 
-        clientName: "خالد علي", 
-        phoneNumber: "01122334455", 
-        guestCount: 2, 
-        startDate: today.toISOString(), 
-        endDate: new Date(today.getTime() + 86400000 * 2).toISOString(), 
-        status: "admin_approved", 
-        opStatus: "waiting", 
-        paymentStatus: "pending", 
-        totalAmount: 7000, 
-        paymentMethod: 'instapay', 
-        paymentReference: 'TXN789', 
         createdAt: serverTimestamp() 
       }
     ];
@@ -270,16 +261,6 @@ export function useAppStore() {
     for (const b of bookingData) {
       const ref = doc(collection(db, 'bookings'));
       batch.set(ref, b);
-    }
-
-    const couponData = [
-      { code: "PHARMA10", discountType: "percentage", value: 10, isActive: true, expiryDate: "2025-12-31" },
-      { code: "SUMMER2024", discountType: "fixed", value: 500, isActive: true, expiryDate: "2024-09-30" }
-    ];
-
-    for (const cp of couponData) {
-      const ref = doc(collection(db, 'coupons'));
-      batch.set(ref, cp);
     }
 
     await batch.commit();

@@ -16,7 +16,7 @@ import {
   Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings, UserPlus,
   ArrowUpRight, Megaphone, Percent, Copy, Filter, Download, Calendar as CalendarIcon,
   LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle, Database,
-  ArrowRightLeft, Eye, Waves, Sun, Anchor, Palmtree
+  ArrowRightLeft, Eye, Waves, Sun, Anchor, Palmtree, TableProperties
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -26,6 +26,8 @@ import { AddUserDialog } from '@/components/AddUserDialog'
 import { EditUserDialog } from '@/components/EditUserDialog'
 import { ChaletDetailsDialog } from '@/components/ChaletDetailsDialog'
 import { SupervisorActionDialog } from '@/components/SupervisorActionDialog'
+import { ChaletSpreadsheet } from '@/components/ChaletSpreadsheet'
+import { ChaletReportDialog } from '@/components/ChaletReportDialog'
 import Image from 'next/image'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, Area, AreaChart, Pie, PieChart, Cell } from 'recharts'
@@ -62,6 +64,11 @@ export default function PharmaBeachApp() {
   
   const [activeSupervisorBooking, setActiveSupervisorBooking] = useState<Booking | null>(null)
   const [isSupervisorActionOpen, setIsSupervisorActionOpen] = useState(false)
+
+  // تقرير الشيت
+  const [reportChalet, setReportChalet] = useState<Chalet | null>(null)
+  const [reportBooking, setReportBooking] = useState<Booking | null>(null)
+  const [isReportOpen, setIsReportOpen] = useState(false)
 
   const stats = useMemo(() => {
     let relevantBookings = store.bookings;
@@ -113,14 +120,6 @@ export default function PharmaBeachApp() {
     return list
   }, [store.role, store.bookings, searchQuery, statusFilter, store.currentUser]);
 
-  const revenueData = useMemo(() => {
-    const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو']
-    return months.map((m, i) => ({
-      name: m,
-      revenue: Math.round((stats.totalRevenue / 6) + (i * 2000))
-    }))
-  }, [stats.totalRevenue]);
-
   const handleAuth = async () => {
     try {
       if (isLoginView) {
@@ -137,15 +136,10 @@ export default function PharmaBeachApp() {
     }
   }
 
-  const handleSupervisorConfirm = async (updates: Partial<Booking>) => {
-    if (!activeSupervisorBooking) return;
-    try {
-      await store.updateBooking(activeSupervisorBooking.id, updates);
-      toast({ title: "تم تحديث حالة الوحدة يدوياً بنجاح" });
-      setIsSupervisorActionOpen(false);
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "فشل تحديث الحالة", description: e.message });
-    }
+  const handleOpenSpreadsheetReport = (chalet: Chalet, booking?: Booking) => {
+    setReportChalet(chalet)
+    setReportBooking(booking || null)
+    setIsReportOpen(true)
   }
 
   if (!store.isLoaded) return <div className="h-screen flex items-center justify-center font-black bg-slate-50 text-primary animate-pulse text-2xl">جاري تشغيل محرك فارما بيتش...</div>
@@ -230,14 +224,18 @@ export default function PharmaBeachApp() {
                <StatCard title="كوبونات نشطة" val={stats.activeCoupons} icon={Tag} color="text-purple-600" />
             </div>
 
-            <Tabs defaultValue="bookings" className="w-full">
+            <Tabs defaultValue="spreadsheet" className="w-full">
               <TabsList className="bg-white p-2 rounded-[2.5rem] mb-12 flex flex-wrap justify-start border shadow-sm h-auto gap-3">
-                <TabsTrigger value="bookings" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">الحجوزات والمالية</TabsTrigger>
+                <TabsTrigger value="spreadsheet" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><TableProperties className="h-4 w-4" /> جدول الجدولة (الشيت)</TabsTrigger>
+                <TabsTrigger value="bookings" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">المالية والحوالات</TabsTrigger>
                 <TabsTrigger value="chalets" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">إدارة الأصول</TabsTrigger>
-                <TabsTrigger value="reports" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">التقارير المالية</TabsTrigger>
                 <TabsTrigger value="users" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">فريق العمل</TabsTrigger>
                 <TabsTrigger value="settings" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">الإعدادات</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="spreadsheet" className="space-y-8">
+                 <ChaletSpreadsheet chalets={store.chalets} bookings={store.bookings} onSelectChalet={handleOpenSpreadsheetReport} userRole={store.role} />
+              </TabsContent>
 
               <TabsContent value="bookings" className="space-y-8">
                  <div className="flex flex-col md:flex-row justify-between items-center gap-6 bg-white p-8 rounded-[3rem] border shadow-sm mb-4">
@@ -281,7 +279,7 @@ export default function PharmaBeachApp() {
                             {b.paymentStatus === 'pending' && (
                               <Button className="flex-1 md:flex-none h-16 px-12 bg-green-600 hover:bg-green-700 font-black rounded-2xl shadow-xl shadow-green-100" onClick={() => store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })}>تأكيد الحوالة</Button>
                             )}
-                            <Button variant="outline" className="flex-1 md:flex-none h-16 px-8 rounded-2xl font-black gap-2 border-slate-200" onClick={() => setViewingDetailsChalet(store.chalets.find(c => c.id === b.chaletId) || null)}><Eye className="h-5 w-5" /> عرض</Button>
+                            <Button variant="outline" className="flex-1 md:flex-none h-16 px-8 rounded-2xl font-black gap-2 border-slate-200" onClick={() => handleOpenSpreadsheetReport(store.chalets.find(c => c.id === b.chaletId)!, b)}><Eye className="h-5 w-5" /> عرض التقرير</Button>
                           </div>
                       </Card>
                     ))}
@@ -304,17 +302,15 @@ export default function PharmaBeachApp() {
                       <Card key={c.id} className="overflow-hidden rounded-[2.5rem] border-none shadow-xl bg-white flex flex-col text-right group">
                          <div className="relative h-48">
                             <Image src={c.image} alt={c.name} fill className="object-cover" />
-                            <div className="absolute top-4 right-4">
+                            <div className="absolute top-4 right-4 flex flex-col gap-2">
                                <Badge className={`${c.status === 'active' ? 'bg-green-500' : c.status === 'maintenance' ? 'bg-orange-500' : 'bg-slate-500'} text-white border-none px-4 py-1 rounded-full font-black`}>
                                  {c.status === 'active' ? 'نشط' : c.status === 'maintenance' ? 'صيانة' : 'مغلق'}
                                </Badge>
+                               <Badge variant="outline" className="bg-white/80 backdrop-blur-sm border-none shadow-sm">{c.code}</Badge>
                             </div>
                          </div>
                          <div className="p-6 space-y-4">
                             <h4 className="text-xl font-black">{c.name}</h4>
-                            <div className="flex items-center gap-2 justify-end text-slate-500 font-bold text-sm">
-                               {c.location} <MapPin className="h-4 w-4 text-primary" />
-                            </div>
                             <div className="flex justify-between items-center flex-row-reverse border-t pt-4">
                                <div className="text-right">
                                   <p className="text-[10px] text-slate-400 font-black uppercase">السعر الأساسي</p>
@@ -322,45 +318,11 @@ export default function PharmaBeachApp() {
                                </div>
                                <div className="flex gap-2">
                                   <Button variant="ghost" size="icon" className="rounded-full bg-slate-50" onClick={() => setViewingDetailsChalet(c)}><Settings className="h-4 w-4" /></Button>
-                                  <Button variant="ghost" size="icon" className="rounded-full bg-red-50 text-red-600" onClick={() => store.updateChalet(c.id, { status: c.status === 'active' ? 'closed' : 'active' })}><Trash2 className="h-4 w-4" /></Button>
                                </div>
                             </div>
                          </div>
                       </Card>
                     ))}
-                 </div>
-              </TabsContent>
-
-              <TabsContent value="reports" className="space-y-12">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
-                       <h3 className="text-3xl font-black text-right">مراقبة الإيرادات الشهرية</h3>
-                       <div className="h-[350px] w-full">
-                          <ChartContainer config={chartConfig}>
-                            <BarChart data={revenueData}>
-                               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                               <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                               <YAxis tickLine={false} axisLine={false} />
-                               <RechartsTooltip content={<ChartTooltipContent />} />
-                               <Bar dataKey="revenue" fill="var(--color-revenue)" radius={[12, 12, 0, 0]} />
-                            </BarChart>
-                          </ChartContainer>
-                       </div>
-                    </Card>
-                    <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
-                       <h3 className="text-3xl font-black text-right">تحليل التدفق النقدي</h3>
-                       <div className="h-[350px] w-full">
-                          <ChartContainer config={chartConfig}>
-                            <AreaChart data={revenueData}>
-                               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                               <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                               <YAxis tickLine={false} axisLine={false} />
-                               <RechartsTooltip content={<ChartTooltipContent />} />
-                               <Area type="monotone" dataKey="revenue" stroke="var(--color-revenue)" fill="var(--color-revenue)" fillOpacity={0.1} />
-                            </AreaChart>
-                          </ChartContainer>
-                       </div>
-                    </Card>
                  </div>
               </TabsContent>
 
@@ -382,7 +344,7 @@ export default function PharmaBeachApp() {
                             <div className="flex items-center gap-4 flex-row-reverse text-right">
                                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                                   {u.role === 'broker' ? <Briefcase /> : <ClipboardCheck />}
-                               </div>
+                                </div>
                                <div>
                                   <p className="text-xl font-black">{u.name}</p>
                                   <Badge variant="outline" className={u.status === 'suspended' ? 'text-destructive border-destructive/20' : 'text-primary'}>
@@ -392,13 +354,6 @@ export default function PharmaBeachApp() {
                             </div>
                             <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => { setEditingUser(u); setIsEditUserOpen(true); }}><Settings className="h-5 w-5" /></Button>
                          </div>
-                         <Button 
-                            variant="outline" 
-                            className={`w-full h-12 rounded-xl font-black ${u.status === 'suspended' ? 'text-green-600 border-green-100' : 'text-destructive border-destructive/10'}`}
-                            onClick={() => store.updateUser(u.id, { status: u.status === 'suspended' ? 'active' : 'suspended' })}
-                          >
-                            {u.status === 'suspended' ? 'تفعيل الحساب' : 'تعطيل الحساب'}
-                         </Button>
                       </Card>
                     ))}
                  </div>
@@ -422,16 +377,30 @@ export default function PharmaBeachApp() {
              <div className="flex justify-between items-center flex-row-reverse">
                 <div className="text-right">
                    <h2 className="text-4xl font-black text-slate-900">لوحة تحكم الوسيط</h2>
-                   <p className="text-slate-500 font-bold mt-2">تابع عمولاتك وحجوزاتك النشطة يدوياً</p>
+                   <p className="text-slate-500 font-bold mt-2">تابع عمولاتك (200 ج.م لليلة) وجدول حجوزاتك</p>
                 </div>
                 <div className="flex gap-4">
-                  <StatCard title="عمولات محققة" val={(stats.totalRevenue * 0.1).toLocaleString() + " ج.م"} icon={TrendingUp} color="text-primary" />
+                  <StatCard title="إجمالي العمولات" val={store.bookings.filter(b => b.brokerId === store.currentUser?.uid).reduce((acc, b) => acc + (b.brokerCommission || 0), 0).toLocaleString() + " ج.م"} icon={TrendingUp} color="text-primary" />
                   <StatCard title="حجوزاتي" val={filteredBookings.length} icon={CalendarIcon} color="text-blue-600" />
                 </div>
              </div>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {myChalets.map(c => <ChaletCard key={c.id} chalet={c} onBook={(chalet) => setViewingDetailsChalet(chalet)} />)}
-             </div>
+
+             <Tabs defaultValue="spreadsheet" className="w-full">
+                <TabsList className="bg-white p-2 rounded-[2.5rem] mb-12 flex justify-start border shadow-sm h-auto gap-3">
+                   <TabsTrigger value="spreadsheet" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><TableProperties className="h-4 w-4" /> جدول الجدولة</TabsTrigger>
+                   <TabsTrigger value="units" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">تصفح الوحدات</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="spreadsheet">
+                   <ChaletSpreadsheet chalets={store.chalets} bookings={store.bookings} onSelectChalet={handleOpenSpreadsheetReport} userRole={store.role} />
+                </TabsContent>
+
+                <TabsContent value="units">
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      {myChalets.map(c => <ChaletCard key={c.id} chalet={c} onBook={(chalet) => setViewingDetailsChalet(chalet)} />)}
+                   </div>
+                </TabsContent>
+             </Tabs>
           </div>
         ) : store.role === 'supervisor' ? (
           <div className="container mx-auto px-4 py-12 space-y-12">
@@ -511,18 +480,25 @@ export default function PharmaBeachApp() {
         isOpen={isBookingOpen} 
         onClose={() => setIsBookingOpen(false)} 
         onConfirm={(data) => { 
-          const payload = { ...data };
-          if (store.role === 'broker') (payload as any).brokerId = store.currentUser?.uid;
-          store.addBooking(payload);
+          store.addBooking(data);
           toast({ title: "تم إرسال طلب الحجز بنجاح" }); 
         }} 
-        existingBookings={store.bookings} 
+        existingBookings={store.bookings}
+        currentUser={store.currentUser}
+      />
+
+      <ChaletReportDialog 
+        chalet={reportChalet} 
+        booking={reportBooking} 
+        isOpen={isReportOpen} 
+        onClose={() => setIsReportOpen(false)} 
+        userRole={store.role} 
       />
 
       <AddChaletDialog isOpen={isAddChaletOpen} onClose={() => setIsAddChaletOpen(false)} onAdd={(data) => { store.addChalet(data); toast({ title: "تمت إضافة الشاليه بنجاح" }); }} />
       <AddUserDialog isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} onAdd={(data) => { store.updateUser(data.uid, data); toast({ title: "تم إنشاء حساب الموظف بنجاح" }); }} chalets={store.chalets} />
       <EditUserDialog user={editingUser} isOpen={isEditUserOpen} onClose={() => { setIsEditUserOpen(false); setEditingUser(null); }} onUpdate={(userId, data) => { store.updateUser(userId, data); toast({ title: "تم تحديث بيانات الموظف بنجاح" }); }} />
-      <SupervisorActionDialog isOpen={isSupervisorActionOpen} onClose={() => setIsSupervisorActionOpen(false)} booking={activeSupervisorBooking} chalet={store.chalets.find(c => c.id === activeSupervisorBooking?.chaletId) || null} onConfirm={handleSupervisorConfirm} />
+      <SupervisorActionDialog isOpen={isSupervisorActionOpen} onClose={() => setIsSupervisorActionOpen(false)} booking={activeSupervisorBooking} chalet={store.chalets.find(c => c.id === activeSupervisorBooking?.chaletId) || null} onConfirm={(updates) => store.updateBooking(activeSupervisorBooking!.id, updates)} />
 
     </div>
   )

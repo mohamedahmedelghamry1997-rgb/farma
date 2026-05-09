@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Home, MapPin, DollarSign, Image as ImageIcon } from "lucide-react"
+import { Home, MapPin, DollarSign, Hash } from "lucide-react"
 
 interface AddChaletDialogProps {
   isOpen: boolean
@@ -18,6 +18,7 @@ interface AddChaletDialogProps {
 
 export function AddChaletDialog({ isOpen, onClose, onAdd }: AddChaletDialogProps) {
   const [name, setName] = useState('')
+  const [code, setCode] = useState('')
   const [normalPrice, setNormalPrice] = useState('')
   const [holidayPrice, setHolidayPrice] = useState('')
   const [city, setCity] = useState('')
@@ -27,6 +28,7 @@ export function AddChaletDialog({ isOpen, onClose, onAdd }: AddChaletDialogProps
   const handleAdd = () => {
     onAdd({
       name,
+      code,
       normalPrice: parseInt(normalPrice),
       holidayPrice: parseInt(holidayPrice),
       city: city === 'sc' ? 'الساحل الشمالي' : 'العين السخنة',
@@ -36,11 +38,13 @@ export function AddChaletDialog({ isOpen, onClose, onAdd }: AddChaletDialogProps
     })
     // Reset
     setName('')
+    setCode('')
     setNormalPrice('')
     setHolidayPrice('')
     setCity('')
     setLocation('')
     setDescription('')
+    onClose()
   }
 
   return (
@@ -52,9 +56,15 @@ export function AddChaletDialog({ isOpen, onClose, onAdd }: AddChaletDialogProps
         </DialogHeader>
         
         <div className="space-y-5 py-4">
-           <div className="space-y-2">
-              <Label className="font-bold text-slate-600 flex items-center gap-2 justify-end text-xs">اسم الشاليه <Home className="h-3.3" /></Label>
-              <Input placeholder="مثال: لؤلؤة الساحل 1" value={name} onChange={e => setName(e.target.value)} className="rounded-2xl h-12 text-right bg-slate-50 border-slate-100" />
+           <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="font-bold text-slate-600 flex items-center gap-2 justify-end text-xs">اسم الشاليه <Home className="h-3.3" /></Label>
+                <Input placeholder="مثال: لؤلؤة الساحل 1" value={name} onChange={e => setName(e.target.value)} className="rounded-2xl h-12 text-right bg-slate-50 border-slate-100" />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-bold text-slate-600 flex items-center gap-2 justify-end text-xs">كود الشاليه <Hash className="h-3.3" /></Label>
+                <Input placeholder="CH-101" value={code} onChange={e => setCode(e.target.value)} className="rounded-2xl h-12 text-right bg-slate-50 border-slate-100" />
+              </div>
            </div>
 
            <div className="grid grid-cols-2 gap-4">
@@ -94,7 +104,7 @@ export function AddChaletDialog({ isOpen, onClose, onAdd }: AddChaletDialogProps
         </div>
 
         <DialogFooter className="flex flex-row-reverse gap-3 pb-2">
-           <Button className="flex-1 rounded-2xl h-14 font-black bg-primary text-white" onClick={handleAdd} disabled={!name || !normalPrice || !city}>
+           <Button className="flex-1 rounded-2xl h-14 font-black bg-primary text-white" onClick={handleAdd} disabled={!name || !code || !normalPrice || !city}>
              إضافة الشاليه للمراجعة
            </Button>
            <Button variant="ghost" className="rounded-2xl h-14 font-bold text-slate-400" onClick={onClose}>إلغاء</Button>

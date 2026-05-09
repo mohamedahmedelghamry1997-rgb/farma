@@ -10,10 +10,11 @@ import { Calendar } from "@/components/ui/calendar"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Chalet, Booking } from "@/lib/store"
-import { format, isBefore, startOfDay, isSameDay, isWithinInterval, differenceInDays } from "date-fns"
+import { format, isBefore, startOfDay, isSameDay, isWithinInterval, differenceInDays, addDays, subDays } from "date-fns"
 import { ar } from "date-fns/locale"
-import { CalendarIcon, Users, Phone, User, MessageSquare, Wallet, CreditCard } from "lucide-react"
+import { CalendarIcon, Users, Phone, User, MessageSquare, Wallet, CreditCard, AlertTriangle } from "lucide-react"
 import { DateRange } from "react-day-picker"
+import { useToast } from '@/hooks/use-toast'
 
 interface BookingDialogProps {
   chalet: Chalet | null
@@ -21,9 +22,11 @@ interface BookingDialogProps {
   onClose: () => void
   onConfirm: (booking: Omit<Booking, 'id' | 'status' | 'opStatus'>) => void
   existingBookings: Booking[]
+  currentUser?: any
 }
 
-export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBookings }: BookingDialogProps) {
+export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBookings, currentUser }: BookingDialogProps) {
+  const { toast } = useToast()
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -38,8 +41,44 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     return chalet.normalPrice * days
   }
 
+  const checkGapRule = (range: DateRange | undefined) => {
+    if (!range?.from || !range?.to || !chalet) return true;
+
+    const before = subDays(range.from, 1);
+    const after = addDays(range.to, 1);
+    const twoDaysBefore = subDays(range.from, 2);
+    const twoDaysAfter = addDays(range.to, 2);
+
+    const isOccupied = (day: Date) => existingBookings.some(b => 
+      b.chaletId === chalet.id && 
+      b.status !== 'cancelled' &&
+      isWithinInterval(startOfDay(day), { start: startOfDay(new Date(b.startDate)), end: startOfDay(new Date(b.endDate)) })
+    );
+
+    // فحص إذا كان هناك يوم واحد فارغ قبل الحجز
+    const hasSingleGapBefore = isOccupied(twoDaysBefore) && !isOccupied(before);
+    // فحص إذا كان هناك يوم واحد فارغ بعد الحجز
+    const hasSingleGapAfter = isOccupied(twoDaysAfter) && !isOccupied(after);
+
+    if (hasSingleGapBefore || hasSingleGapAfter) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في الجدولة",
+        description: "يمنع ترك يوم واحد فارغ بين الحجوزات. يرجى اختيار تواريخ متصلة بالحجوزات السابقة."
+      });
+      return false;
+    }
+
+    return true;
+  }
+
   const handleConfirm = () => {
     if (!chalet || !dateRange?.from || !dateRange?.to || !name || !phone) return
+    
+    if (!checkGapRule(dateRange)) return;
+
+    const nights = differenceInDays(dateRange.to, dateRange.from) + 1;
+
     onConfirm({
       chaletId: chalet.id,
       clientName: name,
@@ -50,9 +89,12 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
       notes: notes,
       paymentMethod,
       paymentReference: paymentRef,
-      totalAmount: calculateTotal()
+      totalAmount: calculateTotal(),
+      brokerId: currentUser?.uid,
+      brokerName: currentUser?.name || "مباشر",
+      brokerCommission: nights * 200
     })
-    // Reset state after confirm
+    
     setDateRange(undefined)
     setName('')
     setPhone('')
@@ -80,7 +122,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
         <DialogHeader className="bg-primary p-8 text-white relative">
           <DialogTitle className="text-2xl font-bold text-right mb-2">طلب حجز واستلام الوحدة</DialogTitle>
           <DialogDescription className="text-white/70 text-right font-medium">
-             منتجع فارما بيتش - يرجى استكمال بيانات الدفع للتأكيد
+             منتجع فارما بيتش - يرجى الالتزام بالجدولة المتصلة (بدون فجوات)
           </DialogDescription>
           <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
             <CalendarIcon size={120} />
@@ -96,7 +138,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
               <Calendar
                 mode="range"
                 selected={dateRange}
-                onSelect={setDateRange}
+                onSelect={(range) => setDateRange(range)}
                 disabled={isDateDisabled}
                 className="rounded-xl w-full flex justify-center"
                 locale={ar}
@@ -105,29 +147,24 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
             </div>
           </div>
 
+          <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3 flex-row-reverse text-right">
+            <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0" />
+            <p className="text-xs text-orange-800 font-bold leading-relaxed">تنبيه: لن يقبل النظام أي حجز يترك يوماً واحداً منفرداً بين الحجوزات السابقة والجديدة.</p>
+          </div>
+
           <div className="grid grid-cols-1 gap-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 justify-end">
                   اسم العميل بالكامل <User className="h-3 w-3" />
                 </Label>
-                <Input 
-                  placeholder="الاسم الثلاثي..." 
-                  value={name} 
-                  onChange={e => setName(e.target.value)}
-                  className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-right focus:bg-white"
-                />
+                <Input placeholder="الاسم الثلاثي..." value={name} onChange={e => setName(e.target.value)} className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-right" />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 justify-end">
                   رقم الجوال <Phone className="h-3 w-3" />
                 </Label>
-                <Input 
-                  placeholder="01xxxxxxxxx" 
-                  value={phone} 
-                  onChange={e => setPhone(e.target.value)}
-                  className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-right focus:bg-white"
-                />
+                <Input placeholder="01xxxxxxxxx" value={phone} onChange={e => setPhone(e.target.value)} className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-right" />
               </div>
             </div>
 
@@ -138,20 +175,6 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                </div>
                
                <div className="space-y-3">
-                 <Label className="text-[10px] font-black text-slate-400 uppercase">وسيلة التحويل</Label>
-                 <Select onValueChange={setPaymentMethod} defaultValue="vodafone_cash">
-                    <SelectTrigger className="rounded-xl bg-white border-blue-100 h-12">
-                      <SelectValue placeholder="اختر الوسيلة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="vodafone_cash">فودافون كاش (01012345678)</SelectItem>
-                      <SelectItem value="instapay">إنستا باي (InstaPay)</SelectItem>
-                      <SelectItem value="bank">تحويل بنكي</SelectItem>
-                    </SelectContent>
-                 </Select>
-               </div>
-
-               <div className="space-y-3">
                  <Label className="text-[10px] font-black text-slate-400 uppercase">رقم العملية أو المرجع <CreditCard className="h-3 w-3 inline ml-1" /></Label>
                  <Input 
                   placeholder="ادخل رقم التحويل أو المرجع هنا..." 
@@ -160,18 +183,6 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                   className="rounded-xl border-blue-100 bg-white h-12 text-right"
                 />
                </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 justify-end">
-                ملاحظات إضافية <MessageSquare className="h-3 w-3" />
-              </Label>
-              <Textarea 
-                placeholder="أي طلبات خاصة للمشرف..." 
-                value={notes} 
-                onChange={e => setNotes(e.target.value)}
-                className="rounded-2xl border-slate-100 bg-slate-50 min-h-[80px] text-right focus:bg-white"
-              />
             </div>
           </div>
         </div>
