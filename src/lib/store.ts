@@ -9,7 +9,7 @@ export interface User {
   id: string
   name: string
   role: UserRole
-  assignedChaletIds?: string[]
+  assignedChaletIds: string[] // الشاليهات المسؤول عنها الموظف
 }
 
 export interface Chalet {
@@ -32,19 +32,19 @@ export interface Booking {
   startDate: string
   endDate: string
   status: 'pending' | 'confirmed' | 'cancelled'
-  opStatus?: 'waiting' | 'checked_in' | 'checked_out'
+  opStatus: 'waiting' | 'checked_in' | 'checked_out'
   checkInTime?: string
   checkOutTime?: string
   notes?: string
-  conditionReport?: string
-  securityDeposit?: number
+  conditionReport?: string // تقرير المشرف عن الحالة
+  securityDeposit?: string // مبلغ التأمين المسترد أو المخصوم منه
   brokerId?: string 
 }
 
-// توليد 30 شاليه لمحاكاة الواقع
+// توليد بيانات أولية
 const generateChalets = (): Chalet[] => {
-  const cities = ['الساحل الشمالي', 'العين السخنة', 'شرم الشيخ', 'الغردقة']
-  const locations = ['سيدي عبد الرحمن', 'المونت جلالة', 'بورتو السخنة', 'مارينا 7', 'خليج نعمة', 'الجونة']
+  const cities = ['الساحل الشمالي', 'العين السخنة']
+  const locations = ['سيدي عبد الرحمن', 'المونت جلالة', 'بورتو السخنة', 'مارينا 7']
   
   return Array.from({ length: 30 }).map((_, i) => ({
     id: `c${i + 1}`,
@@ -61,9 +61,9 @@ const generateChalets = (): Chalet[] => {
 const INITIAL_CHALETS: Chalet[] = generateChalets()
 
 const INITIAL_USERS: User[] = [
-  { id: 'u1', name: 'المدير العام', role: 'admin' },
-  { id: 'u2', name: 'وسيط مبيعات 1', role: 'broker', assignedChaletIds: ['c1', 'c2', 'c3', 'c4', 'c5'] },
-  { id: 'u3', name: 'المشرف الميداني', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id) }
+  { id: 'u1', name: 'المدير العام (أدمن)', role: 'admin', assignedChaletIds: INITIAL_CHALETS.map(c => c.id) },
+  { id: 'u2', name: 'أحمد السيلز (بروكر)', role: 'broker', assignedChaletIds: ['c1', 'c2', 'c3', 'c4', 'c5'] },
+  { id: 'u3', name: 'محمد المشرف (مشرف)', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id) }
 ]
 
 export function useAppStore() {
@@ -80,12 +80,7 @@ export function useAppStore() {
     const savedBookings = localStorage.getItem('pb_bookings')
     const savedUsers = localStorage.getItem('pb_users')
 
-    if (savedRole) {
-      setRole(savedRole)
-      const usersData = savedUsers ? JSON.parse(savedUsers) : INITIAL_USERS
-      const foundUser = usersData.find((u: any) => u.role === savedRole)
-      setCurrentUser(foundUser || null)
-    }
+    if (savedRole) setRole(savedRole)
     if (savedChalets) setChalets(JSON.parse(savedChalets))
     if (savedBookings) setBookings(JSON.parse(savedBookings))
     if (savedUsers) setUsers(JSON.parse(savedUsers))
@@ -95,22 +90,20 @@ export function useAppStore() {
 
   useEffect(() => {
     if (isLoaded) {
-      if (role) localStorage.setItem('pb_role', role)
+      if (role) {
+        localStorage.setItem('pb_role', role)
+        const user = users.find(u => u.role === role)
+        setCurrentUser(user || null)
+      }
       localStorage.setItem('pb_chalets', JSON.stringify(chalets))
       localStorage.setItem('pb_bookings', JSON.stringify(bookings))
       localStorage.setItem('pb_users', JSON.stringify(users))
     }
   }, [role, chalets, bookings, users, isLoaded])
 
-  const changeRole = (newRole: UserRole) => {
-    setRole(newRole)
-    const user = users.find(u => u.role === newRole) || null
-    setCurrentUser(user)
-  }
-
-  const addBooking = (booking: Omit<Booking, 'id' | 'status'>) => {
+  const addBooking = (bookingData: Omit<Booking, 'id' | 'status' | 'opStatus'>) => {
     const newBooking: Booking = {
-      ...booking,
+      ...bookingData,
       id: Math.random().toString(36).substr(2, 9),
       status: 'pending',
       opStatus: 'waiting'
@@ -132,8 +125,8 @@ export function useAppStore() {
     setChalets(prev => prev.filter(c => c.id !== id))
   }
 
-  const addUser = (user: Omit<User, 'id'>) => {
-    const newUser = { ...user, id: 'u' + (users.length + 1) }
+  const addUser = (userData: Omit<User, 'id'>) => {
+    const newUser = { ...userData, id: 'u' + (users.length + 1) }
     setUsers(prev => [...prev, newUser])
   }
 
@@ -141,10 +134,14 @@ export function useAppStore() {
     setUsers(prev => prev.filter(u => u.id !== id))
   }
 
+  const updateUser = (id: string, updates: Partial<User>) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u))
+  }
+
   return {
     role,
     currentUser,
-    setRole: changeRole,
+    setRole,
     chalets,
     bookings,
     users,
@@ -154,6 +151,7 @@ export function useAppStore() {
     deleteChalet,
     addUser,
     deleteUser,
+    updateUser,
     isLoaded
   }
 }
