@@ -29,7 +29,7 @@ export interface UserProfile {
   isApproved: boolean
   phone?: string
   email?: string
-  commissionRate?: number // نسبة عمولة البروكر
+  commissionRate?: number
   status?: 'active' | 'suspended'
 }
 
@@ -127,12 +127,17 @@ export function useAppStore() {
           name: "فيلا الملكة هاسيندا", normalPrice: 8000, holidayPrice: 10000, city: "الساحل الشمالي", location: "سيدي عبد الرحمن", 
           description: "فيلا صف أول بحر بحديقة خاصة وحمام سباحة إنفينيتي.", status: "active", maxGuests: 10,
           image: "https://picsum.photos/seed/h1/800/600", amenities: ["واي فاي", "تكييف", "مسبح"],
-          ownerBrokerId: "broker_uid_1"
+          ownerBrokerId: "broker_uid_1", gallery: ["https://picsum.photos/seed/h2/800/600", "https://picsum.photos/seed/h3/800/600"]
         },
         { 
           name: "لؤلؤة السخنة 7", normalPrice: 3000, holidayPrice: 4500, city: "العين السخنة", location: "تلال", 
           description: "شاليه مودرن بفيو بانورامي على البحر الأحمر.", status: "active", maxGuests: 4,
           image: "https://picsum.photos/seed/s1/800/600", ownerBrokerId: "broker_uid_1"
+        },
+        { 
+          name: "جولف بورتو مارينا", normalPrice: 2000, holidayPrice: 3000, city: "الساحل الشمالي", location: "مارينا", 
+          description: "شاليه في قلب بورتو مارينا قريب من كافة الخدمات والنوادي.", status: "active", maxGuests: 6,
+          image: "https://picsum.photos/seed/m1/800/600", ownerBrokerId: "broker_uid_1"
         }
       ]
       demoChalets.forEach(c => addDoc(collection(db, 'chalets'), { ...c, createdAt: serverTimestamp() }))
@@ -146,7 +151,15 @@ export function useAppStore() {
       ]
       demoUsers.forEach(u => addDoc(collection(db, 'users'), { ...u, createdAt: serverTimestamp() }))
     }
-  }, [chaletsLoading, usersLoading, db])
+
+    if (coupons?.length === 0) {
+      const demoCoupons = [
+        { code: "PHARMA10", discountType: "percentage", value: 10, isActive: true, expiryDate: "2025-12-31" },
+        { code: "EID2024", discountType: "fixed", value: 500, isActive: true, expiryDate: "2024-06-30" }
+      ]
+      demoCoupons.forEach(cp => addDoc(collection(db, 'coupons'), cp))
+    }
+  }, [chaletsLoading, usersLoading, db, coupons])
 
   const addBooking = (data: Omit<Booking, 'id' | 'createdAt'>) => {
     addDoc(collection(db, 'bookings'), { ...data, createdAt: serverTimestamp() })

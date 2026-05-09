@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { Calendar } from "@/components/ui/calendar"
 import { Chalet, Booking } from "@/lib/store"
-import { MapPin, Star, Waves, CheckCircle2, Video, CalendarIcon, Info } from "lucide-react"
+import { MapPin, Star, Waves, CheckCircle2, Video, CalendarIcon, Info, ShieldAlert } from "lucide-react"
 import { ar } from "date-fns/locale"
 import Image from "next/image"
 import { startOfDay, isSameDay, isWithinInterval } from "date-fns"
@@ -68,7 +68,7 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
            </div>
 
            <div className="absolute bottom-8 right-8 left-8 text-white">
-              <h2 className="text-4xl font-black mb-2">{chalet.name}</h2>
+              <DialogTitle className="text-4xl font-black mb-2">{chalet.name}</DialogTitle>
               <p className="flex items-center gap-2 text-white/80 font-bold"><MapPin className="h-4 w-4 text-primary" /> {chalet.location}</p>
            </div>
         </div>
@@ -91,6 +91,14 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
                           <CheckCircle2 className="h-4 w-4 text-green-500" /> {f}
                        </Badge>
                     ))}
+                 </div>
+                 
+                 <div className="p-6 bg-orange-50 rounded-3xl border border-orange-100 flex items-center gap-4">
+                    <ShieldAlert className="text-orange-600 h-8 w-8" />
+                    <div>
+                       <p className="font-black text-orange-800">سياسة التأمين والرسوم</p>
+                       <p className="text-sm text-orange-600 font-bold">يتم دفع مبلغ تأمين مسترد عند الاستلام لضمان سلامة الوحدة.</p>
+                    </div>
                  </div>
               </div>
 
