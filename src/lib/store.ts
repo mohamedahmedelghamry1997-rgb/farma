@@ -50,9 +50,9 @@ const generateChalets = (): Chalet[] => {
   return Array.from({ length: 30 }).map((_, i) => ({
     id: `c${i + 1}`,
     name: `شاليه لؤلؤة ${i + 1}`,
-    normalPrice: 2000 + (Math.floor(Math.random() * 10) * 500),
-    holidayPrice: 3000 + (Math.floor(Math.random() * 10) * 500),
-    description: `وصف تفصيلي لشاليه لؤلؤة ${i + 1} الفاخر.`,
+    normalPrice: 2500 + (Math.floor(Math.random() * 10) * 500),
+    holidayPrice: 3500 + (Math.floor(Math.random() * 10) * 500),
+    description: `وصف تفصيلي لشاليه لؤلؤة ${i + 1} الفاخر، يتميز بطلة مباشرة على البحر وتشطيبات فندقية راقية.`,
     image: `https://picsum.photos/seed/${i + 100}/800/600`,
     location: locations[i % locations.length],
     city: cities[i % cities.length],
@@ -64,8 +64,8 @@ const INITIAL_CHALETS: Chalet[] = generateChalets()
 
 const INITIAL_USERS: User[] = [
   { id: 'u1', name: 'المدير العام (الأدمن)', role: 'admin', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
-  { id: 'u2', name: 'أحمد البروكر', role: 'broker', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true },
-  { id: 'u3', name: 'محمد المشرف', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id), isApproved: true }
+  { id: 'u2', name: 'أحمد البروكر', role: 'broker', assignedChaletIds: INITIAL_CHALETS.map(c => c.id).slice(0, 10), isApproved: true },
+  { id: 'u3', name: 'محمد المشرف', role: 'supervisor', assignedChaletIds: INITIAL_CHALETS.map(c => c.id).slice(0, 15), isApproved: true }
 ]
 
 export function useAppStore() {

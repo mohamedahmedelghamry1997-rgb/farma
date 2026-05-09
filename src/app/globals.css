@@ -44,7 +44,7 @@
 }
 
 .filter-container {
-  @apply bg-blue-50/50 p-6 rounded-[2.5rem] shadow-sm border border-blue-100/50 mb-10;
+  @apply bg-blue-50/50 p-8 rounded-[3rem] shadow-sm border border-blue-100/50 mb-12;
 }
 
 /* RTL Support for Lucide Icons */
@@ -76,7 +76,7 @@
 }
 
 .rdp-day {
-  @apply h-10 w-10 flex items-center justify-center rounded-xl transition-all cursor-pointer font-bold text-sm !important;
+  @apply h-11 w-11 flex items-center justify-center rounded-2xl transition-all cursor-pointer font-black text-sm !important;
 }
 
 .rdp-day:hover {
@@ -84,7 +84,7 @@
 }
 
 .rdp-selected {
-  @apply bg-primary text-white hover:bg-primary/90 !important;
+  @apply bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 !important;
 }
 
 .rdp-range_start, .rdp-range_end {
@@ -92,11 +92,11 @@
 }
 
 .rdp-range_middle {
-  @apply bg-primary/10 text-primary !important;
+  @apply bg-primary/10 text-primary font-bold !important;
 }
 
 .rdp-disabled {
-  @apply opacity-20 cursor-not-allowed pointer-events-none !important;
+  @apply opacity-20 cursor-not-allowed pointer-events-none grayscale !important;
 }
 
 /* Animation */
@@ -106,5 +106,12 @@
 }
 
 .animate-slide-up {
-  animation: slideUp 0.5s ease-out forwards;
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full;
 }
