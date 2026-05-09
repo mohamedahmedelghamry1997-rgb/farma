@@ -38,7 +38,9 @@ export default function PharmaBeachApp() {
 
   const myChalets = useMemo(() => {
     let list = store.chalets
-    if (store.role === 'broker') list = store.chalets.filter(c => c.ownerBrokerId === store.currentUser?.uid || c.status === 'active')
+    if (store.role === 'broker') {
+        list = store.chalets.filter(c => c.ownerBrokerId === store.currentUser?.uid || c.status === 'active')
+    }
     if (searchQuery) {
       list = list.filter(c => c.name.includes(searchQuery) || c.location.includes(searchQuery))
     }
@@ -64,11 +66,24 @@ export default function PharmaBeachApp() {
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
              <div className="bg-primary p-2 rounded-xl"><Home className="text-white h-5 w-5" /></div>
-             <h1 className="text-xl font-black text-slate-900 leading-none">فارما بيتش <span className="text-[10px] text-primary block">STUDIO FIREBASS AI</span></h1>
+             <div className="text-right">
+                <h1 className="text-xl font-black text-slate-900 leading-none">فارما بيتش</h1>
+                <span className="text-[10px] text-primary font-bold">STUDIO FIREBASS AI</span>
+             </div>
           </div>
           <div className="flex items-center gap-4">
-             {store.role && <Badge className="bg-slate-100 text-slate-900 py-1.5 px-4 rounded-full font-black text-xs">{store.role === 'admin' ? 'مدير' : store.role === 'broker' ? 'بروكر' : store.role === 'supervisor' ? 'مشرف' : 'عميل'}</Badge>}
-             {store.role && <Button variant="ghost" size="sm" onClick={() => store.setRole(null)}><LogOut className="h-4 w-4" /></Button>}
+             {store.role && (
+                <div className="flex items-center gap-3">
+                    <div className="text-left hidden md:block">
+                        <p className="text-xs font-black">{store.currentUser?.name || 'مستخدم تجريبي'}</p>
+                        <p className="text-[10px] text-slate-400 font-bold">{store.role === 'admin' ? 'مدير عام' : store.role === 'broker' ? 'وسيط عقاري' : 'مشرف ميداني'}</p>
+                    </div>
+                    <Badge className="bg-primary/10 text-primary border-none py-1.5 px-4 rounded-full font-black text-xs">
+                        {store.role === 'admin' ? 'مدير' : store.role === 'broker' ? 'بروكر' : store.role === 'supervisor' ? 'مشرف' : 'عميل'}
+                    </Badge>
+                </div>
+             )}
+             {store.role && <Button variant="ghost" size="sm" onClick={() => store.setRole(null)} className="rounded-xl"><LogOut className="h-4 w-4" /></Button>}
           </div>
         </div>
       </header>
@@ -79,12 +94,12 @@ export default function PharmaBeachApp() {
           <div className="space-y-0">
             <div className="bg-white py-32 border-b">
                <div className="container mx-auto px-4 text-center space-y-8">
-                  <Badge variant="secondary" className="px-6 py-2 rounded-full font-black text-primary">أهلاً بك في فخر الساحل</Badge>
+                  <Badge variant="secondary" className="px-6 py-2 rounded-full font-black text-primary bg-primary/5 border-primary/10">أهلاً بك في فخر الساحل</Badge>
                   <h2 className="text-6xl font-black text-slate-900 leading-tight">فخامة <span className="text-primary">الساحل</span> بين يديك</h2>
                   <p className="text-xl font-bold text-slate-500 max-w-2xl mx-auto">نظام الإدارة المركزي لضمان أقصى درجات الرقابة والجودة في التشغيل الفندقي. استمتع بأرقى الشاليهات في الساحل والسخنة.</p>
                   <div className="flex justify-center gap-4">
                     <Button size="lg" className="rounded-full h-16 px-12 text-xl font-black shadow-xl shadow-primary/20" onClick={() => document.getElementById('units')?.scrollIntoView({behavior: 'smooth'})}>استعرض الشاليهات</Button>
-                    <Button size="lg" variant="outline" className="rounded-full h-16 px-12 text-xl font-black">احجز بالهاتف</Button>
+                    <Button size="lg" variant="outline" className="rounded-full h-16 px-12 text-xl font-black border-slate-200">احجز بالهاتف</Button>
                   </div>
                </div>
             </div>
@@ -96,7 +111,7 @@ export default function PharmaBeachApp() {
                   </div>
                   <div className="w-full md:w-96 relative">
                     <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <Input placeholder="ابحث بالاسم أو الموقع..." className="h-14 rounded-2xl pr-12 text-right bg-white shadow-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    <Input placeholder="ابحث بالاسم أو الموقع..." className="h-14 rounded-2xl pr-12 text-right bg-white shadow-sm border-slate-100" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                   </div>
                </div>
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -111,71 +126,71 @@ export default function PharmaBeachApp() {
         {store.role === 'admin' && (
           <div className="container mx-auto px-4 py-10 space-y-10">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-               <StatCard title="إجمالي الإيرادات" val={store.bookings.reduce((acc, b) => acc + (b.totalAmount || 0), 0).toLocaleString() + ' ج.م'} icon={Wallet} color="text-green-600" />
+               <StatCard title="إجمالي الإيرادات" val={store.bookings.filter(b => b.paymentStatus === 'verified').reduce((acc, b) => acc + (b.totalAmount || 0), 0).toLocaleString() + ' ج.م'} icon={Wallet} color="text-green-600" />
                <StatCard title="النزلاء بالداخل" val={store.bookings.filter(b => b.opStatus === 'checked_in').length} icon={Activity} color="text-blue-600" />
                <StatCard title="حوالات معلقة" val={store.bookings.filter(b => b.paymentStatus === 'pending').length} icon={AlertTriangle} color="text-orange-600" />
                <StatCard title="إشغال اليوم" val="85%" icon={BarChart3} color="text-purple-600" />
             </div>
 
             <Tabs defaultValue="bookings" className="w-full">
-              <TabsList className="bg-white p-2 rounded-[2rem] mb-8 flex flex-wrap justify-start border shadow-sm">
-                <TabsTrigger value="bookings" className="rounded-xl px-6 font-black data-[state=active]:bg-primary data-[state=active]:text-white">المالية والحجوزات</TabsTrigger>
-                <TabsTrigger value="chalets" className="rounded-xl px-6 font-black data-[state=active]:bg-primary data-[state=active]:text-white">إدارة الأصول</TabsTrigger>
-                <TabsTrigger value="marketing" className="rounded-xl px-6 font-black data-[state=active]:bg-primary data-[state=active]:text-white">التسويق والكوبونات</TabsTrigger>
-                <TabsTrigger value="users" className="rounded-xl px-6 font-black data-[state=active]:bg-primary data-[state=active]:text-white">فريق العمل</TabsTrigger>
-                <TabsTrigger value="reports" className="rounded-xl px-6 font-black data-[state=active]:bg-primary data-[state=active]:text-white">التقارير</TabsTrigger>
+              <TabsList className="bg-white p-2 rounded-[2rem] mb-8 flex flex-wrap justify-start border shadow-sm h-auto">
+                <TabsTrigger value="bookings" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">المالية والحجوزات</TabsTrigger>
+                <TabsTrigger value="chalets" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">إدارة الأصول</TabsTrigger>
+                <TabsTrigger value="marketing" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">التسويق والكوبونات</TabsTrigger>
+                <TabsTrigger value="users" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">فريق العمل</TabsTrigger>
+                <TabsTrigger value="reports" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">التقارير</TabsTrigger>
               </TabsList>
 
               <TabsContent value="bookings" className="space-y-6">
                  {myBookings.map(b => (
                    <Card key={b.id} className="p-8 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-6 border-none shadow-xl bg-white">
-                      <div className="flex items-center gap-6 flex-1">
+                      <div className="flex items-center gap-6 flex-1 w-full md:w-auto">
                          <div className={`p-6 rounded-3xl ${b.paymentStatus === 'verified' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}><Receipt className="h-10 w-10" /></div>
                          <div className="text-right">
                            <p className="font-black text-2xl">{b.clientName}</p>
                            <p className="text-sm font-bold text-slate-500">{store.chalets.find(c => c.id === b.chaletId)?.name} | {b.totalAmount} ج.م</p>
                            <div className="flex gap-2 mt-3">
-                              <Badge className={b.paymentStatus === 'verified' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}>
+                              <Badge className={b.paymentStatus === 'verified' ? 'bg-green-100 text-green-700 border-none' : 'bg-orange-100 text-orange-700 border-none'}>
                                 {b.paymentStatus === 'verified' ? 'دفع مؤكد' : 'انتظار مراجعة الحوالة'}
                               </Badge>
-                              <Badge variant="outline" className="border-slate-200">مرجع: {b.paymentReference}</Badge>
+                              <Badge variant="outline" className="border-slate-200 text-[10px]">مرجع: {b.paymentReference}</Badge>
                            </div>
                          </div>
                       </div>
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 w-full md:w-auto">
                         {b.paymentStatus === 'pending' && (
-                          <Button className="h-14 px-8 bg-green-600 font-black rounded-2xl shadow-lg shadow-green-200" onClick={() => store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })}>تأكيد الحوالة</Button>
+                          <Button className="flex-1 md:flex-none h-14 px-8 bg-green-600 font-black rounded-2xl shadow-lg shadow-green-200" onClick={() => store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })}>تأكيد الحوالة</Button>
                         )}
-                        <Button variant="outline" className="h-14 px-6 rounded-2xl font-black gap-2 border-slate-200"><FileSpreadsheet className="h-4 w-4" /> تصدير PDF</Button>
+                        <Button variant="outline" className="flex-1 md:flex-none h-14 px-6 rounded-2xl font-black gap-2 border-slate-200"><FileSpreadsheet className="h-4 w-4" /> تصدير PDF</Button>
                       </div>
                    </Card>
                  ))}
               </TabsContent>
 
               <TabsContent value="chalets" className="space-y-6">
-                 <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm">
+                 <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm gap-6">
                    <div className="text-right">
                      <h3 className="text-3xl font-black">إدارة المحفظة العقارية</h3>
                      <p className="text-slate-500 font-bold">تحكم في الأسعار، التوفر، وحالات الصيانة</p>
                    </div>
-                   <Button className="rounded-2xl h-16 px-10 font-black gap-2 text-lg shadow-xl shadow-primary/20" onClick={() => setIsAddChaletOpen(true)}><Plus /> إضافة وحدة</Button>
+                   <Button className="w-full md:w-auto rounded-2xl h-16 px-10 font-black gap-2 text-lg shadow-xl shadow-primary/20" onClick={() => setIsAddChaletOpen(true)}><Plus /> إضافة وحدة</Button>
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {store.chalets.map(c => (
                       <Card key={c.id} className="rounded-[3rem] overflow-hidden bg-white border-none shadow-xl hover:-translate-y-2 transition-all duration-500 group">
                          <div className="h-56 relative overflow-hidden">
                            <Image src={c.image} alt={c.name} fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
-                           <Badge className="absolute top-6 right-6 bg-white/90 text-slate-900 font-black backdrop-blur-md border-none">{c.city}</Badge>
+                           <Badge className="absolute top-6 right-6 bg-white/90 text-slate-900 font-black backdrop-blur-md border-none px-4 py-2">{c.city}</Badge>
                          </div>
                          <div className="p-8 space-y-6">
-                            <h4 className="font-black text-xl">{c.name}</h4>
+                            <h4 className="font-black text-xl text-right">{c.name}</h4>
                             <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-500">
-                               <div className="flex items-center gap-2"><CheckCircle2 className="h-3.3 text-green-500" /> {c.normalPrice} ج.م</div>
-                               <div className="flex items-center gap-2"><Star className="h-3.3 text-yellow-500" /> 5.0</div>
+                               <div className="flex items-center gap-2 justify-end">{c.normalPrice} ج.م <CheckCircle2 className="h-3.3 text-green-500" /></div>
+                               <div className="flex items-center gap-2 justify-end">5.0 <Star className="h-3.3 text-yellow-500" /></div>
                             </div>
                             <div className="flex gap-2">
-                               <Button variant="secondary" className="flex-1 h-12 rounded-xl font-black" onClick={() => setViewingDetailsChalet(c)}>السجل والتفاصيل</Button>
-                               <Button variant="ghost" className="h-12 w-12 rounded-xl text-destructive" onClick={() => store.deleteChalet(c.id)}><Trash2 className="h-5 w-5" /></Button>
+                               <Button variant="secondary" className="flex-1 h-12 rounded-xl font-black bg-slate-100 text-slate-900" onClick={() => setViewingDetailsChalet(c)}>السجل والتفاصيل</Button>
+                               <Button variant="ghost" className="h-12 w-12 rounded-xl text-destructive hover:bg-destructive/10" onClick={() => store.deleteChalet(c.id)}><Trash2 className="h-5 w-5" /></Button>
                             </div>
                          </div>
                       </Card>
@@ -189,36 +204,36 @@ export default function PharmaBeachApp() {
                        <h3 className="text-2xl font-black">كوبونات الخصم</h3>
                        <div className="space-y-4">
                           {store.coupons?.map(cp => (
-                            <div key={cp.id} className="p-6 bg-slate-50 rounded-2xl border-dashed border-2 flex justify-between items-center">
+                            <div key={cp.id} className="p-6 bg-slate-50 rounded-2xl border-dashed border-2 border-slate-200 flex justify-between items-center">
                                <div className="text-right">
                                  <p className="font-black text-2xl text-primary">{cp.code}</p>
                                  <p className="text-xs font-bold text-slate-500">خصم {cp.value}{cp.discountType === 'percentage' ? '%' : ' ج.م'}</p>
                                </div>
-                               <Badge variant={cp.isActive ? 'default' : 'secondary'}>{cp.isActive ? 'نشط' : 'منتهي'}</Badge>
+                               <Badge variant={cp.isActive ? 'default' : 'secondary'} className="rounded-full px-4">{cp.isActive ? 'نشط' : 'منتهي'}</Badge>
                             </div>
                           ))}
                        </div>
-                       <Button className="w-full h-14 rounded-2xl font-black"><Tag className="ml-2 h-4 w-4" /> إنشاء كوبون جديد</Button>
+                       <Button className="w-full h-14 rounded-2xl font-black border-none"><Tag className="ml-2 h-4 w-4" /> إنشاء كوبون جديد</Button>
                     </Card>
                     <Card className="p-10 rounded-[3rem] border-none shadow-xl bg-white text-right space-y-6">
                        <h3 className="text-2xl font-black">إدارة المواسم</h3>
                        <p className="text-slate-500 font-bold">تحكم في الأسعار التلقائية حسب التواريخ (عيد، صيف، شتاء)</p>
-                       <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-4 text-blue-700">
+                       <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-4 text-blue-700 flex-row-reverse">
                           <Settings className="h-8 w-8" />
-                          <p className="font-black">موسم الصيف 2024 مفعل بنسبة زيادة 30%</p>
+                          <p className="font-black text-right">موسم الصيف 2024 مفعل بنسبة زيادة 30%</p>
                        </div>
-                       <Button variant="outline" className="w-full h-14 rounded-2xl font-black">إعدادات المواسم</Button>
+                       <Button variant="outline" className="w-full h-14 rounded-2xl font-black border-slate-200">إعدادات المواسم</Button>
                     </Card>
                  </div>
               </TabsContent>
               
               <TabsContent value="users" className="space-y-6">
-                 <div className="flex justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm">
+                 <div className="flex flex-col md:flex-row justify-between items-center bg-white p-10 rounded-[3rem] border shadow-sm gap-6">
                    <div className="text-right">
                      <h3 className="text-3xl font-black">فريق العمل</h3>
                      <p className="text-slate-500 font-bold">إدارة المشرفين، البروكرز، وصلاحيات الوصول</p>
                    </div>
-                   <Button className="rounded-2xl h-16 px-10 font-black gap-2 text-lg shadow-xl shadow-primary/20" onClick={() => setIsAddUserOpen(true)}><Users /> إضافة موظف</Button>
+                   <Button className="w-full md:w-auto rounded-2xl h-16 px-10 font-black gap-2 text-lg shadow-xl shadow-primary/20" onClick={() => setIsAddUserOpen(true)}><Users /> إضافة موظف</Button>
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {store.users.map(u => (
@@ -228,7 +243,7 @@ export default function PharmaBeachApp() {
                             <p className="font-black text-xl">{u.name}</p>
                             <Badge className="mt-1 bg-slate-50 text-slate-600 border-none">{u.role === 'broker' ? 'وسيط' : 'مشرف'}</Badge>
                          </div>
-                         <Button variant="ghost" className="h-10 w-10 text-destructive"><XCircle /></Button>
+                         <Button variant="ghost" className="h-10 w-10 text-destructive hover:bg-destructive/10"><XCircle /></Button>
                       </Card>
                     ))}
                  </div>
@@ -246,10 +261,10 @@ export default function PharmaBeachApp() {
             </div>
 
             <Tabs defaultValue="inventory" className="w-full">
-              <TabsList className="bg-white p-2 rounded-[2rem] mb-8 flex border shadow-sm">
-                <TabsTrigger value="inventory" className="rounded-xl px-10 font-black">الوحدات المتاحة</TabsTrigger>
-                <TabsTrigger value="crm" className="rounded-xl px-10 font-black">العملاء والحجوزات</TabsTrigger>
-                <TabsTrigger value="performance" className="rounded-xl px-10 font-black">الأداء والعمولات</TabsTrigger>
+              <TabsList className="bg-white p-2 rounded-[2rem] mb-8 flex border shadow-sm h-auto">
+                <TabsTrigger value="inventory" className="rounded-xl px-10 py-3 font-black">الوحدات المتاحة</TabsTrigger>
+                <TabsTrigger value="crm" className="rounded-xl px-10 py-3 font-black">العملاء والحجوزات</TabsTrigger>
+                <TabsTrigger value="performance" className="rounded-xl px-10 py-3 font-black">الأداء والعمولات</TabsTrigger>
               </TabsList>
 
               <TabsContent value="inventory" className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -261,7 +276,7 @@ export default function PharmaBeachApp() {
               <TabsContent value="crm" className="space-y-6">
                  {myBookings.map(b => (
                    <Card key={b.id} className="p-10 rounded-[3rem] border-none shadow-xl bg-white flex flex-col md:flex-row justify-between items-center gap-8">
-                      <div className="text-right flex-1 space-y-3">
+                      <div className="text-right flex-1 space-y-3 w-full">
                         <div className="flex items-center gap-3">
                           <p className="font-black text-2xl">{b.clientName}</p>
                           <Badge className="bg-blue-50 text-blue-700 border-none">{b.status === 'pending' ? 'بانتظار موافقة الأدمن' : 'حجز مؤكد'}</Badge>
@@ -272,9 +287,9 @@ export default function PharmaBeachApp() {
                            <span className="flex items-center gap-1"><MessageSquare className="h-3.3" /> ملاحظة: يفضل الأدوار العليا</span>
                         </div>
                       </div>
-                      <div className="flex gap-3">
-                        <Button className="rounded-2xl h-14 px-8 font-black bg-blue-600 shadow-lg shadow-blue-100 gap-2"><MessageSquare className="h-5 w-5" /> دردشة العميل</Button>
-                        <Button variant="outline" className="rounded-2xl h-14 px-6 rounded-2xl font-black gap-2 border-slate-200" onClick={() => toast({ title: "تم فتح سجل التشغيل التاريخي" })}><History className="h-5 w-5" /> سجل التشغيل</Button>
+                      <div className="flex gap-3 w-full md:w-auto">
+                        <Button className="flex-1 md:flex-none rounded-2xl h-14 px-8 font-black bg-blue-600 shadow-lg shadow-blue-100 gap-2"><MessageSquare className="h-5 w-5" /> دردشة العميل</Button>
+                        <Button variant="outline" className="flex-1 md:flex-none rounded-2xl h-14 px-6 font-black gap-2 border-slate-200" onClick={() => toast({ title: "تم فتح سجل التشغيل التاريخي" })}><History className="h-5 w-5" /> سجل التشغيل</Button>
                       </div>
                    </Card>
                  ))}
@@ -296,21 +311,21 @@ export default function PharmaBeachApp() {
                {myBookings.map(b => (
                  <Card key={b.id} className="p-10 rounded-[3.5rem] shadow-2xl border-none bg-white hover:shadow-primary/5 transition-all">
                     <div className="flex flex-col md:flex-row justify-between items-start gap-10">
-                       <div className="text-right space-y-4 flex-1">
-                          <div className="flex items-center gap-4">
+                       <div className="text-right space-y-4 flex-1 w-full">
+                          <div className="flex items-center gap-4 flex-row-reverse">
                             <h3 className="text-3xl font-black text-slate-900">{store.chalets.find(c => c.id === b.chaletId)?.name}</h3>
                             <Badge className="h-8 px-4 rounded-xl bg-slate-100 text-slate-700 border-none font-black">{b.opStatus === 'waiting' ? 'بانتظار وصول' : 'بالداخل الآن'}</Badge>
                           </div>
                           <p className="text-xl font-bold text-slate-600">النزيل: {b.clientName} | <span className="text-primary underline">{b.phoneNumber}</span></p>
-                          <div className="flex flex-wrap gap-3">
+                          <div className="flex flex-wrap gap-3 justify-end">
                              <div className="flex items-center gap-2 bg-slate-50 px-5 py-2.5 rounded-2xl text-sm font-black text-slate-700 border border-slate-100">
-                               <Zap className="h-4 w-4 text-yellow-500" /> كهرباء: {b.electricityReading || '---'}
+                               {b.electricityReading || '---'} <Zap className="h-4 w-4 text-yellow-500" />
                              </div>
                              <div className="flex items-center gap-2 bg-slate-50 px-5 py-2.5 rounded-2xl text-sm font-black text-slate-700 border border-slate-100">
-                               <Droplets className="h-4 w-4 text-blue-500" /> مياه: {b.waterReading || '---'}
+                               {b.waterReading || '---'} <Droplets className="h-4 w-4 text-blue-500" />
                              </div>
                              <div className="flex items-center gap-2 bg-slate-50 px-5 py-2.5 rounded-2xl text-sm font-black text-slate-700 border border-slate-100">
-                               <ShieldAlert className="h-4 w-4 text-red-500" /> التأمين: {b.totalAmount * 0.2} ج.م
+                               {b.totalAmount * 0.2} ج.م <ShieldAlert className="h-4 w-4 text-red-500" />
                              </div>
                           </div>
                        </div>
@@ -359,7 +374,23 @@ export default function PharmaBeachApp() {
       </footer>
 
       <ChaletDetailsDialog chalet={viewingDetailsChalet} isOpen={!!viewingDetailsChalet} onClose={() => setViewingDetailsChalet(null)} onBook={() => { setSelectedChalet(viewingDetailsChalet); setIsBookingOpen(true); setViewingDetailsChalet(null); }} existingBookings={store.bookings} />
-      <BookingDialog chalet={selectedChalet} isOpen={isBookingOpen} onClose={() => setIsBookingOpen(false)} onConfirm={(data) => { store.addBooking({ ...data, brokerId: store.role === 'broker' ? store.currentUser?.uid : undefined }); toast({ title: "تم إرسال الطلب للمراجعة المالية" }); }} existingBookings={store.bookings} />
+      
+      <BookingDialog 
+        chalet={selectedChalet} 
+        isOpen={isBookingOpen} 
+        onClose={() => setIsBookingOpen(false)} 
+        onConfirm={(data) => { 
+          const bookingPayload: any = { ...data };
+          // Fix: Avoid passing undefined to Firestore
+          if (store.role === 'broker' && store.currentUser?.uid) {
+            bookingPayload.brokerId = store.currentUser.uid;
+          }
+          store.addBooking(bookingPayload); 
+          toast({ title: "تم إرسال الطلب للمراجعة المالية" }); 
+        }} 
+        existingBookings={store.bookings} 
+      />
+
       <AddChaletDialog isOpen={isAddChaletOpen} onClose={() => setIsAddChaletOpen(false)} onAdd={(data) => { store.addChalet(data); toast({ title: "تمت إضافة الشاليه وبانتظار الاعتماد" }); }} />
       <AddUserDialog isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} onAdd={(data) => { store.addUser(data); toast({ title: "تم إنشاء حساب الموظف الجديد" }); }} chalets={store.chalets} />
 

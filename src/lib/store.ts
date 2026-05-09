@@ -96,7 +96,7 @@ export interface Coupon {
 
 export function useAppStore() {
   const db = useFirestore()
-  const [role, setRole] = useState<UserRole | null>(null)
+  const [role, setRoleState] = useState<UserRole | null>(null)
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
 
   const { data: chalets, loading: chaletsLoading } = useCollection<Chalet>(
@@ -155,9 +155,26 @@ export function useAppStore() {
     }
   }, [chaletsLoading, usersLoading, db, coupons])
 
+  const setRole = (newRole: UserRole | null) => {
+    setRoleState(newRole);
+    if (newRole && users) {
+      const user = users.find(u => u.role === newRole);
+      if (user) setCurrentUser(user);
+    } else {
+      setCurrentUser(null);
+    }
+  }
+
+  const cleanData = (data: any) => {
+    return Object.entries(data).reduce((acc, [key, value]) => {
+      if (value !== undefined) acc[key] = value;
+      return acc;
+    }, {} as any);
+  };
+
   const addBooking = (data: Omit<Booking, 'id' | 'createdAt'>) => {
     addDoc(collection(db, 'bookings'), { 
-      ...data, 
+      ...cleanData(data), 
       status: data.status || 'pending',
       opStatus: data.opStatus || 'waiting',
       paymentStatus: data.paymentStatus || 'pending',
@@ -166,15 +183,15 @@ export function useAppStore() {
   }
 
   const updateBooking = (id: string, updates: Partial<Booking>) => {
-    updateDoc(doc(db, 'bookings', id), updates)
+    updateDoc(doc(db, 'bookings', id), cleanData(updates))
   }
 
   const addChalet = (data: Omit<Chalet, 'id'>) => {
-    addDoc(collection(db, 'chalets'), { ...data, createdAt: serverTimestamp() })
+    addDoc(collection(db, 'chalets'), { ...cleanData(data), createdAt: serverTimestamp() })
   }
 
   const updateChalet = (id: string, updates: Partial<Chalet>) => {
-    updateDoc(doc(db, 'chalets', id), updates)
+    updateDoc(doc(db, 'chalets', id), cleanData(updates))
   }
 
   const deleteChalet = (id: string) => {
@@ -182,11 +199,11 @@ export function useAppStore() {
   }
 
   const addUser = (data: Omit<UserProfile, 'id'>) => {
-    addDoc(collection(db, 'users'), { ...data, createdAt: serverTimestamp() })
+    addDoc(collection(db, 'users'), { ...cleanData(data), createdAt: serverTimestamp() })
   }
 
   const addCoupon = (data: Omit<Coupon, 'id'>) => {
-    addDoc(collection(db, 'coupons'), { ...data })
+    addDoc(collection(db, 'coupons'), cleanData(data))
   }
 
   return {
