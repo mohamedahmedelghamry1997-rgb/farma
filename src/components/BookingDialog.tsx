@@ -87,6 +87,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                 disabled={isDateDisabled}
                 className="rounded-xl w-full flex justify-center"
                 locale={ar}
+                dir="rtl"
               />
             </div>
             {dateRange?.from && dateRange?.to && (

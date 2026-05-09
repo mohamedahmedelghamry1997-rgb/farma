@@ -23,15 +23,17 @@ function Calendar({
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center mb-4",
+        month_caption: "flex justify-center pt-1 relative items-center mb-4",
         caption_label: "text-sm font-bold text-primary",
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
+        nav: "flex items-center gap-1",
+        button_previous: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border-none shadow-none"
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border-none shadow-none absolute left-1 z-10"
         ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
+        button_next: cn(
+          buttonVariants({ variant: "outline" }),
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border-none shadow-none absolute right-1 z-10"
+        ),
         month_grid: "w-full border-collapse space-y-1",
         weekdays: "flex justify-between mb-2",
         weekday: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] text-center flex-1",
@@ -40,21 +42,25 @@ function Calendar({
           buttonVariants({ variant: "ghost" }),
           "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-primary/10 transition-colors cursor-pointer flex items-center justify-center rounded-lg"
         ),
-        day_range_end: "day-range-end",
-        day_selected:
+        range_start: "day-range-start",
+        range_end: "day-range-end",
+        selected:
           "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-secondary/20 text-secondary font-bold",
-        day_outside:
+        today: "bg-secondary/20 text-secondary font-bold",
+        outside:
           "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
-        day_disabled: "text-muted-foreground opacity-30 cursor-not-allowed pointer-events-none",
-        day_range_middle:
+        disabled: "text-muted-foreground opacity-30 cursor-not-allowed pointer-events-none",
+        range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        day_hidden: "invisible",
+        hidden: "invisible",
         ...classNames,
       }}
       components={{
-        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
-        IconRight: () => <ChevronRight className="h-4 w-4" />,
+        Chevron: ({ orientation }) => {
+          if (orientation === "left") return <ChevronLeft className="h-4 w-4" />
+          if (orientation === "right") return <ChevronRight className="h-4 w-4" />
+          return null
+        },
       }}
       {...props}
     />

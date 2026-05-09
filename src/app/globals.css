@@ -55,28 +55,11 @@
   @apply bg-white/80 backdrop-blur-md border border-white/20;
 }
 
-/* Calendar Fixes for v9 and RTL */
-.rdp-month_grid {
-  width: 100% !important;
-}
-
-.rdp-weekdays {
-  display: flex !important;
-  justify-content: space-between !important;
-  width: 100% !important;
-}
-
-.rdp-week {
-  display: flex !important;
-  justify-content: space-between !important;
-  width: 100% !important;
-}
-
+/* Calendar Fixes for v9 */
 .rdp-day {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex: 1 !important;
-  aspect-ratio: 1/1 !important;
-  max-width: 40px !important;
+  cursor: pointer !important;
+}
+
+.rdp-button_next, .rdp-button_previous {
+  position: absolute !important;
 }
