@@ -1,3 +1,4 @@
+
 "use client"
 
 import Image from "next/image"
@@ -23,16 +24,16 @@ export function ChaletCard({ chalet, onBook }: ChaletCardProps) {
           className="object-cover transition-transform duration-700 group-hover:scale-110"
           data-ai-hint="beachfront chalet"
         />
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 left-4">
           <Badge className="bg-white/90 text-primary border-none font-bold py-1 px-3 backdrop-blur-sm">
-            ${chalet.price}<span className="text-[10px] opacity-60 ml-1">/night</span>
+            ${chalet.price}<span className="text-[10px] opacity-60 mr-1">/ليلة</span>
           </Badge>
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
           <p className="text-white text-sm line-clamp-2">{chalet.description}</p>
         </div>
       </div>
-      <CardContent className="p-6">
+      <CardContent className="p-6 text-right">
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-headline text-xl text-primary font-bold">{chalet.name}</h3>
           <div className="flex items-center gap-1 text-secondary font-bold">
@@ -42,7 +43,7 @@ export function ChaletCard({ chalet, onBook }: ChaletCardProps) {
         </div>
         <div className="flex items-center gap-1 text-muted-foreground text-sm mb-4">
           <MapPin className="h-4 w-4" />
-          <span>Pharma Beach Village, North Coast</span>
+          <span>قرية فارما بيتش، الساحل الشمالي</span>
         </div>
       </CardContent>
       <CardFooter className="px-6 pb-6 pt-0">
@@ -50,7 +51,7 @@ export function ChaletCard({ chalet, onBook }: ChaletCardProps) {
           className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 rounded-xl"
           onClick={() => onBook(chalet)}
         >
-          Book Now
+          احجز الآن
         </Button>
       </CardFooter>
     </Card>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from 'react'
@@ -6,11 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Chalet, Booking } from "@/lib/store"
-import { format, addDays, isBefore, startOfDay } from "date-fns"
+import { format, isBefore, startOfDay } from "date-fns"
+import { ar } from "date-fns/locale"
 import { CalendarIcon, Users, Phone, User } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 interface BookingDialogProps {
   chalet: Chalet | null
@@ -39,73 +39,74 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     onClose()
   }
 
-  // Back-to-back logic helper
   const isDateDisabled = (day: Date) => {
     return isBefore(day, startOfDay(new Date())) || existingBookings.some(b => {
       const start = new Date(b.startDate)
       const end = new Date(b.endDate)
-      return day >= start && day <= end && b.chaletId === chalet?.id
+      return day >= start && day <= end && b.chaletId === chalet?.id && b.status !== 'cancelled'
     })
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden rounded-3xl border-none shadow-2xl">
+      <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden rounded-3xl border-none shadow-2xl text-right">
         <div className="bg-primary p-6 text-white">
-          <DialogTitle className="font-headline text-2xl">Book {chalet?.name}</DialogTitle>
+          <DialogTitle className="font-headline text-2xl">حجز {chalet?.name}</DialogTitle>
           <DialogDescription className="text-white/80 mt-1">
-            Complete the form to request your luxury stay.
+            أكمل البيانات أدناه لطلب حجز إقامتك الفاخرة.
           </DialogDescription>
         </div>
         
-        <div className="p-6 space-y-6 bg-white">
+        <div className="p-6 space-y-6 bg-white overflow-y-auto max-h-[70vh]">
           <div className="space-y-2">
-            <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
-              <CalendarIcon className="h-3 w-3" /> Select Dates
+            <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2 justify-end">
+               اختر التواريخ <CalendarIcon className="h-3 w-3" />
             </Label>
-            <Calendar
-              mode="range"
-              selected={{ from: date?.from, to: date?.to }}
-              onSelect={(range: any) => setDate(range)}
-              disabled={isDateDisabled}
-              className="rounded-xl border shadow-sm"
-              numberOfMonths={1}
-            />
+            <div className="flex justify-center">
+              <Calendar
+                mode="range"
+                selected={{ from: date?.from, to: date?.to }}
+                onSelect={(range: any) => setDate(range)}
+                disabled={isDateDisabled}
+                className="rounded-xl border shadow-sm"
+                locale={ar}
+              />
+            </div>
             {date?.from && date?.to && (
-              <p className="text-xs text-primary font-medium px-1">
-                {format(date.from, "LLL dd, y")} - {format(date.to, "LLL dd, y")}
+              <p className="text-xs text-primary font-medium px-1 text-center">
+                {format(date.from, "dd MMMM y", { locale: ar })} - {format(date.to, "dd MMMM y", { locale: ar })}
               </p>
             )}
           </div>
 
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
-                <User className="h-3 w-3" /> Full Name
+              <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2 justify-end">
+                الاسم بالكامل <User className="h-3 w-3" />
               </Label>
               <Input 
-                placeholder="Enter your name" 
+                placeholder="أدخل اسمك" 
                 value={name} 
                 onChange={e => setName(e.target.value)}
-                className="rounded-xl border-muted h-12"
+                className="rounded-xl border-muted h-12 text-right"
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
-                  <Phone className="h-3 w-3" /> Phone
+                <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2 justify-end">
+                  رقم الهاتف <Phone className="h-3 w-3" />
                 </Label>
                 <Input 
                   placeholder="01xxxxxxxxx" 
                   value={phone} 
                   onChange={e => setPhone(e.target.value)}
-                  className="rounded-xl border-muted h-12"
+                  className="rounded-xl border-muted h-12 text-right"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
-                  <Users className="h-3 w-3" /> Guests
+                <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2 justify-end">
+                  الضيوف <Users className="h-3 w-3" />
                 </Label>
                 <Input 
                   type="number" 
@@ -113,22 +114,22 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                   max={10} 
                   value={guests} 
                   onChange={e => setGuests(parseInt(e.target.value))}
-                  className="rounded-xl border-muted h-12"
+                  className="rounded-xl border-muted h-12 text-right"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        <DialogFooter className="p-6 pt-0 bg-white">
-          <Button variant="outline" onClick={onClose} className="rounded-xl h-12">Cancel</Button>
+        <DialogFooter className="p-6 pt-0 bg-white gap-2 flex-row-reverse">
           <Button 
             onClick={handleConfirm} 
             disabled={!date?.to || !name || !phone}
             className="rounded-xl h-12 bg-primary text-white flex-1"
           >
-            Confirm Request
+            تأكيد الطلب
           </Button>
+          <Button variant="outline" onClick={onClose} className="rounded-xl h-12">إلغاء</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

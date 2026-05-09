@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from 'react'
@@ -32,25 +33,25 @@ export interface Booking {
 const INITIAL_CHALETS: Chalet[] = [
   {
     id: '1',
-    name: 'Royal Blue Chalet',
+    name: 'شاليه رويال بلو',
     price: 450,
-    description: 'Experience ultimate luxury in our signature Royal Blue chalet with direct beach access.',
+    description: 'استمتع بالفخامة المطلقة في شاليه رويال بلو مع وصول مباشر للشاطئ وحمام سباحة خاص.',
     image: 'https://picsum.photos/seed/chalet1/800/600',
     rating: 4.8,
   },
   {
     id: '2',
-    name: 'Golden Sands Retreat',
+    name: 'منتجع الرمال الذهبية',
     price: 380,
-    description: 'A serene getaway perfectly positioned for sunset views over Pharma Beach.',
+    description: 'ملاذ هادئ يقع في موقع مثالي لمشاهدة غروب الشمس الساحر فوق قرية فارما.',
     image: 'https://picsum.photos/seed/chalet2/800/600',
     rating: 4.5,
   },
   {
     id: '3',
-    name: 'Azure Pearl Suite',
+    name: 'جناح اللؤلؤة اللازوردية',
     price: 520,
-    description: 'Our premium suite featuring panoramic windows and modern amenities.',
+    description: 'جناحنا المتميز الذي يتميز بنوافذ بانورامية ومرافق عصرية متكاملة.',
     image: 'https://picsum.photos/seed/chalet3/800/600',
     rating: 4.9,
   },
@@ -60,13 +61,13 @@ const INITIAL_BOOKINGS: Booking[] = [
   {
     id: 'b1',
     chaletId: '1',
-    clientName: 'Ahmed Omar',
+    clientName: 'أحمد عمر',
     phoneNumber: '0123456789',
     guestCount: 4,
     startDate: new Date().toISOString(),
     endDate: new Date(Date.now() + 86400000 * 2).toISOString(),
     status: 'confirmed',
-    notes: 'Needs extra towels',
+    notes: 'يحتاج مناشف إضافية',
   }
 ]
 
