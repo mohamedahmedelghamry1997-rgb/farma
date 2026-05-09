@@ -30,6 +30,7 @@ export interface UserProfile {
   status?: 'active' | 'suspended'
   commissionRate?: number
   image?: string
+  performanceScore?: number
 }
 
 export interface Chalet {
@@ -151,7 +152,6 @@ export function useAppStore() {
 
     if (coupons?.length === 0) {
       addDoc(collection(db, 'coupons'), { code: "PHARMA20", discountType: "percentage", value: 20, isActive: true, expiryDate: "2025-12-31" })
-      addDoc(collection(db, 'coupons'), { code: "SUMMER2024", discountType: "fixed", value: 500, isActive: true, expiryDate: "2024-09-30" })
     }
   }, [chaletsLoading, usersLoading, db, coupons])
 
