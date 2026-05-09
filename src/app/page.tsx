@@ -80,7 +80,11 @@ export default function PharmaBeachApp() {
     let list = store.bookings
     if (store.role === 'supervisor') {
       const assignedIds = store.currentUser?.assignedChaletIds || []
-      list = list.filter(b => assignedIds.includes(b.chaletId) && (b.status === 'confirmed' || b.status === 'admin_approved'))
+      // If mock supervisor has no assignedIds, show all active for demo
+      if (assignedIds.length > 0) {
+        list = list.filter(b => assignedIds.includes(b.chaletId))
+      }
+      list = list.filter(b => b.status === 'confirmed' || b.status === 'admin_approved')
     }
     if (searchQuery) {
       list = list.filter(b => b.clientName.includes(searchQuery) || b.phoneNumber.includes(searchQuery))
