@@ -43,6 +43,17 @@ export default function PharmaBeachApp() {
   const [aiAnalyzing, setAiAnalyzing] = useState<string | null>(null)
   const [aiAnalysisResult, setAiAnalysisResult] = useState<any>(null)
 
+  // Revenue Data for Chart - Defined at the top level to follow Rules of Hooks
+  const revenueData = useMemo(() => {
+    return store.chalets.map(c => ({
+      name: c.name,
+      total: store.bookings
+        .filter(b => b.chaletId === c.id && b.status === 'confirmed')
+        .length * c.price
+    }))
+  }, [store.bookings, store.chalets])
+
+  // Early return after all hooks are declared
   if (!store.isLoaded) return <div className="h-screen flex items-center justify-center bg-background"><Clock className="animate-spin text-primary" /></div>
 
   const handleBook = (chalet: Chalet) => {
@@ -94,16 +105,6 @@ export default function PharmaBeachApp() {
       setAiAnalyzing(null)
     }
   }
-
-  // Revenue Data for Chart
-  const revenueData = useMemo(() => {
-    return store.chalets.map(c => ({
-      name: c.name,
-      total: store.bookings
-        .filter(b => b.chaletId === c.id && b.status === 'confirmed')
-        .length * c.price
-    }))
-  }, [store.bookings, store.chalets])
 
   return (
     <div className="min-h-screen bg-background pb-32">
