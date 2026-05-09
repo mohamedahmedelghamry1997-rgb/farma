@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
   Users, Home, CheckCircle2, XCircle, Plus, Trash2, MapPin, Phone, LogOut, 
   Wallet, Receipt, Search, Activity, BarChart3, TrendingUp, Clock, Star,
@@ -27,7 +28,7 @@ import { ChaletDetailsDialog } from '@/components/ChaletDetailsDialog'
 import { SupervisorActionDialog } from '@/components/SupervisorActionDialog'
 import Image from 'next/image'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart, Pie, PieChart, Cell } from 'recharts'
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, Area, AreaChart, Pie, PieChart, Cell } from 'recharts'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
 import { adminChaletBookingGapOptimizer } from '@/ai/flows/admin-chalet-booking-gap-optimizer'
@@ -46,6 +47,7 @@ export default function PharmaBeachApp() {
   const { toast } = useToast()
   
   const [isLoginView, setIsLoginView] = useState(true)
+  const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -127,9 +129,11 @@ export default function PharmaBeachApp() {
       if (isLoginView) {
         await signInWithEmailAndPassword(auth, email, password)
         toast({ title: "تم تسجيل الدخول بنجاح" })
+        setIsAuthOpen(false)
       } else {
         await createUserWithEmailAndPassword(auth, email, password)
         toast({ title: "تم إنشاء الحساب بنجاح" })
+        setIsAuthOpen(false)
       }
     } catch (e: any) {
       toast({ variant: "destructive", title: "خطأ في المصادقة", description: e.message })
@@ -162,49 +166,10 @@ export default function PharmaBeachApp() {
 
   if (!store.isLoaded) return <div className="h-screen flex items-center justify-center font-black bg-slate-50 text-primary animate-pulse text-2xl">جاري تشغيل محرك فارما بيتش...</div>
 
-  if (!store.authUser) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 text-right">
-        <Card className="w-full max-w-md p-10 rounded-[3rem] shadow-2xl space-y-8 bg-white border-none">
-          <div className="text-center space-y-3">
-             <div className="bg-primary w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-lg shadow-primary/20"><LogIn className="text-white h-8 w-8" /></div>
-             <h2 className="text-3xl font-black text-slate-900">{isLoginView ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}</h2>
-             <p className="text-slate-500 font-bold">مرحباً بك في منظومة فارما بيتش الإدارية</p>
-          </div>
-          <div className="space-y-4">
-             {!isLoginView && (
-               <div className="space-y-2">
-                 <label className="text-xs font-black text-slate-400 mr-2">الاسم بالكامل</label>
-                 <Input placeholder="أدخل اسمك..." value={name} onChange={e => setName(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none text-right" />
-               </div>
-             )}
-             <div className="space-y-2">
-               <label className="text-xs font-black text-slate-400 mr-2">البريد الإلكتروني</label>
-               <Input type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none text-right" />
-             </div>
-             <div className="space-y-2">
-               <label className="text-xs font-black text-slate-400 mr-2">كلمة المرور</label>
-               <Input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none text-right" />
-             </div>
-          </div>
-          <Button className="w-full h-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/20" onClick={handleAuth}>
-            {isLoginView ? 'دخول للنظام' : 'تسجيل حساب جديد'}
-          </Button>
-          <p className="text-center text-sm font-bold text-slate-400">
-            {isLoginView ? 'ليس لديك حساب؟ ' : 'لديك حساب بالفعل؟ '}
-            <button className="text-primary font-black" onClick={() => setIsLoginView(!isLoginView)}>
-              {isLoginView ? 'سجل الآن' : 'سجل دخولك'}
-            </button>
-          </p>
-        </Card>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-right" dir="rtl">
       
-      <header className="bg-white border-b sticky top-0 z-50 py-4 px-6 shadow-sm">
+      <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 py-4 px-6 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
              <div className="bg-primary p-2.5 rounded-2xl shadow-lg shadow-primary/20"><Anchor className="text-white h-6 w-6" /></div>
@@ -214,20 +179,28 @@ export default function PharmaBeachApp() {
              </div>
           </div>
           <div className="flex items-center gap-4">
-             <div className="text-left hidden md:block">
-                <p className="text-sm font-black text-slate-900">{store.currentUser?.name || store.authUser.email}</p>
-                <Badge className="bg-primary/10 text-primary border-none text-[10px] py-1 px-3 rounded-full font-black">
-                    {store.role === 'admin' ? 'مدير النظام' : store.role === 'broker' ? 'وسيط' : store.role === 'supervisor' ? 'مشرف' : 'عميل'}
-                </Badge>
-             </div>
-             <Button variant="ghost" size="sm" onClick={() => signOut(auth)} className="rounded-2xl hover:bg-destructive/10 hover:text-destructive transition-colors"><LogOut className="h-5 w-5" /></Button>
+             {store.authUser ? (
+               <>
+                 <div className="text-left hidden md:block">
+                    <p className="text-sm font-black text-slate-900">{store.currentUser?.name || store.authUser.email}</p>
+                    <Badge className="bg-primary/10 text-primary border-none text-[10px] py-1 px-3 rounded-full font-black">
+                        {store.role === 'admin' ? 'مدير النظام' : store.role === 'broker' ? 'وسيط' : store.role === 'supervisor' ? 'مشرف' : 'عميل'}
+                    </Badge>
+                 </div>
+                 <Button variant="ghost" size="sm" onClick={() => signOut(auth)} className="rounded-2xl hover:bg-destructive/10 hover:text-destructive transition-colors"><LogOut className="h-5 w-5" /></Button>
+               </>
+             ) : (
+               <Button onClick={() => setIsAuthOpen(true)} className="rounded-2xl h-12 px-8 font-black gap-2 shadow-lg shadow-primary/20">
+                 <LogIn className="h-5 w-5" /> دخول النظام
+               </Button>
+             )}
           </div>
         </div>
       </header>
 
       <main className="flex-1 pb-24">
         
-        {(!store.role || store.role === 'client') && (
+        {(!store.role || store.role === 'client') ? (
           <div className="space-y-0">
             <div className="bg-white py-32 border-b relative overflow-hidden">
                <div className="container mx-auto px-4 text-center space-y-12 relative z-10">
@@ -240,7 +213,9 @@ export default function PharmaBeachApp() {
                   <p className="text-xl md:text-2xl font-bold text-slate-500 max-w-3xl mx-auto leading-relaxed">استكشف أفخم شاليهات فارما بيتش واحجز عطلتك القادمة بضغطة زر. نظام إدارة ذكي لضمان راحتك.</p>
                   <div className="flex flex-col sm:flex-row justify-center gap-6">
                     <Button size="lg" className="rounded-[2rem] h-20 px-16 text-2xl font-black shadow-2xl shadow-primary/30 transition-transform hover:scale-105" onClick={() => document.getElementById('units')?.scrollIntoView({behavior: 'smooth'})}>تصفح الشاليهات</Button>
-                    <Button size="lg" variant="outline" className="rounded-[2rem] h-20 px-16 text-2xl font-black border-2 border-slate-200" onClick={() => window.open('https://wa.me/201012345678', '_blank')}>تواصل واتساب</Button>
+                    {!store.authUser && (
+                      <Button size="lg" variant="outline" className="rounded-[2rem] h-20 px-16 text-2xl font-black border-2 border-slate-200" onClick={() => setIsAuthOpen(true)}>سجل دخولك</Button>
+                    )}
                   </div>
                </div>
             </div>
@@ -262,9 +237,7 @@ export default function PharmaBeachApp() {
                </div>
             </div>
           </div>
-        )}
-
-        {store.role === 'admin' && (
+        ) : store.role === 'admin' ? (
           <div className="container mx-auto px-4 py-12 space-y-12">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                <StatCard title="إجمالي الإيرادات" val={stats.totalRevenue.toLocaleString() + ' ج.م'} icon={Wallet} color="text-green-600" />
@@ -392,7 +365,7 @@ export default function PharmaBeachApp() {
                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                <XAxis dataKey="name" tickLine={false} axisLine={false} />
                                <YAxis tickLine={false} axisLine={false} />
-                               <ChartTooltip content={<ChartTooltipContent />} />
+                               <RechartsTooltip content={<ChartTooltipContent />} />
                                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={[12, 12, 0, 0]} />
                             </BarChart>
                           </ChartContainer>
@@ -406,7 +379,7 @@ export default function PharmaBeachApp() {
                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                <XAxis dataKey="name" tickLine={false} axisLine={false} />
                                <YAxis tickLine={false} axisLine={false} />
-                               <ChartTooltip content={<ChartTooltipContent />} />
+                               <RechartsTooltip content={<ChartTooltipContent />} />
                                <Area type="monotone" dataKey="revenue" stroke="var(--color-revenue)" fill="var(--color-revenue)" fillOpacity={0.1} />
                             </AreaChart>
                           </ChartContainer>
@@ -468,9 +441,7 @@ export default function PharmaBeachApp() {
               </TabsContent>
             </Tabs>
           </div>
-        )}
-
-        {store.role === 'broker' && (
+        ) : store.role === 'broker' ? (
           <div className="container mx-auto px-4 py-12 space-y-12">
              <div className="flex justify-between items-center flex-row-reverse">
                 <div className="text-right">
@@ -486,9 +457,7 @@ export default function PharmaBeachApp() {
                 {myChalets.map(c => <ChaletCard key={c.id} chalet={c} onBook={(chalet) => setViewingDetailsChalet(chalet)} />)}
              </div>
           </div>
-        )}
-
-        {store.role === 'supervisor' && (
+        ) : store.role === 'supervisor' ? (
           <div className="container mx-auto px-4 py-12 space-y-12">
              <div className="flex justify-between items-center flex-row-reverse">
                 <div className="text-right">
@@ -515,13 +484,49 @@ export default function PharmaBeachApp() {
                 ))}
              </div>
           </div>
-        )}
+        ) : null}
 
       </main>
 
       <footer className="bg-slate-900 text-white py-12 text-center border-t-8 border-primary">
          <p className="text-slate-400 font-bold">فارما بيتش ريزورت - STUDIO FIREBASS AI</p>
       </footer>
+
+      {/* Auth Dialog */}
+      <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
+        <DialogContent className="p-10 rounded-[3rem] shadow-2xl bg-white border-none max-w-md">
+          <DialogHeader className="text-center space-y-3">
+             <div className="bg-primary w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-lg shadow-primary/20"><LogIn className="text-white h-8 w-8" /></div>
+             <DialogTitle className="text-3xl font-black text-slate-900 text-center">{isLoginView ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}</DialogTitle>
+             <p className="text-slate-500 font-bold text-center">مرحباً بك في منظومة فارما بيتش الإدارية</p>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+             {!isLoginView && (
+               <div className="space-y-2">
+                 <label className="text-xs font-black text-slate-400 mr-2">الاسم بالكامل</label>
+                 <Input placeholder="أدخل اسمك..." value={name} onChange={e => setName(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none text-right" />
+               </div>
+             )}
+             <div className="space-y-2">
+               <label className="text-xs font-black text-slate-400 mr-2">البريد الإلكتروني</label>
+               <Input type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none text-right" />
+             </div>
+             <div className="space-y-2">
+               <label className="text-xs font-black text-slate-400 mr-2">كلمة المرور</label>
+               <Input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none text-right" />
+             </div>
+          </div>
+          <Button className="w-full h-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/20" onClick={handleAuth}>
+            {isLoginView ? 'دخول للنظام' : 'تسجيل حساب جديد'}
+          </Button>
+          <p className="text-center text-sm font-bold text-slate-400 mt-4">
+            {isLoginView ? 'ليس لديك حساب؟ ' : 'لديك حساب بالفعل؟ '}
+            <button className="text-primary font-black" onClick={() => setIsLoginView(!isLoginView)}>
+              {isLoginView ? 'سجل الآن' : 'سجل دخولك'}
+            </button>
+          </p>
+        </DialogContent>
+      </Dialog>
 
       <ChaletDetailsDialog chalet={viewingDetailsChalet} isOpen={!!viewingDetailsChalet} onClose={() => setViewingDetailsChalet(null)} onBook={() => { setSelectedChalet(viewingDetailsChalet); setIsBookingOpen(true); setViewingDetailsChalet(null); }} existingBookings={store.bookings} userRole={store.role} />
       
