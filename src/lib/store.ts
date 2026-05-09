@@ -213,6 +213,14 @@ export function useAppStore() {
     }
   }
 
+  const updateUser = async (id: string, updates: Partial<UserProfile>) => {
+    try {
+      await updateDoc(doc(db, 'users', id), updates);
+    } catch (e) {
+      console.error("Error updating user:", e);
+    }
+  }
+
   const addCoupon = async (data: Omit<Coupon, 'id'>) => {
     try {
       await addDoc(collection(db, 'coupons'), { ...data, isActive: true });
@@ -232,7 +240,6 @@ export function useAppStore() {
   const seedDatabase = async () => {
     const batch = writeBatch(db);
 
-    // 1. Seed Chalets
     const chaletData = [
       { name: "فيلا الياقوت - مارينا 5", normalPrice: 5000, holidayPrice: 7500, city: "الساحل الشمالي", location: "مارينا 5، الصف الأول", status: "active", description: "فيلا فاخرة تطل مباشرة على البحر مع حمام سباحة خاص وحديقة واسعة.", image: "https://picsum.photos/seed/v1/800/600" },
       { name: "شاليه اللؤلؤة - هاسيندا", normalPrice: 3500, holidayPrice: 5000, city: "الساحل الشمالي", location: "هاسيندا باي، الساحل", status: "active", description: "شاليه مودرن بموقع متميز بالقرب من الكلوب هاوس.", image: "https://picsum.photos/seed/v2/800/600" },
@@ -247,10 +254,9 @@ export function useAppStore() {
       chaletRefs.push(ref.id);
     }
 
-    // 2. Seed Users (Profiles)
     const userData = [
-      { uid: "demo-broker-1", name: "أحمد السمسار", role: "broker", isApproved: true, assignedChaletIds: [chaletRefs[0], chaletRefs[1]] },
-      { uid: "demo-super-1", name: "محمود المشرف", role: "supervisor", isApproved: true, assignedChaletIds: chaletRefs }
+      { uid: "demo-broker-1", name: "أحمد السمسار", role: "broker", isApproved: true, assignedChaletIds: [chaletRefs[0], chaletRefs[1]], status: 'active', commissionRate: 10 },
+      { uid: "demo-super-1", name: "محمود المشرف", role: "supervisor", isApproved: true, assignedChaletIds: chaletRefs, status: 'active' }
     ];
 
     for (const u of userData) {
@@ -258,19 +264,17 @@ export function useAppStore() {
       batch.set(ref, { ...u, createdAt: serverTimestamp() });
     }
 
-    // 3. Seed Bookings
     const bookingData = [
-      { chaletId: chaletRefs[0], clientName: "ياسر محمود", phoneNumber: "01011223344", guestCount: 4, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 86400000 * 3).toISOString(), status: "admin_approved", opStatus: "waiting", paymentStatus: "verified", totalAmount: 15000, brokerId: "demo-broker-1" },
-      { chaletId: chaletRefs[1], clientName: "سارة أحمد", phoneNumber: "01233445566", guestCount: 2, startDate: new Date(Date.now() - 86400000 * 5).toISOString(), endDate: new Date(Date.now() - 86400000 * 2).toISOString(), status: "confirmed", opStatus: "checked_out", paymentStatus: "verified", totalAmount: 7000, brokerId: "demo-broker-1" },
-      { chaletId: chaletRefs[2], clientName: "خالد علي", phoneNumber: "01144556677", guestCount: 6, startDate: new Date(Date.now() + 86400000 * 10).toISOString(), endDate: new Date(Date.now() + 86400000 * 15).toISOString(), status: "pending", opStatus: "waiting", paymentStatus: "pending", totalAmount: 12500 }
+      { chaletId: chaletRefs[0], clientName: "ياسر محمود", phoneNumber: "01011223344", guestCount: 4, startDate: new Date().toISOString(), endDate: new Date(Date.now() + 86400000 * 3).toISOString(), status: "admin_approved", opStatus: "waiting", paymentStatus: "verified", totalAmount: 15000, brokerId: "demo-broker-1", paymentMethod: 'vodafone_cash', paymentReference: 'REF123', createdAt: serverTimestamp() },
+      { chaletId: chaletRefs[1], clientName: "سارة أحمد", phoneNumber: "01233445566", guestCount: 2, startDate: new Date(Date.now() - 86400000 * 5).toISOString(), endDate: new Date(Date.now() - 86400000 * 2).toISOString(), status: "confirmed", opStatus: "checked_out", paymentStatus: "verified", totalAmount: 7000, brokerId: "demo-broker-1", paymentMethod: 'instapay', paymentReference: 'REF456', createdAt: serverTimestamp() },
+      { chaletId: chaletRefs[2], clientName: "خالد علي", phoneNumber: "01144556677", guestCount: 6, startDate: new Date(Date.now() + 86400000 * 10).toISOString(), endDate: new Date(Date.now() + 86400000 * 15).toISOString(), status: "pending", opStatus: "waiting", paymentStatus: "pending", totalAmount: 12500, createdAt: serverTimestamp() }
     ];
 
     for (const b of bookingData) {
       const ref = doc(collection(db, 'bookings'));
-      batch.set(ref, { ...b, createdAt: serverTimestamp() });
+      batch.set(ref, b);
     }
 
-    // 4. Seed Coupons
     const couponData = [
       { code: "PHARMA20", discountType: "percentage", value: 20, expiryDate: "2025-12-31", isActive: true },
       { code: "SUMMER500", discountType: "fixed", value: 500, expiryDate: "2025-09-01", isActive: true }
@@ -287,7 +291,7 @@ export function useAppStore() {
   return {
     role, currentUser, authUser, isAuthLoading,
     chalets, bookings, users, coupons,
-    addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser, addCoupon, deleteCoupon, seedDatabase,
+    addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser, updateUser, addCoupon, deleteCoupon, seedDatabase,
     isLoaded: !isAuthLoading && !isDataLoading
   }
 }

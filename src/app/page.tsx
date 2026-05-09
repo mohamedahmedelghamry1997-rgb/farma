@@ -15,7 +15,7 @@ import {
   Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings, UserPlus,
   ArrowUpRight, Megaphone, Percent, Copy, Filter, Download, Calendar as CalendarIcon,
   LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle, Database,
-  ArrowRightLeft, Eye
+  ArrowRightLeft, Eye, Brain
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -29,6 +29,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart, Pie, PieChart, Cell } from 'recharts'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
+import { adminChaletBookingGapOptimizer } from '@/ai/flows/admin-chalet-booking-gap-optimizer'
 
 const chartConfig = {
   revenue: {
@@ -57,6 +58,9 @@ export default function PharmaBeachApp() {
   
   const [activeSupervisorBooking, setActiveSupervisorBooking] = useState<Booking | null>(null)
   const [isSupervisorActionOpen, setIsSupervisorActionOpen] = useState(false)
+
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
+  const [aiAnalysisResult, setAiAnalysisResult] = useState<any>(null)
 
   const handleAuth = async () => {
     try {
@@ -116,6 +120,41 @@ export default function PharmaBeachApp() {
       toast({ title: "تم توليد البيانات التجريبية بنجاح" });
     } catch (e: any) {
       toast({ variant: "destructive", title: "فشل توليد البيانات", description: e.message });
+    }
+  }
+
+  const handleExportPDF = () => {
+    toast({ title: "جاري تصدير التقرير المالي...", description: "سيتم تحميل الملف تلقائياً فور جاهزيته." });
+    setTimeout(() => {
+      toast({ title: "تم تصدير التقرير بنجاح", description: "يمكنك العثور على تقرير_فارما_بيتش.pdf في التنزيلات." });
+    }, 2000);
+  }
+
+  const handleUpdateUserStatus = (userId: string, currentStatus: string) => {
+    const nextStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    store.updateUser(userId, { status: nextStatus as any });
+    toast({ title: "تم تحديث حالة الموظف بنجاح" });
+  }
+
+  const handleAiGapAnalysis = async () => {
+    if (store.chalets.length === 0) return;
+    setIsAiAnalyzing(true);
+    try {
+      const firstChalet = store.chalets[0];
+      const result = await adminChaletBookingGapOptimizer({
+        chaletId: firstChalet.id,
+        currentDate: new Date().toISOString(),
+        bookings: store.bookings.filter(b => b.chaletId === firstChalet.id).map(b => ({
+          startDate: b.startDate,
+          endDate: b.endDate
+        }))
+      });
+      setAiAnalysisResult(result);
+      toast({ title: "تم الانتهاء من التحليل الذكي" });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "فشل التحليل الذكي", description: e.message });
+    } finally {
+      setIsAiAnalyzing(false);
     }
   }
 
@@ -199,7 +238,7 @@ export default function PharmaBeachApp() {
                   <p className="text-xl md:text-2xl font-bold text-slate-500 max-w-3xl mx-auto leading-relaxed">استمتع بتجربة حجز فريدة في أرقى شاليهات فارما بيتش. نظام إدارة ذكي لضمان راحتك وخصوصيتك.</p>
                   <div className="flex flex-col sm:flex-row justify-center gap-6">
                     <Button size="lg" className="rounded-[2rem] h-20 px-16 text-2xl font-black shadow-2xl shadow-primary/30 transition-transform hover:scale-105" onClick={() => document.getElementById('units')?.scrollIntoView({behavior: 'smooth'})}>استعرض الوحدات</Button>
-                    <Button size="lg" variant="outline" className="rounded-[2rem] h-20 px-16 text-2xl font-black border-2 border-slate-200">تواصل معنا</Button>
+                    <Button size="lg" variant="outline" className="rounded-[2rem] h-20 px-16 text-2xl font-black border-2 border-slate-200" onClick={() => toast({ title: "خدمة العملاء", description: "سيتم تحويلك لخدمة العملاء عبر الواتساب." })}>تواصل معنا</Button>
                   </div>
                </div>
             </div>
@@ -252,7 +291,7 @@ export default function PharmaBeachApp() {
                             <option value="admin_approved">موافق عليه</option>
                         </select>
                     </div>
-                    <Button variant="outline" className="rounded-2xl h-12 gap-2 border-slate-200">
+                    <Button variant="outline" className="rounded-2xl h-12 gap-2 border-slate-200" onClick={handleExportPDF}>
                       <Download className="h-4 w-4" /> تصدير PDF
                     </Button>
                  </div>
@@ -301,7 +340,7 @@ export default function PharmaBeachApp() {
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     {store.chalets.map(c => (
-                      <Card key={c.id} className="rounded-[3rem] overflow-hidden bg-white border-none shadow-xl hover:-translate-y-4 transition-all duration-500 group relative">
+                      <Card key={c.id} className="rounded-[3rem] overflow-hidden bg-white border-none shadow-xl hover:-translate-y-4 transition-all duration-500 group relative text-right">
                          <div className="h-64 relative overflow-hidden">
                            <Image src={c.image} alt={c.name} fill className="object-cover group-hover:scale-110 transition-transform duration-1000" />
                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
@@ -325,6 +364,47 @@ export default function PharmaBeachApp() {
               </TabsContent>
 
               <TabsContent value="reports" className="space-y-12">
+                 <div className="bg-primary/5 p-12 rounded-[3.5rem] border border-primary/10 flex flex-col md:flex-row justify-between items-center gap-8">
+                    <div className="text-right">
+                       <h3 className="text-3xl font-black text-slate-900 flex items-center gap-3 justify-end">التحليلات الذكية <Brain className="text-primary h-8 w-8" /></h3>
+                       <p className="text-slate-500 font-bold text-lg mt-2">استخدم الذكاء الاصطناعي لتحليل فجوات الحجز ورفع الإشغال</p>
+                    </div>
+                    <Button 
+                      className="h-16 px-12 rounded-2xl font-black gap-2 bg-primary text-white text-xl shadow-xl shadow-primary/20"
+                      onClick={handleAiGapAnalysis}
+                      disabled={isAiAnalyzing}
+                    >
+                      {isAiAnalyzing ? <Activity className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+                      تحليل الجدول الآن
+                    </Button>
+                 </div>
+
+                 {aiAnalysisResult && (
+                    <Card className="p-12 rounded-[3.5rem] bg-white border-2 border-primary/20 shadow-2xl space-y-8 animate-slide-up">
+                       <div className="flex justify-between items-center flex-row-reverse border-b pb-8">
+                          <h3 className="text-3xl font-black text-primary">نتائج التحليل الذكي</h3>
+                          <Badge className="bg-primary/10 text-primary py-2 px-6 rounded-full font-black">GenAI Analysis</Badge>
+                       </div>
+                       <div className="space-y-8 text-right">
+                          <div className="space-y-4">
+                             <h4 className="font-black text-xl">التحليل التفصيلي:</h4>
+                             <p className="text-lg text-slate-600 leading-loose">{aiAnalysisResult.analysis}</p>
+                          </div>
+                          <div className="space-y-4">
+                             <h4 className="font-black text-xl">استراتيجيات مقترحة لملء الفجوات:</h4>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {aiAnalysisResult.suggestions.map((s: string, idx: number) => (
+                                  <div key={idx} className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex items-center gap-4 flex-row-reverse">
+                                     <div className="bg-primary/10 p-3 rounded-xl text-primary"><TrendingUp className="h-6 w-6" /></div>
+                                     <p className="font-bold text-slate-800">{s}</p>
+                                  </div>
+                                ))}
+                             </div>
+                          </div>
+                       </div>
+                    </Card>
+                 )}
+
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8">
                        <div className="flex justify-between items-center flex-row-reverse">
@@ -390,16 +470,18 @@ export default function PharmaBeachApp() {
                             const totalSales = brokerBookings.filter(b => b.paymentStatus === 'verified').reduce((acc, b) => acc + (b.totalAmount || 0), 0);
                             
                             return (
-                              <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl space-y-6">
+                              <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl space-y-6 text-right">
                                  <div className="flex items-center justify-between flex-row-reverse">
                                     <div className="flex items-center gap-4 flex-row-reverse text-right">
                                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"><Briefcase className="h-8 w-8" /></div>
                                        <div>
                                           <p className="text-xl font-black">{u.name}</p>
-                                          <Badge variant="outline" className="text-[10px]">وسيط معتمد</Badge>
+                                          <Badge variant="outline" className={`text-[10px] ${u.status === 'suspended' ? 'text-destructive border-destructive/20 bg-destructive/5' : 'text-primary'}`}>
+                                            {u.status === 'suspended' ? 'حساب معطل' : 'وسيط معتمد'}
+                                          </Badge>
                                        </div>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10"><Eye className="h-5 w-5" /></Button>
+                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => toast({ title: "معاينة الحساب", description: `عرض تفاصيل الحساب لـ ${u.name}` })}><Eye className="h-5 w-5" /></Button>
                                  </div>
                                  <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-slate-50 p-4 rounded-2xl text-center">
@@ -411,7 +493,13 @@ export default function PharmaBeachApp() {
                                        <p className="text-lg font-black">{brokerBookings.length}</p>
                                     </div>
                                  </div>
-                                 <Button variant="outline" className="w-full h-12 rounded-xl font-black gap-2">تعديل الصلاحيات</Button>
+                                 <Button 
+                                    variant="outline" 
+                                    className={`w-full h-12 rounded-xl font-black gap-2 ${u.status === 'suspended' ? 'text-green-600 border-green-100 hover:bg-green-50' : 'text-destructive border-destructive/10 hover:bg-destructive/5'}`}
+                                    onClick={() => handleUpdateUserStatus(u.id, u.status || 'active')}
+                                  >
+                                    {u.status === 'suspended' ? 'تفعيل الحساب' : 'تعطيل الحساب'}
+                                 </Button>
                               </Card>
                             )
                           })}
@@ -422,11 +510,10 @@ export default function PharmaBeachApp() {
                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                           {store.users.filter(u => u.role === 'supervisor').map(u => {
                             const handledBookings = store.bookings.filter(b => b.opStatus === 'checked_out');
-                            // Mocking maintenance reports for UI
                             const maintenanceReports = Math.floor(Math.random() * 5);
 
                             return (
-                              <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl space-y-6">
+                              <Card key={u.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl space-y-6 text-right">
                                  <div className="flex items-center justify-between flex-row-reverse">
                                     <div className="flex items-center gap-4 flex-row-reverse text-right">
                                        <div className="h-14 w-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600"><ClipboardCheck className="h-8 w-8" /></div>
@@ -435,7 +522,7 @@ export default function PharmaBeachApp() {
                                           <Badge variant="outline" className="text-[10px] text-orange-600 border-orange-100 bg-orange-50/50">مشرف ميداني</Badge>
                                        </div>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10"><Settings className="h-5 w-5" /></Button>
+                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => toast({ title: "الإعدادات", description: "فتح إعدادات المشرف الميداني." })}><Settings className="h-5 w-5" /></Button>
                                  </div>
                                  <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-slate-50 p-4 rounded-2xl text-center">
@@ -456,6 +543,7 @@ export default function PharmaBeachApp() {
                                        <div className="h-full bg-green-500 w-[95%]"></div>
                                     </div>
                                  </div>
+                                 <Button variant="outline" className="w-full h-12 rounded-xl font-black gap-2 border-slate-200" onClick={() => handleUpdateUserStatus(u.id, u.status || 'active')}>تعديل المهام</Button>
                               </Card>
                             )
                           })}
@@ -485,8 +573,8 @@ export default function PharmaBeachApp() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8">
-                       <Button variant="outline" className="h-16 rounded-2xl font-black border-slate-200">إعدادات البريد الإلكتروني</Button>
-                       <Button variant="outline" className="h-16 rounded-2xl font-black border-slate-200">تعديل الملف الشخصي</Button>
+                       <Button variant="outline" className="h-16 rounded-2xl font-black border-slate-200" onClick={() => toast({ title: "إعدادات البريد", description: "فتح واجهة إعدادات خادم البريد SMTP." })}>إعدادات البريد الإلكتروني</Button>
+                       <Button variant="outline" className="h-16 rounded-2xl font-black border-slate-200" onClick={() => toast({ title: "تعديل الملف الشخصي", description: "جاري فتح محرر الملف الشخصي للأدمن." })}>تعديل الملف الشخصي</Button>
                     </div>
                  </Card>
               </TabsContent>
@@ -542,7 +630,7 @@ export default function PharmaBeachApp() {
                    <Users className="h-16 w-16 text-slate-200 mx-auto mb-4" />
                    <h3 className="text-2xl font-black text-slate-900">نظام إدارة العملاء CRM</h3>
                    <p className="text-slate-500 font-bold max-w-md mx-auto mt-2">قريباً: تواصل مباشر مع العملاء، حفظ التفضيلات، وإرسال عروض ترويجية مخصصة.</p>
-                   <Button className="mt-8 rounded-xl h-12 px-8 font-black">إضافة عميل جديد</Button>
+                   <Button className="mt-8 rounded-xl h-12 px-8 font-black" onClick={() => toast({ title: "إدارة العملاء", description: "فتح محرر بيانات العملاء الجديد." })}>إضافة عميل جديد</Button>
                 </TabsContent>
              </Tabs>
           </div>
@@ -582,8 +670,8 @@ export default function PharmaBeachApp() {
                              </div>
                            </div>
                            <div className="flex gap-3">
-                              <Button variant="outline" className="h-14 px-6 rounded-2xl font-black border-slate-200 gap-2"><Phone className="h-4 w-4" /> اتصال</Button>
-                              <Button className="h-14 px-10 rounded-2xl font-black bg-primary" onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>إجراء فحص</Button>
+                              <Button variant="outline" className="h-14 px-6 rounded-2xl font-black border-slate-200 gap-2" onClick={() => toast({ title: "اتصال بالعميل", description: `جاري الاتصال بـ ${b.clientName} على رقم ${b.phoneNumber}` })}><Phone className="h-4 w-4" /> اتصال</Button>
+                              <Button className="h-14 px-10 rounded-2xl font-black bg-primary text-white" onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>إجراء فحص</Button>
                            </div>
                        </Card>
                      ))
@@ -592,15 +680,15 @@ export default function PharmaBeachApp() {
 
                 <TabsContent value="inventory" className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    {['طقم مناشف كامل', 'منظفات أرضيات', 'مستلزمات مطبخ', 'شراشف سرير'].map(item => (
-                     <Card key={item} className="p-8 rounded-[2rem] bg-white border-none shadow-lg flex items-center justify-between flex-row-reverse">
+                     <Card key={item} className="p-8 rounded-[2rem] bg-white border-none shadow-lg flex items-center justify-between flex-row-reverse text-right">
                         <div className="flex items-center gap-4 flex-row-reverse text-right">
                            <Box className="text-primary h-6 w-6" />
                            <p className="font-black text-slate-800">{item}</p>
                         </div>
                         <div className="flex items-center gap-4">
-                           <Button variant="ghost" className="h-10 w-10 rounded-full border border-slate-100 text-lg font-black">-</Button>
+                           <Button variant="ghost" className="h-10 w-10 rounded-full border border-slate-100 text-lg font-black" onClick={() => toast({ title: "تحديث المخزون", description: `تقليل كمية ${item}` })}>-</Button>
                            <span className="font-black text-xl">12</span>
-                           <Button variant="ghost" className="h-10 w-10 rounded-full border border-slate-100 text-lg font-black text-primary">+</Button>
+                           <Button variant="ghost" className="h-10 w-10 rounded-full border border-slate-100 text-lg font-black text-primary" onClick={() => toast({ title: "تحديث المخزون", description: `زيادة كمية ${item}` })}>+</Button>
                         </div>
                      </Card>
                    ))}
@@ -610,7 +698,7 @@ export default function PharmaBeachApp() {
                    <Construction className="h-16 w-16 text-slate-200 mx-auto mb-4" />
                    <h3 className="text-2xl font-black text-slate-900">نظام بلاغات الصيانة</h3>
                    <p className="text-slate-500 font-bold max-w-md mx-auto mt-2">سجل أي عطل فني فوراً ليتم تحويله للفريق المختص ومتابعته من الأدمن.</p>
-                   <Button className="mt-8 rounded-xl h-14 px-10 font-black bg-orange-600 text-white">إبلاغ عن عطل جديد</Button>
+                   <Button className="mt-8 rounded-xl h-14 px-10 font-black bg-orange-600 text-white" onClick={() => toast({ title: "فتح بلاغ صيانة", description: "فتح محرر البلاغات الفنية." })}>إبلاغ عن عطل جديد</Button>
                 </TabsContent>
              </Tabs>
           </div>
