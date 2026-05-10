@@ -73,7 +73,6 @@ export default function PharmaBeachApp() {
   const [bankInfo, setBankInfo] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
 
-  // لأغراض التجربة فقط، نسمح بتبديل الأدوار يدوياً
   const [manualRole, setManualRole] = useState<UserRole | null>(null)
   const activeRole = manualRole || store.role
 
@@ -162,7 +161,7 @@ export default function PharmaBeachApp() {
     if (activeRole === 'supervisor') list = list.filter(b => b.status === 'confirmed' || b.status === 'admin_approved')
     
     if (statusFilter !== 'all') {
-      list = list.filter(b => b.status === statusFilter || b.paymentStatus === statusFilter)
+      list = list.filter(b => b.status === statusFilter || b.paymentStatus === statusFilter || b.opStatus === statusFilter)
     }
 
     if (searchQuery) {
@@ -302,6 +301,7 @@ export default function PharmaBeachApp() {
               <TabsList className="bg-white p-2 rounded-[2.5rem] mb-12 flex flex-wrap justify-start border shadow-sm h-auto gap-3">
                 <TabsTrigger value="spreadsheet" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><TableProperties className="h-4 w-4" /> جدول الجدولة (الشيت)</TabsTrigger>
                 <TabsTrigger value="bookings" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">المالية والحوالات</TabsTrigger>
+                <TabsTrigger value="ops" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">متابعة المشرفين</TabsTrigger>
                 <TabsTrigger value="withdrawals" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">طلبات السحب</TabsTrigger>
                 <TabsTrigger value="chalets" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">إدارة الأصول</TabsTrigger>
                 <TabsTrigger value="users" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">فريق العمل</TabsTrigger>
@@ -316,6 +316,34 @@ export default function PharmaBeachApp() {
                     onAddBooking={handleAddBookingFromSheet}
                     userRole={activeRole} 
                   />
+              </TabsContent>
+
+              <TabsContent value="ops" className="space-y-8">
+                 <div className="bg-white p-10 rounded-[3rem] border shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="text-right">
+                       <h3 className="text-3xl font-black">سجل المهام الميدانية</h3>
+                       <p className="text-slate-500 font-bold">متابعة استلام وتسليم الوحدات وقراءات العدادات</p>
+                    </div>
+                    <Badge className="bg-blue-50 text-blue-600 px-6 py-3 rounded-2xl font-black">إجمالي المهام: {store.bookings.filter(b => b.status === 'confirmed').length}</Badge>
+                 </div>
+                 <div className="grid grid-cols-1 gap-6">
+                    {store.bookings.filter(b => b.status === 'confirmed').map(b => (
+                      <Card key={b.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl flex flex-col md:flex-row justify-between items-center gap-6 text-right">
+                         <div className="flex items-center gap-6 flex-row-reverse flex-1 w-full">
+                            <div className={`h-16 w-16 rounded-2xl flex items-center justify-center shadow-inner ${b.opStatus === 'checked_out' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
+                               <ClipboardCheck className="h-8 w-8" />
+                            </div>
+                            <div className="flex-1 space-y-1">
+                               <p className="text-xl font-black">{b.clientName}</p>
+                               <p className="font-bold text-slate-500">{store.chalets.find(c => c.id === b.chaletId)?.name} | {b.opStatus === 'checked_out' ? 'تم الخروج' : b.opStatus === 'checked_in' ? 'تم الاستلام' : 'بانتظار المشرف'}</p>
+                            </div>
+                         </div>
+                         <Button variant="outline" className="rounded-2xl h-12 px-8 font-black border-slate-200 gap-2" onClick={() => handleOpenSpreadsheetReport(store.chalets.find(c => c.id === b.chaletId)!, b)}>
+                            <Eye className="h-4 w-4" /> عرض تقرير المشرف
+                         </Button>
+                      </Card>
+                    ))}
+                 </div>
               </TabsContent>
 
               <TabsContent value="bookings" className="space-y-8">
@@ -555,6 +583,7 @@ export default function PharmaBeachApp() {
              <Tabs defaultValue="spreadsheet" className="w-full">
                 <TabsList className="bg-white p-2 rounded-[2.5rem] mb-12 flex justify-start border shadow-sm h-auto gap-3">
                    <TabsTrigger value="spreadsheet" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><TableProperties className="h-4 w-4" /> جدول الجدولة</TabsTrigger>
+                   <TabsTrigger value="ops" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><ClipboardCheck className="h-4 w-4" /> متابعة التنفيذ</TabsTrigger>
                    <TabsTrigger value="wallet" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><Wallet className="h-4 w-4" /> المحفظة والأرباح</TabsTrigger>
                    <TabsTrigger value="units" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">تصفح الوحدات</TabsTrigger>
                 </TabsList>
@@ -567,6 +596,29 @@ export default function PharmaBeachApp() {
                     onAddBooking={handleAddBookingFromSheet}
                     userRole={activeRole} 
                    />
+                </TabsContent>
+
+                <TabsContent value="ops" className="space-y-8">
+                   <div className="bg-white p-10 rounded-[3rem] border shadow-sm text-right">
+                      <h3 className="text-3xl font-black">متابعة تنفيذ حجوزاتي</h3>
+                      <p className="text-slate-500 font-bold">تأكد من استلام عملائك للوحدات في الموعد</p>
+                   </div>
+                   <div className="grid grid-cols-1 gap-6">
+                      {filteredBookings.filter(b => b.status === 'confirmed').map(b => (
+                        <Card key={b.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl flex flex-col md:flex-row justify-between items-center gap-6 text-right">
+                           <div className="text-right flex-1">
+                              <p className="text-xl font-black">{b.clientName}</p>
+                              <p className="text-sm font-bold text-slate-500">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
+                           </div>
+                           <div className="flex items-center gap-4">
+                              <Badge className={b.opStatus === 'checked_out' ? 'bg-green-500' : b.opStatus === 'checked_in' ? 'bg-blue-500' : 'bg-orange-500'}>
+                                {b.opStatus === 'checked_out' ? 'تم الخروج' : b.opStatus === 'checked_in' ? 'تم الاستلام' : 'بانتظار المشرف'}
+                              </Badge>
+                              <Button variant="ghost" size="icon" onClick={() => handleOpenSpreadsheetReport(store.chalets.find(c => c.id === b.chaletId)!, b)}><Eye className="h-5 w-5" /></Button>
+                           </div>
+                        </Card>
+                      ))}
+                   </div>
                 </TabsContent>
 
                 <TabsContent value="wallet" className="space-y-8">
@@ -587,27 +639,6 @@ export default function PharmaBeachApp() {
                          <p className="text-4xl font-black text-green-600">{brokerStats.withdrawn.toLocaleString()} ج.م</p>
                       </Card>
                    </div>
-
-                   <div className="space-y-6">
-                      <h3 className="text-2xl font-black text-right">سجل التحويلات</h3>
-                      {store.withdrawals.filter(w => w.brokerId === (store.currentUser?.uid || "admin1_uid")).map(w => (
-                        <Card key={w.id} className="p-6 rounded-[2rem] bg-white border-none shadow-sm flex justify-between items-center flex-row-reverse text-right">
-                           <div>
-                              <p className="font-black text-slate-900">{w.amount.toLocaleString()} ج.م</p>
-                              <p className="text-xs font-bold text-slate-400">{w.createdAt?.seconds ? format(new Date(w.createdAt.seconds * 1000), 'dd MMMM yyyy', { locale: ar }) : 'الآن'}</p>
-                           </div>
-                           <div className="flex items-center gap-4">
-                              <Badge className={w.status === 'approved' ? 'bg-green-500' : w.status === 'pending' ? 'bg-orange-500' : 'bg-red-500'}>
-                                {w.status === 'approved' ? 'تم التحويل' : w.status === 'pending' ? 'قيد المراجعة' : 'مرفوض'}
-                              </Badge>
-                              <span className="text-xs font-bold text-slate-500">{w.method === 'vodafone_cash' ? 'فودافون كاش' : w.method === 'instapay' ? 'انستا باي' : 'بنك'}</span>
-                           </div>
-                        </Card>
-                      ))}
-                      {store.withdrawals.filter(w => w.brokerId === (store.currentUser?.uid || "admin1_uid")).length === 0 && (
-                        <div className="text-center py-10 text-slate-400 font-bold">لا توجد تحويلات سابقة</div>
-                      )}
-                   </div>
                 </TabsContent>
 
                 <TabsContent value="units">
@@ -621,28 +652,55 @@ export default function PharmaBeachApp() {
           <div className="container mx-auto px-4 py-12 space-y-12">
              <div className="flex justify-between items-center flex-row-reverse">
                 <div className="text-right">
-                   <h2 className="text-4xl font-black text-slate-900">المهام الميدانية</h2>
+                   <h2 className="text-4xl font-black text-slate-900">المهام الميدانية للمشرف</h2>
                    <p className="text-slate-500 font-bold mt-2">إدارة الاستلام والتسليم وفحص الوحدات يدوياً</p>
                 </div>
-                <StatCard title="مهام معلقة" val={filteredBookings.filter(b => b.opStatus === 'waiting').length} icon={ShieldAlert} color="text-orange-600" />
+                <StatCard title="مهام قيد الانتظار" val={filteredBookings.filter(b => b.opStatus !== 'checked_out').length} icon={ShieldAlert} color="text-orange-600" />
              </div>
-             <div className="space-y-6">
-                {filteredBookings.map(b => (
-                  <Card key={b.id} className="p-8 rounded-[2.5rem] shadow-xl bg-white flex justify-between items-center flex-row-reverse">
-                      <div className="text-right flex items-center gap-6 flex-row-reverse">
-                        <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400"><ClipboardCheck /></div>
-                        <div>
-                           <p className="text-2xl font-black">{b.clientName}</p>
-                           <p className="text-slate-500 font-bold">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-3">
-                         <Button variant="outline" className="h-14 px-6 rounded-2xl font-black border-slate-200 gap-2" onClick={() => window.open(`tel:${b.phoneNumber}`)}><Phone className="h-4 w-4" /> اتصال</Button>
-                         <Button className="h-14 px-10 rounded-2xl font-black bg-primary text-white" onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>إجراء الفحص</Button>
-                      </div>
-                  </Card>
-                ))}
-             </div>
+
+             <Tabs defaultValue="tasks" className="w-full">
+                <TabsList className="bg-white p-2 rounded-[2.5rem] mb-12 flex justify-start border shadow-sm h-auto gap-3">
+                   <TabsTrigger value="tasks" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><ClipboardCheck className="h-4 w-4" /> مهام اليوم</TabsTrigger>
+                   <TabsTrigger value="spreadsheet" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><TableProperties className="h-4 w-4" /> جدول الإشغال (مشاهدة)</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="tasks" className="space-y-6">
+                   {filteredBookings.map(b => (
+                     <Card key={b.id} className="p-8 rounded-[2.5rem] shadow-xl bg-white flex flex-col md:flex-row justify-between items-center flex-row-reverse gap-6">
+                         <div className="text-right flex items-center gap-6 flex-row-reverse flex-1 w-full">
+                           <div className={`h-16 w-16 rounded-2xl flex items-center justify-center shadow-inner ${b.opStatus === 'checked_in' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-400'}`}><ClipboardCheck /></div>
+                           <div>
+                              <p className="text-2xl font-black">{b.clientName}</p>
+                              <p className="text-slate-500 font-bold">{store.chalets.find(c => c.id === b.chaletId)?.name} | {b.opStatus === 'checked_in' ? 'تم الاستلام - بانتظار الخروج' : 'لم يستلم بعد'}</p>
+                              <div className="flex gap-2 mt-2 justify-end">
+                                 <Badge variant="outline" className="border-slate-100 text-[10px]">{format(new Date(b.startDate), 'dd MMM')} - {format(new Date(b.endDate), 'dd MMM')}</Badge>
+                              </div>
+                           </div>
+                         </div>
+                         <div className="flex gap-3 w-full md:w-auto">
+                            <Button variant="outline" className="h-14 px-6 rounded-2xl font-black border-slate-200 gap-2 flex-1 md:flex-none" onClick={() => window.open(`tel:${b.phoneNumber}`)}><Phone className="h-4 w-4" /> اتصال بالعميل</Button>
+                            {b.opStatus !== 'checked_out' && (
+                              <Button className={`h-14 px-10 rounded-2xl font-black text-white flex-1 md:flex-none ${b.opStatus === 'checked_in' ? 'bg-orange-600' : 'bg-primary'}`} onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>
+                                {b.opStatus === 'checked_in' ? 'إجراء إخلاء' : 'إجراء استلام'}
+                              </Button>
+                            )}
+                         </div>
+                     </Card>
+                   ))}
+                   {filteredBookings.length === 0 && (
+                     <div className="text-center py-20 bg-white rounded-[3rem] border-dashed border-2 text-slate-300 font-black">لا توجد مهام حجز مؤكدة حالياً</div>
+                   )}
+                </TabsContent>
+
+                <TabsContent value="spreadsheet">
+                   <ChaletSpreadsheet 
+                    chalets={store.chalets} 
+                    bookings={store.bookings} 
+                    onSelectChalet={handleOpenSpreadsheetReport} 
+                    userRole={activeRole} 
+                   />
+                </TabsContent>
+             </Tabs>
           </div>
         ) : null}
 
@@ -678,12 +736,6 @@ export default function PharmaBeachApp() {
           <Button className="w-full h-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/20" onClick={handleAuth}>
             {isLoginView ? 'دخول للنظام' : 'تسجيل حساب جديد'}
           </Button>
-          <p className="text-center text-sm font-bold text-slate-400 mt-4">
-            {isLoginView ? 'ليس لديك حساب؟ ' : 'لديك حساب بالفعل؟ '}
-            <button className="text-primary font-black" onClick={() => setIsLoginView(!isLoginView)}>
-              {isLoginView ? 'سجل الآن' : 'سجل دخولك'}
-            </button>
-          </p>
         </DialogContent>
       </Dialog>
 
@@ -717,10 +769,8 @@ export default function PharmaBeachApp() {
       <SupervisorActionDialog isOpen={isSupervisorActionOpen} onClose={() => setIsSupervisorActionOpen(false)} booking={activeSupervisorBooking} chalet={store.chalets.find(c => c.id === activeSupervisorBooking?.chaletId) || null} onConfirm={(updates) => store.updateBooking(activeSupervisorBooking!.id, updates)} />
       <WithdrawalDialog isOpen={isWithdrawalOpen} onClose={() => setIsWithdrawalOpen(false)} availableBalance={brokerStats.balance} onConfirm={handleWithdrawRequest} />
 
-      {/* ميزة تبديل الهوية متاحة فقط للأدمن أو لأغراض التجربة */}
       <RoleSwitcher currentRole={activeRole} onRoleChange={setManualRole} />
 
-      {/* زر واتساب العائم */}
       <WhatsAppButton number={store.systemSettings?.whatsappNumber} />
 
     </div>

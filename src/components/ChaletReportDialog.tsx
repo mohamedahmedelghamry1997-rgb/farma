@@ -4,7 +4,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Chalet, Booking, UserRole } from '@/lib/store'
 import { Badge } from './ui/badge'
-import { User, Phone, Calendar as CalendarIcon, DollarSign, Tag, Briefcase, History, MapPin, Hash, Receipt, Wallet, UserCheck, Clock, ArrowLeftRight } from 'lucide-react'
+import { User, Phone, Calendar as CalendarIcon, DollarSign, Tag, Briefcase, History, MapPin, Hash, Receipt, Wallet, UserCheck, Clock, ArrowLeftRight, Zap, Droplets, ClipboardCheck, CheckCircle2 } from 'lucide-react'
 import { format, differenceInDays, isAfter, startOfDay } from 'date-fns'
 import { ar } from 'date-fns/locale'
 import { Button } from './ui/button'
@@ -25,7 +25,6 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
   const nights = booking ? differenceInDays(new Date(booking.endDate), new Date(booking.startDate)) + 1 : 0;
   const commission = booking ? (booking.brokerCommission || 0) : (nights * 200);
 
-  // حساب الموعد القادم المتاح
   const chaletBookings = allBookings
     .filter(b => b.chaletId === chalet.id && b.status !== 'cancelled')
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
@@ -35,11 +34,9 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
     return isAfter(new Date(b.endDate), today) && !isAfter(new Date(b.startDate), today);
   });
 
-  const nextBooking = chaletBookings.find(b => isAfter(new Date(b.startDate), new Date()));
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden rounded-[3rem] border-none shadow-2xl text-right bg-white max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-[3rem] border-none shadow-2xl text-right bg-white max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader className="bg-primary p-10 text-white relative">
           <div className="flex flex-col gap-2 z-10 relative">
              <Badge variant="outline" className="w-fit border-white/30 text-white font-black px-4">{chalet.code}</Badge>
@@ -57,7 +54,6 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
         </DialogHeader>
 
         <div className="p-10 space-y-12">
-          {/* قسم حالة التوافر الفورية */}
           {!booking && (
             <div className={`p-8 rounded-[2.5rem] border-2 flex flex-col items-center text-center gap-4 ${currentBooking ? 'border-orange-100 bg-orange-50' : 'border-green-100 bg-green-50'}`}>
                 {currentBooking ? (
@@ -90,29 +86,53 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
           )}
 
           {booking && (
-            <div className="space-y-10">
+            <div className="space-y-12">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InfoCard title="العميل المستأجر" value={booking.clientName} icon={User} color="text-blue-600" subValue={booking.phoneNumber} />
                 <InfoCard title="فترة الإقامة" value={`${format(new Date(booking.startDate), 'dd MMMM yyyy', { locale: ar })}`} icon={CalendarIcon} color="text-orange-600" subValue={`إلى ${format(new Date(booking.endDate), 'dd MMMM yyyy', { locale: ar })} (${nights} ليالي)`} />
-                <InfoCard title="المسوق المسؤول" value={booking.brokerName || "حجز مباشر"} icon={Briefcase} color="text-purple-600" subValue={booking.brokerId ? "وسيط معتمد" : "إدارة المنتجع"} />
-                <InfoCard title="إجمالي مبلغ الحجز" value={`${booking.totalAmount?.toLocaleString()} ج.م`} icon={Wallet} color="text-green-600" subValue={`سعر الليلة: ${chalet.normalPrice.toLocaleString()} ج.م`} />
+              </div>
+
+              {/* قسم تقرير المشرف الميداني */}
+              <div className="bg-slate-50 p-10 rounded-[2.5rem] border border-slate-100 space-y-8">
+                 <div className="flex items-center justify-between flex-row-reverse border-b pb-4">
+                    <h4 className="text-2xl font-black flex items-center gap-2 flex-row-reverse"><ClipboardCheck className="text-primary" /> تقرير الفحص الميداني</h4>
+                    <Badge className={`${booking.opStatus === 'checked_out' ? 'bg-green-500' : booking.opStatus === 'checked_in' ? 'bg-blue-500' : 'bg-orange-500'} text-white border-none px-4 py-1.5`}>
+                        {booking.opStatus === 'checked_out' ? 'تم الإخلاء' : booking.opStatus === 'checked_in' ? 'العميل بالداخل' : 'في انتظار المشرف'}
+                    </Badge>
+                 </div>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-yellow-400 text-center">
+                       <Zap className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
+                       <p className="text-[10px] font-black text-slate-400">عداد الكهرباء</p>
+                       <p className="text-xl font-black">{booking.electricityReading || '---'}</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-400 text-center">
+                       <Droplets className="h-6 w-6 text-blue-500 mx-auto mb-2" />
+                       <p className="text-[10px] font-black text-slate-400">عداد المياه</p>
+                       <p className="text-xl font-black">{booking.waterReading || '---'}</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-400 text-center">
+                       <CheckCircle2 className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                       <p className="text-[10px] font-black text-slate-400">حالة النظافة/الجرد</p>
+                       <p className="text-sm font-black">{booking.opStatus !== 'waiting' ? 'تم الفحص' : 'بانتظار الفحص'}</p>
+                    </div>
+                 </div>
+
+                 <div className="p-6 bg-white rounded-2xl border border-slate-100 text-right">
+                    <p className="text-xs font-black text-slate-400 uppercase mb-2">ملاحظات المشرف الميدانية:</p>
+                    <p className="text-slate-700 font-bold leading-relaxed">{booking.conditionReport || 'لا توجد ملاحظات مسجلة حتى الآن.'}</p>
+                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 flex flex-col items-center text-center gap-2">
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">عمولة المسوق الإجمالية</p>
                     <p className="text-4xl font-black text-primary">{commission.toLocaleString()} <span className="text-sm">ج.م</span></p>
-                    <Badge className="bg-primary/10 text-primary border-none text-[10px] mt-2">{(commission / nights).toFixed(0)} ج.م × {nights} ليالي</Badge>
                  </div>
-                 
                  <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex flex-col items-center text-center gap-2">
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">مرجع العملية المالية</p>
                     <p className="text-xl font-black text-slate-900">{booking.paymentReference || '---'}</p>
-                    <div className="flex gap-2 mt-2">
-                       <Badge className={booking.paymentStatus === 'verified' ? 'bg-green-500' : 'bg-orange-500'}>
-                          {booking.paymentStatus === 'verified' ? 'دفع مؤكد' : 'انتظار المراجعة'}
-                       </Badge>
-                    </div>
                  </div>
               </div>
 

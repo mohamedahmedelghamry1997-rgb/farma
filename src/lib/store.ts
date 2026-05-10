@@ -76,6 +76,7 @@ export interface Booking {
   conditionReport?: string
   electricityReading?: string
   waterReading?: string
+  checkInTime?: string
   checkOutTime?: string
 }
 
@@ -218,7 +219,7 @@ export function useAppStore() {
       await addDoc(collection(db, 'bookings'), {
         ...data,
         status: data.status || 'pending',
-        opStatus: data.opStatus || 'waiting',
+        opStatus: 'waiting',
         createdAt: serverTimestamp()
       });
     } catch (e) {
@@ -315,7 +316,6 @@ export function useAppStore() {
     }
 
     const today = new Date();
-    // توليد حجوزات مؤكدة لوسيط تجريبي ليكون لديه رصيد قابل للسحب
     const bookingData = [
       { 
         chaletId: chaletRefs[0], 
