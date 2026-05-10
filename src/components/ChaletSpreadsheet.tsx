@@ -33,8 +33,9 @@ export function ChaletSpreadsheet({ chalets, bookings, onSelectChalet, onAddBook
 
   const filteredChalets = useMemo(() => {
     return chalets.filter(c => {
-      const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            c.code.toLowerCase().includes(searchQuery.toLowerCase())
+      const nameMatch = (c.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+      const codeMatch = (c.code || '').toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSearch = nameMatch || codeMatch
       
       if (searchDate) {
         const targetDate = new Date(searchDate)
