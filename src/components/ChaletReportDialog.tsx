@@ -23,7 +23,7 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
   if (!chalet) return null
 
   const nights = booking ? differenceInDays(new Date(booking.endDate), new Date(booking.startDate)) + 1 : 0;
-  const commission = nights * 200;
+  const commission = booking ? (booking.brokerCommission || 0) : (nights * 200);
 
   // حساب الموعد القادم المتاح
   const chaletBookings = allBookings
@@ -102,7 +102,7 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
                  <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 flex flex-col items-center text-center gap-2">
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">عمولة المسوق الإجمالية</p>
                     <p className="text-4xl font-black text-primary">{commission.toLocaleString()} <span className="text-sm">ج.م</span></p>
-                    <Badge className="bg-primary/10 text-primary border-none text-[10px] mt-2">200 ج.م × {nights} ليالي</Badge>
+                    <Badge className="bg-primary/10 text-primary border-none text-[10px] mt-2">{(commission / nights).toFixed(0)} ج.م × {nights} ليالي</Badge>
                  </div>
                  
                  <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex flex-col items-center text-center gap-2">

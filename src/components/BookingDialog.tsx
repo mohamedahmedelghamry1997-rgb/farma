@@ -79,6 +79,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     if (!checkGapRule(dateRange)) return;
 
     const nights = differenceInDays(dateRange.to, dateRange.from) + 1;
+    const commissionPerNight = currentUser?.commissionRate || 200;
 
     onConfirm({
       chaletId: chalet.id,
@@ -93,7 +94,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
       totalAmount: calculateTotal(),
       brokerId: currentUser?.uid,
       brokerName: currentUser?.name || "مباشر",
-      brokerCommission: nights * 200
+      brokerCommission: nights * commissionPerNight
     })
     
     setDateRange(undefined)

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { UserProfile, UserRole } from "@/lib/store"
-import { Settings, Shield, Briefcase, ClipboardCheck, Percent } from "lucide-react"
+import { Settings, Shield, Briefcase, ClipboardCheck, Wallet } from "lucide-react"
 
 interface EditUserDialogProps {
   user: UserProfile | null
@@ -20,14 +20,14 @@ interface EditUserDialogProps {
 export function EditUserDialog({ user, isOpen, onClose, onUpdate }: EditUserDialogProps) {
   const [name, setName] = useState('')
   const [role, setRole] = useState<UserRole>('broker')
-  const [commission, setCommission] = useState('0')
+  const [commission, setCommission] = useState('200')
   const [status, setStatus] = useState<'active' | 'suspended'>('active')
 
   useEffect(() => {
     if (user) {
       setName(user.name || '')
       setRole(user.role || 'broker')
-      setCommission(String(user.commissionRate || 0))
+      setCommission(String(user.commissionRate || 200))
       setStatus(user.status || 'active')
     }
   }, [user])
@@ -89,8 +89,8 @@ export function EditUserDialog({ user, isOpen, onClose, onUpdate }: EditUserDial
 
            {role === 'broker' && (
              <div className="space-y-2">
-                <Label className="font-bold text-slate-600 flex items-center gap-2 justify-end text-xs">نسبة العمولة (%) <Percent className="h-3 w-3" /></Label>
-                <Input type="number" value={commission} onChange={e => setCommission(e.target.value)} className="rounded-2xl h-12 text-right bg-slate-50" />
+                <Label className="font-bold text-slate-600 flex items-center gap-2 justify-end text-xs">قيمة العمولة لكل ليلة (ج.م) <Wallet className="h-3 w-3" /></Label>
+                <Input type="number" value={commission} onChange={e => setCommission(e.target.value)} className="rounded-2xl h-12 text-right bg-slate-50 font-black" />
              </div>
            )}
 
