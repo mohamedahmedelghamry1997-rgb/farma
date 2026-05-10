@@ -1,11 +1,10 @@
-
 {
-  "name": "فارما بيتش ريزورت",
+  "name": "فارما بيتش - إدارة الحجوزات",
   "short_name": "فارما بيتش",
-  "description": "نظام إدارة حجز واستلام شاليهات قرية فارما بيتش الفاخرة",
+  "description": "النظام الإداري المتكامل لمنتجع فارما بيتش",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
+  "background_color": "#ffffff",
   "theme_color": "#9333ea",
   "orientation": "portrait",
   "icons": [
@@ -18,7 +17,8 @@
     {
       "src": "https://picsum.photos/seed/appicon/512/512",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

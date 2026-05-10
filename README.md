@@ -1,53 +1,40 @@
-# نظام إدارة فارما بيتش - Pharma Beach Resort
+# نظام إدارة فارما بيتش - Pharma Beach Resort (PWA)
 
-نظام إداري متكامل (PWA) مخصص للهواتف المحمولة لإدارة حجوزات الشاليهات والعمليات الميدانية.
+نظام إداري متكامل مخصص للهواتف المحمولة لإدارة حجوزات الشاليهات والعمليات الميدانية.
 
-## 🚀 أوامر الرفع على GitHub
+## 🚀 الخطوات النهائية للنشر المباشر
 
-افتح الـ Terminal في مجلد المشروع ونفذ الأوامر التالية:
-
+### 1. الرفع على GitHub
+افتح الـ Terminal في مجلد المشروع ونفذ:
 ```bash
 git init
 git add .
-git commit -m "Initial commit - PWA Mobile App"
+git commit -m "🚀 إطلاق النسخة الأولى - PWA Mobile App"
 git branch -M main
 git remote add origin https://github.com/mohamedahmedelghamry1997-rgb/farma.git
 git push -u origin main
 ```
 
-## 🌐 أوامر النشر على Vercel
+### 2. النشر على Vercel (الموقع المباشر)
+لجعل الموقع متاحاً للجميع برابط مباشر:
+- قم بتثبيت Vercel CLI: `npm install -g vercel`
+- نفذ أمر الربط: `vercel`
+- نفذ أمر النشر النهائي: `vercel --prod`
+*ملاحظة: تأكد من إضافة مفاتيح Firebase في لوحة تحكم Vercel (Settings -> Environment Variables).*
 
-لرفع المشروع على استضافة Vercel:
+## 📱 كيفية تثبيت التطبيق على هاتفك
 
-1. تأكد من تثبيت Vercel CLI:
-   ```bash
-   npm install -g vercel
-   ```
-2. قم بتشغيل أمر الربط:
-   ```bash
-   vercel
-   ```
-3. للنشر النهائي:
-   ```bash
-   vercel --prod
-   ```
-*ملاحظة: تأكد من إضافة متغيرات بيئة Firebase في لوحة تحكم Vercel.*
-
-## 📱 خطوات التثبيت كتطبيق (PWA)
-
-### على iPhone (iOS):
-1. افتح الموقع في متصفح **Safari**.
-2. اضغط على زر **Share** (المشاركة) في الأسفل.
+### على iPhone (Safari):
+1. افتح الرابط في **Safari**.
+2. اضغط على زر **Share** (المشاركة).
 3. اختر **Add to Home Screen** (إضافة إلى الشاشة الرئيسية).
 
-### على Android:
-1. افتح الموقع في متصفح **Chrome**.
-2. اضغط على النقاط الثلاث بالأعلى.
-3. اختر **Install App** (تثبيت التطبيق).
+### على Android (Chrome):
+1. افتح الرابط في **Chrome**.
+2. ستظهر لك رسالة "تثبيت التطبيق" تلقائياً، أو اضغط على النقاط الثلاث واختر **Install App**.
 
-## 🛠 التقنيات المستخدمة
-- **Framework:** Next.js 15 (App Router)
-- **UI:** Tailwind CSS + ShadCN UI
-- **Database & Auth:** Firebase (Firestore & Auth)
-- **AI:** Genkit (Google Gemini)
-- **PWA:** Service Workers & Web Manifest
+## 🛠 المميزات التقنية
+- **PWA:** يدعم العمل بدون اتصال وتثبيت الأيقونة.
+- **Mobile-First:** واجهة مستخدم سفلية مريحة للموبايل.
+- **Real-time:** تحديثات لحظية عبر Firebase.
+- **Automation:** نظام فحص ميداني متكامل للمشرفين.

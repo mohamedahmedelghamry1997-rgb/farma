@@ -1,4 +1,3 @@
-
 const CACHE_NAME = 'pharma-beach-v1';
 const ASSETS_TO_CACHE = [
   '/',
