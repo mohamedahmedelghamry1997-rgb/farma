@@ -5,12 +5,13 @@
 ## 🚀 الخطوات النهائية للنشر المباشر
 
 ### 1. الرفع على GitHub
-افتح الـ Terminal في مجلد المشروع ونفذ الأوامر التالية لربط الكود بمستودعك:
+افتح الـ Terminal في مجلد المشروع ونفذ الأوامر التالية لربط الكود بمستودعك الحقيقي:
 ```bash
 git init
 git add .
 git commit -m "🚀 إطلاق النسخة الأولى - PWA Mobile App"
 git branch -M main
+git remote remove origin
 git remote add origin https://github.com/mohamedahmedelghamry1997-rgb/farma.git
 git push -u origin main
 ```
