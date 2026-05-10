@@ -79,6 +79,17 @@ export interface Booking {
   checkOutTime?: string
 }
 
+export interface WithdrawalRequest {
+  id: string
+  brokerId: string
+  brokerName: string
+  amount: number
+  method: 'vodafone_cash' | 'instapay' | 'bank'
+  details: string
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt: any
+}
+
 export interface Coupon {
   id: string
   code: string
@@ -105,6 +116,7 @@ export function useAppStore() {
 
   const [chalets, setChalets] = useState<Chalet[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([])
   const [users, setUsers] = useState<UserProfile[]>([])
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({})
@@ -160,6 +172,10 @@ export function useAppStore() {
       setBookings(snap.docs.map(d => ({ ...d.data() as Booking, id: d.id })));
     });
 
+    const unsubWithdrawals = onSnapshot(query(collection(db, 'withdrawals'), orderBy('createdAt', 'desc')), (snap) => {
+      setWithdrawals(snap.docs.map(d => ({ ...d.data() as WithdrawalRequest, id: d.id })));
+    });
+
     const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
       setUsers(snap.docs.map(d => ({ ...d.data() as UserProfile, id: d.id })));
     });
@@ -181,6 +197,7 @@ export function useAppStore() {
       unsubscribeAuth();
       unsubChalets();
       unsubBookings();
+      unsubWithdrawals();
       unsubUsers();
       unsubSettings();
       unsubCoupons();
@@ -214,6 +231,26 @@ export function useAppStore() {
       await updateDoc(doc(db, 'bookings', id), updates);
     } catch (e) {
       console.error("Error updating booking:", e);
+    }
+  }
+
+  const addWithdrawalRequest = async (data: Omit<WithdrawalRequest, 'id' | 'createdAt' | 'status'>) => {
+    try {
+      await addDoc(collection(db, 'withdrawals'), {
+        ...data,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+    } catch (e) {
+      console.error("Error adding withdrawal request:", e);
+    }
+  }
+
+  const updateWithdrawalStatus = async (id: string, status: 'approved' | 'rejected') => {
+    try {
+      await updateDoc(doc(db, 'withdrawals', id), { status });
+    } catch (e) {
+      console.error("Error updating withdrawal status:", e);
     }
   }
 
@@ -308,8 +345,8 @@ export function useAppStore() {
 
   return {
     role, currentUser, authUser, isAuthLoading,
-    chalets, bookings, users, coupons, systemSettings,
-    addBooking, updateBooking, addChalet, updateChalet, addUser, updateUser, seedDatabase, updateSystemSettings,
+    chalets, bookings, users, coupons, systemSettings, withdrawals,
+    addBooking, updateBooking, addChalet, updateChalet, addUser, updateUser, seedDatabase, updateSystemSettings, addWithdrawalRequest, updateWithdrawalStatus,
     isLoaded: !isAuthLoading && !isDataLoading
   }
 }

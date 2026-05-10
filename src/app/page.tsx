@@ -18,7 +18,8 @@ import {
   Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings, UserPlus,
   ArrowUpRight, Megaphone, Percent, Copy, Filter, Download, Calendar as CalendarIcon,
   LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle, Database,
-  ArrowRightLeft, Eye, Waves, Sun, Anchor, Palmtree, TableProperties, CreditCard, Save
+  ArrowRightLeft, Eye, Waves, Sun, Anchor, Palmtree, TableProperties, CreditCard, Save,
+  ArrowDownToLine, Check, Ban
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -30,9 +31,12 @@ import { ChaletDetailsDialog } from '@/components/ChaletDetailsDialog'
 import { SupervisorActionDialog } from '@/components/SupervisorActionDialog'
 import { ChaletSpreadsheet } from '@/components/ChaletSpreadsheet'
 import { ChaletReportDialog } from '@/components/ChaletReportDialog'
+import { WithdrawalDialog } from '@/components/WithdrawalDialog'
 import Image from 'next/image'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
+import { format } from 'date-fns'
+import { ar } from 'date-fns/locale'
 
 export default function PharmaBeachApp() {
   const store = useAppStore()
@@ -51,6 +55,7 @@ export default function PharmaBeachApp() {
   const [isAddChaletOpen, setIsAddChaletOpen] = useState(false)
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [isEditUserOpen, setIsEditUserOpen] = useState(false)
+  const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -83,6 +88,29 @@ export default function PharmaBeachApp() {
     toast({ title: "تم حفظ إعدادات الدفع بنجاح" })
   }
 
+  const brokerStats = useMemo(() => {
+    if (store.role !== 'broker' || !store.currentUser) return { total: 0, withdrawn: 0, pending: 0, balance: 0 };
+    
+    const totalCommissions = store.bookings
+      .filter(b => b.brokerId === store.currentUser?.uid && b.status === 'confirmed')
+      .reduce((acc, b) => acc + (b.brokerCommission || 0), 0);
+    
+    const withdrawn = store.withdrawals
+      .filter(w => w.brokerId === store.currentUser?.uid && w.status === 'approved')
+      .reduce((acc, w) => acc + w.amount, 0);
+    
+    const pending = store.withdrawals
+      .filter(w => w.brokerId === store.currentUser?.uid && w.status === 'pending')
+      .reduce((acc, w) => acc + w.amount, 0);
+    
+    return { 
+      total: totalCommissions, 
+      withdrawn, 
+      pending, 
+      balance: totalCommissions - withdrawn - pending 
+    };
+  }, [store.bookings, store.withdrawals, store.role, store.currentUser]);
+
   const stats = useMemo(() => {
     let relevantBookings = store.bookings;
     if (store.role === 'broker') {
@@ -113,7 +141,7 @@ export default function PharmaBeachApp() {
         list = list.filter(c => c.ownerBrokerId === store.currentUser?.uid || c.status === 'active')
     }
     if (searchQuery) {
-      list = list.filter(c => c.name.includes(searchQuery) || (c.location && c.location.includes(searchQuery)) || (c.code && c.code.includes(searchQuery)))
+      list = list.filter(c => (c.name || '').includes(searchQuery) || (c.location && c.location.includes(searchQuery)) || (c.code && (c.code || '').includes(searchQuery)))
     }
     return list
   }, [store.role, store.chalets, searchQuery, store.currentUser]);
@@ -163,6 +191,18 @@ export default function PharmaBeachApp() {
   const handleAddBookingFromSheet = (chalet: Chalet, date: Date) => {
     setSelectedChalet(chalet);
     setIsBookingOpen(true);
+  }
+
+  const handleWithdrawRequest = (data: any) => {
+    if (!store.currentUser) return;
+    store.addWithdrawalRequest({
+      brokerId: store.currentUser.uid,
+      brokerName: store.currentUser.name,
+      amount: data.amount,
+      method: data.method,
+      details: data.details
+    });
+    toast({ title: "تم إرسال طلب السحب بنجاح" });
   }
 
   if (!store.isLoaded) return <div className="h-screen flex items-center justify-center font-black bg-slate-50 text-primary animate-pulse text-2xl">جاري تشغيل محرك فارما بيتش...</div>
@@ -251,6 +291,7 @@ export default function PharmaBeachApp() {
               <TabsList className="bg-white p-2 rounded-[2.5rem] mb-12 flex flex-wrap justify-start border shadow-sm h-auto gap-3">
                 <TabsTrigger value="spreadsheet" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><TableProperties className="h-4 w-4" /> جدول الجدولة (الشيت)</TabsTrigger>
                 <TabsTrigger value="bookings" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">المالية والحوالات</TabsTrigger>
+                <TabsTrigger value="withdrawals" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">طلبات السحب</TabsTrigger>
                 <TabsTrigger value="chalets" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">إدارة الأصول</TabsTrigger>
                 <TabsTrigger value="users" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">فريق العمل</TabsTrigger>
                 <TabsTrigger value="settings" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">الإعدادات</TabsTrigger>
@@ -334,6 +375,43 @@ export default function PharmaBeachApp() {
                           </div>
                       </Card>
                     ))}
+                 </div>
+              </TabsContent>
+
+              <TabsContent value="withdrawals" className="space-y-8">
+                 <div className="bg-white p-10 rounded-[3rem] border shadow-sm text-right">
+                    <h3 className="text-3xl font-black">طلبات سحب العمولات</h3>
+                    <p className="text-slate-500 font-bold">مراجعة وتنفيذ طلبات تحويل الأرباح للمسوقين</p>
+                 </div>
+
+                 <div className="space-y-6">
+                    {store.withdrawals.map(w => (
+                      <Card key={w.id} className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl flex flex-col md:flex-row justify-between items-center gap-6 text-right">
+                         <div className="flex items-center gap-6 flex-row-reverse flex-1 w-full">
+                            <div className="h-16 w-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner"><Wallet className="h-8 w-8" /></div>
+                            <div className="flex-1 space-y-1">
+                               <p className="text-xl font-black">{w.brokerName}</p>
+                               <p className="font-bold text-primary">{w.amount.toLocaleString()} ج.م <span className="text-slate-400 text-xs">({w.method === 'vodafone_cash' ? 'فودافون كاش' : w.method === 'instapay' ? 'انستا باي' : 'بنك'})</span></p>
+                               <p className="text-sm font-bold text-slate-500">{w.details}</p>
+                            </div>
+                         </div>
+                         <div className="flex gap-3 w-full md:w-auto justify-end">
+                            {w.status === 'pending' ? (
+                              <>
+                                <Button className="rounded-xl bg-green-600 hover:bg-green-700 font-black h-12 px-6" onClick={() => store.updateWithdrawalStatus(w.id, 'approved')}>تأكيد الدفع <Check className="ml-2 h-4 w-4" /></Button>
+                                <Button variant="destructive" className="rounded-xl font-black h-12 px-6" onClick={() => store.updateWithdrawalStatus(w.id, 'rejected')}>رفض <Ban className="ml-2 h-4 w-4" /></Button>
+                              </>
+                            ) : (
+                              <Badge className={w.status === 'approved' ? 'bg-green-100 text-green-700 px-6 py-2' : 'bg-red-100 text-red-700 px-6 py-2'}>
+                                {w.status === 'approved' ? 'تم الدفع' : 'مرفوض'}
+                              </Badge>
+                            )}
+                         </div>
+                      </Card>
+                    ))}
+                    {store.withdrawals.length === 0 && (
+                      <div className="text-center py-20 text-slate-400 font-bold">لا توجد طلبات سحب حالياً</div>
+                    )}
                  </div>
               </TabsContent>
 
@@ -425,7 +503,7 @@ export default function PharmaBeachApp() {
                           </div>
                           <div className="space-y-2">
                              <Label className="font-bold text-slate-500">بيانات الحساب البنكي</Label>
-                             <Textarea placeholder="اسم البنك، رقم الحساب، IBAN..." value={bankInfo} onChange={e => setBankInfo(e.target.value)} className="rounded-2xl min-h-[100px] bg-slate-50 border-none text-right" />
+                             <Textarea placeholder="اسم البنك، رقم الحساب، IBAN..." value={bankInfo} onChange={setBankInfo} className="rounded-2xl min-h-[100px] bg-slate-50 border-none text-right" />
                           </div>
                           <Button className="w-full h-16 rounded-2xl font-black gap-2 shadow-lg shadow-primary/20" onClick={handleSaveSettings}>
                              <Save className="h-5 w-5" /> حفظ إعدادات الدفع
@@ -454,7 +532,7 @@ export default function PharmaBeachApp() {
                    <p className="text-slate-500 font-bold mt-2">تابع عمولاتك (200 ج.م لليلة) وجدول حجوزاتك</p>
                 </div>
                 <div className="flex gap-4">
-                  <StatCard title="إجمالي العمولات" val={store.bookings.filter(b => b.brokerId === store.currentUser?.uid).reduce((acc, b) => acc + (b.brokerCommission || 0), 0).toLocaleString() + " ج.م"} icon={TrendingUp} color="text-primary" />
+                  <StatCard title="إجمالي العمولات" val={brokerStats.total.toLocaleString() + " ج.م"} icon={TrendingUp} color="text-primary" />
                   <StatCard title="حجوزاتي" val={filteredBookings.length} icon={CalendarIcon} color="text-blue-600" />
                 </div>
              </div>
@@ -462,6 +540,7 @@ export default function PharmaBeachApp() {
              <Tabs defaultValue="spreadsheet" className="w-full">
                 <TabsList className="bg-white p-2 rounded-[2.5rem] mb-12 flex justify-start border shadow-sm h-auto gap-3">
                    <TabsTrigger value="spreadsheet" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><TableProperties className="h-4 w-4" /> جدول الجدولة</TabsTrigger>
+                   <TabsTrigger value="wallet" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"><Wallet className="h-4 w-4" /> المحفظة والأرباح</TabsTrigger>
                    <TabsTrigger value="units" className="rounded-2xl px-8 py-4 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">تصفح الوحدات</TabsTrigger>
                 </TabsList>
 
@@ -473,6 +552,44 @@ export default function PharmaBeachApp() {
                     onAddBooking={handleAddBookingFromSheet}
                     userRole={store.role} 
                    />
+                </TabsContent>
+
+                <TabsContent value="wallet" className="space-y-8">
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <Card className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl text-center space-y-4">
+                         <p className="text-xs font-black text-slate-400 uppercase">الرصيد القابل للسحب</p>
+                         <p className="text-4xl font-black text-primary">{brokerStats.balance.toLocaleString()} ج.م</p>
+                         <Button className="w-full rounded-2xl h-14 font-black gap-2 mt-4" onClick={() => setIsWithdrawalOpen(true)} disabled={brokerStats.balance <= 0}>
+                            طلب سحب الرصيد <ArrowDownToLine className="h-5 w-5" />
+                         </Button>
+                      </Card>
+                      <Card className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl text-center space-y-4">
+                         <p className="text-xs font-black text-slate-400 uppercase">بانتظار المراجعة</p>
+                         <p className="text-4xl font-black text-orange-500">{brokerStats.pending.toLocaleString()} ج.م</p>
+                      </Card>
+                      <Card className="p-8 rounded-[2.5rem] bg-white border-none shadow-xl text-center space-y-4">
+                         <p className="text-xs font-black text-slate-400 uppercase">إجمالي المسحوبات</p>
+                         <p className="text-4xl font-black text-green-600">{brokerStats.withdrawn.toLocaleString()} ج.م</p>
+                      </Card>
+                   </div>
+
+                   <div className="space-y-6">
+                      <h3 className="text-2xl font-black text-right">سجل التحويلات</h3>
+                      {store.withdrawals.filter(w => w.brokerId === store.currentUser?.uid).map(w => (
+                        <Card key={w.id} className="p-6 rounded-[2rem] bg-white border-none shadow-sm flex justify-between items-center flex-row-reverse text-right">
+                           <div>
+                              <p className="font-black text-slate-900">{w.amount.toLocaleString()} ج.م</p>
+                              <p className="text-xs font-bold text-slate-400">{format(new Date(w.createdAt?.seconds * 1000 || Date.now()), 'dd MMMM yyyy', { locale: ar })}</p>
+                           </div>
+                           <div className="flex items-center gap-4">
+                              <Badge className={w.status === 'approved' ? 'bg-green-500' : w.status === 'pending' ? 'bg-orange-500' : 'bg-red-500'}>
+                                {w.status === 'approved' ? 'تم التحويل' : w.status === 'pending' ? 'قيد المراجعة' : 'مرفوض'}
+                              </Badge>
+                              <span className="text-xs font-bold text-slate-500">{w.method === 'vodafone_cash' ? 'فودافون كاش' : w.method === 'instapay' ? 'انستا باي' : 'بنك'}</span>
+                           </div>
+                        </Card>
+                      ))}
+                   </div>
                 </TabsContent>
 
                 <TabsContent value="units">
@@ -580,6 +697,7 @@ export default function PharmaBeachApp() {
       <AddUserDialog isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} onAdd={(data) => { store.addUser(data); toast({ title: "تم إنشاء حساب الموظف بنجاح" }); }} chalets={store.chalets} />
       <EditUserDialog user={editingUser} isOpen={isEditUserOpen} onClose={() => { setIsEditUserOpen(false); setEditingUser(null); }} onUpdate={(userId, data) => { store.updateUser(userId, data); toast({ title: "تم تحديث بيانات الموظف بنجاح" }); }} />
       <SupervisorActionDialog isOpen={isSupervisorActionOpen} onClose={() => setIsSupervisorActionOpen(false)} booking={activeSupervisorBooking} chalet={store.chalets.find(c => c.id === activeSupervisorBooking?.chaletId) || null} onConfirm={(updates) => store.updateBooking(activeSupervisorBooking!.id, updates)} />
+      <WithdrawalDialog isOpen={isWithdrawalOpen} onClose={() => setIsWithdrawalOpen(false)} availableBalance={brokerStats.balance} onConfirm={handleWithdrawRequest} />
 
     </div>
   )
