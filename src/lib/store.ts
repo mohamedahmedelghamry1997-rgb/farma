@@ -88,6 +88,12 @@ export interface Coupon {
   isActive: boolean
 }
 
+export interface SystemSettings {
+  vodafoneCash?: string
+  instaPay?: string
+  bankAccount?: string
+}
+
 export function useAppStore() {
   const db = useFirestore()
   const auth = useAuth()
@@ -101,6 +107,7 @@ export function useAppStore() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [users, setUsers] = useState<UserProfile[]>([])
   const [coupons, setCoupons] = useState<Coupon[]>([])
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>({})
   const [isDataLoading, setIsDataLoading] = useState(true)
 
   useEffect(() => {
@@ -157,6 +164,12 @@ export function useAppStore() {
       setUsers(snap.docs.map(d => ({ ...d.data() as UserProfile, id: d.id })));
     });
 
+    const unsubSettings = onSnapshot(doc(db, 'config', 'system'), (snap) => {
+      if (snap.exists()) {
+        setSystemSettings(snap.data() as SystemSettings);
+      }
+    });
+
     const unsubCoupons = onSnapshot(collection(db, 'coupons'), (snap) => {
       setCoupons(snap.docs.map(d => ({ ...d.data() as Coupon, id: d.id })));
       setIsDataLoading(false);
@@ -169,9 +182,18 @@ export function useAppStore() {
       unsubChalets();
       unsubBookings();
       unsubUsers();
+      unsubSettings();
       unsubCoupons();
     };
   }, [auth, db]);
+
+  const updateSystemSettings = async (settings: SystemSettings) => {
+    try {
+      await setDoc(doc(db, 'config', 'system'), settings, { merge: true });
+    } catch (e) {
+      console.error("Error updating system settings:", e);
+    }
+  }
 
   const addBooking = async (data: Omit<Booking, 'id' | 'createdAt'>) => {
     try {
@@ -286,8 +308,8 @@ export function useAppStore() {
 
   return {
     role, currentUser, authUser, isAuthLoading,
-    chalets, bookings, users, coupons,
-    addBooking, updateBooking, addChalet, updateChalet, addUser, updateUser, seedDatabase,
+    chalets, bookings, users, coupons, systemSettings,
+    addBooking, updateBooking, addChalet, updateChalet, addUser, updateUser, seedDatabase, updateSystemSettings,
     isLoaded: !isAuthLoading && !isDataLoading
   }
 }

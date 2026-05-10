@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
   Users, Home, CheckCircle2, XCircle, Plus, Trash2, MapPin, Phone, LogOut, 
@@ -16,7 +18,7 @@ import {
   Zap, Droplets, ShieldAlert, ClipboardCheck, LayoutDashboard, Settings, UserPlus,
   ArrowUpRight, Megaphone, Percent, Copy, Filter, Download, Calendar as CalendarIcon,
   LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle, Database,
-  ArrowRightLeft, Eye, Waves, Sun, Anchor, Palmtree, TableProperties
+  ArrowRightLeft, Eye, Waves, Sun, Anchor, Palmtree, TableProperties, CreditCard, Save
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -59,6 +61,27 @@ export default function PharmaBeachApp() {
   const [reportChalet, setReportChalet] = useState<Chalet | null>(null)
   const [reportBooking, setReportBooking] = useState<Booking | null>(null)
   const [isReportOpen, setIsReportOpen] = useState(false)
+
+  const [vCash, setVCash] = useState('')
+  const [iPay, setIPay] = useState('')
+  const [bankInfo, setBankInfo] = useState('')
+
+  useEffect(() => {
+    if (store.systemSettings) {
+      setVCash(store.systemSettings.vodafoneCash || '')
+      setIPay(store.systemSettings.instaPay || '')
+      setBankInfo(store.systemSettings.bankAccount || '')
+    }
+  }, [store.systemSettings])
+
+  const handleSaveSettings = () => {
+    store.updateSystemSettings({
+      vodafoneCash: vCash,
+      instaPay: iPay,
+      bankAccount: bankInfo
+    })
+    toast({ title: "تم حفظ إعدادات الدفع بنجاح" })
+  }
 
   const stats = useMemo(() => {
     let relevantBookings = store.bookings;
@@ -180,7 +203,7 @@ export default function PharmaBeachApp() {
         
         {(!store.role || store.role === 'client') ? (
           <div className="space-y-0">
-            <div className="bg-white py-32 border-b relative overflow-hidden">
+            <div className="bg-white py-32 border-b relative overflow-hidden text-right">
                <div className="container mx-auto px-4 text-center space-y-12 relative z-10">
                   <div className="flex justify-center gap-8 mb-4">
                     <div className="bg-primary/5 p-6 rounded-[2rem] text-primary animate-bounce delay-75"><Waves size={48} /></div>
@@ -197,7 +220,7 @@ export default function PharmaBeachApp() {
                   </div>
                </div>
             </div>
-            <div id="units" className="container mx-auto px-4 py-32">
+            <div id="units" className="container mx-auto px-4 py-32 text-right">
                <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
                   <div className="space-y-3 text-right">
                     <h3 className="text-5xl font-black text-slate-900">الوحدات المتاحة</h3>
@@ -274,7 +297,7 @@ export default function PharmaBeachApp() {
                                <p className="font-black text-3xl text-slate-900">{b.clientName}</p>
                                <p className="text-lg font-bold text-slate-500">{store.chalets.find(c => c.id === b.chaletId)?.name} | <span className="text-primary">{(b.totalAmount || 0).toLocaleString()} ج.م</span></p>
                                <div className="flex gap-3 justify-end mt-4">
-                                  <Badge className={b.paymentStatus === 'verified' ? 'bg-green-500 text-white border-none py-1.5 px-4' : 'bg-orange-500 text-white border-none py-1.5 px-4'}>
+                                  <Badge className={b.paymentStatus === 'verified' ? 'bg-green-500' : 'bg-orange-500'}>
                                     {b.paymentStatus === 'verified' ? 'دفع مؤكد' : 'انتظار المراجعة'}
                                   </Badge>
                                   <Badge variant="outline" className="border-slate-100 bg-slate-50 text-slate-500 font-bold py-1.5 px-4">مرجع: {b.paymentReference}</Badge>
@@ -388,15 +411,38 @@ export default function PharmaBeachApp() {
               </TabsContent>
 
               <TabsContent value="settings" className="space-y-8">
-                 <Card className="p-12 rounded-[3.5rem] bg-white border-none shadow-2xl space-y-8 text-right">
-                    <h3 className="text-3xl font-black">إعدادات النظام</h3>
-                    <div className="p-8 bg-primary/5 rounded-[2rem] border border-primary/10 space-y-6">
-                       <p className="text-slate-500 font-bold">توليد بيانات يدوية حقيقية لتجربة كافة وظائف المنظومة.</p>
-                       <Button className="w-full h-16 rounded-2xl font-black gap-3 text-lg" variant="default" onClick={() => { store.seedDatabase(); toast({ title: "تم توليد البيانات بنجاح" }); }}>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <Card className="p-10 rounded-[3rem] bg-white border-none shadow-xl space-y-8 text-right">
+                       <h3 className="text-2xl font-black flex items-center gap-2 justify-end">إعدادات الدفع والاستلام <CreditCard className="text-primary" /></h3>
+                       <div className="space-y-6">
+                          <div className="space-y-2">
+                             <Label className="font-bold text-slate-500">رقم فودافون كاش</Label>
+                             <Input placeholder="01xxxxxxxxx" value={vCash} onChange={e => setVCash(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none text-right" />
+                          </div>
+                          <div className="space-y-2">
+                             <Label className="font-bold text-slate-500">معرف انستا باي (InstaPay ID)</Label>
+                             <Input placeholder="name@instapay" value={iPay} onChange={e => setIPay(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none text-right" />
+                          </div>
+                          <div className="space-y-2">
+                             <Label className="font-bold text-slate-500">بيانات الحساب البنكي</Label>
+                             <Textarea placeholder="اسم البنك، رقم الحساب، IBAN..." value={bankInfo} onChange={e => setBankInfo(e.target.value)} className="rounded-2xl min-h-[100px] bg-slate-50 border-none text-right" />
+                          </div>
+                          <Button className="w-full h-16 rounded-2xl font-black gap-2 shadow-lg shadow-primary/20" onClick={handleSaveSettings}>
+                             <Save className="h-5 w-5" /> حفظ إعدادات الدفع
+                          </Button>
+                       </div>
+                    </Card>
+
+                    <Card className="p-10 rounded-[3rem] bg-white border-none shadow-xl space-y-8 text-right flex flex-col justify-between">
+                       <div>
+                          <h3 className="text-2xl font-black flex items-center gap-2 justify-end">صيانة المنظومة <Settings className="text-slate-400" /></h3>
+                          <p className="text-slate-500 font-bold mt-4">توليد بيانات يدوية حقيقية لتجربة كافة وظائف المنظومة بشكل سريع.</p>
+                       </div>
+                       <Button className="w-full h-16 rounded-2xl font-black gap-3 text-lg bg-slate-900 hover:bg-slate-800" variant="default" onClick={() => { store.seedDatabase(); toast({ title: "تم توليد البيانات بنجاح" }); }}>
                           توليد البيانات الآن <Database className="h-5 w-5" />
                        </Button>
-                    </div>
-                 </Card>
+                    </Card>
+                 </div>
               </TabsContent>
             </Tabs>
           </div>
