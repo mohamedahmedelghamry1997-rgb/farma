@@ -671,7 +671,7 @@ export default function PharmaBeachApp() {
                            <div className={`h-16 w-16 rounded-2xl flex items-center justify-center shadow-inner ${b.opStatus === 'checked_in' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-400'}`}><ClipboardCheck /></div>
                            <div>
                               <p className="text-2xl font-black">{b.clientName}</p>
-                              <p className="text-slate-500 font-bold">{store.chalets.find(c => c.id === b.chaletId)?.name} | {b.opStatus === 'checked_in' ? 'تم الاستلام - بانتظار الخروج' : 'لم يستلم بعد'}</p>
+                              <p className="text-slate-500 font-bold">{store.chalets.find(c => c.id === b.chaletId)?.name} | {b.opStatus === 'checked_out' ? 'تم الخروج' : b.opStatus === 'checked_in' ? 'تم الاستلام - بانتظار الخروج' : 'لم يستلم بعد'}</p>
                               <div className="flex gap-2 mt-2 justify-end">
                                  <Badge variant="outline" className="border-slate-100 text-[10px]">{format(new Date(b.startDate), 'dd MMM')} - {format(new Date(b.endDate), 'dd MMM')}</Badge>
                               </div>
