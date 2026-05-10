@@ -314,6 +314,7 @@ export function useAppStore() {
     }
 
     const today = new Date();
+    // توليد حجوزات مؤكدة لوسيط تجريبي ليكون لديه رصيد قابل للسحب
     const bookingData = [
       { 
         chaletId: chaletRefs[0], 
@@ -331,6 +332,24 @@ export function useAppStore() {
         brokerCommission: 600, 
         paymentMethod: 'vodafone_cash', 
         paymentReference: 'REF123', 
+        createdAt: serverTimestamp() 
+      },
+      { 
+        chaletId: chaletRefs[1], 
+        clientName: "منى علي", 
+        phoneNumber: "01155667788", 
+        guestCount: 2, 
+        startDate: new Date(today.getTime() + 86400000 * 5).toISOString(), 
+        endDate: new Date(today.getTime() + 86400000 * 8).toISOString(), 
+        status: "confirmed", 
+        opStatus: "waiting", 
+        paymentStatus: "verified", 
+        totalAmount: 10500, 
+        brokerId: "admin1_uid",
+        brokerName: "أحمد البروكر",
+        brokerCommission: 800, 
+        paymentMethod: 'instapay', 
+        paymentReference: 'TXN999', 
         createdAt: serverTimestamp() 
       }
     ];

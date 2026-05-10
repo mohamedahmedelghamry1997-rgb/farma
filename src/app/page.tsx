@@ -32,6 +32,7 @@ import { SupervisorActionDialog } from '@/components/SupervisorActionDialog'
 import { ChaletSpreadsheet } from '@/components/ChaletSpreadsheet'
 import { ChaletReportDialog } from '@/components/ChaletReportDialog'
 import { WithdrawalDialog } from '@/components/WithdrawalDialog'
+import { RoleSwitcher } from '@/components/RoleSwitcher'
 import Image from 'next/image'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
@@ -71,6 +72,10 @@ export default function PharmaBeachApp() {
   const [iPay, setIPay] = useState('')
   const [bankInfo, setBankInfo] = useState('')
 
+  // لأغراض التجربة فقط، نسمح بتبديل الأدوار يدوياً
+  const [manualRole, setManualRole] = useState<UserRole | null>(null)
+  const activeRole = manualRole || store.role
+
   useEffect(() => {
     if (store.systemSettings) {
       setVCash(store.systemSettings.vodafoneCash || '')
@@ -89,18 +94,19 @@ export default function PharmaBeachApp() {
   }
 
   const brokerStats = useMemo(() => {
-    if (store.role !== 'broker' || !store.currentUser) return { total: 0, withdrawn: 0, pending: 0, balance: 0 };
+    const userId = store.currentUser?.uid || "admin1_uid"; // استخدام معرف تجريبي إذا لم يوجد مستخدم
+    if (activeRole !== 'broker') return { total: 0, withdrawn: 0, pending: 0, balance: 0 };
     
     const totalCommissions = store.bookings
-      .filter(b => b.brokerId === store.currentUser?.uid && b.status === 'confirmed')
+      .filter(b => b.brokerId === userId && b.status === 'confirmed')
       .reduce((acc, b) => acc + (b.brokerCommission || 0), 0);
     
     const withdrawn = store.withdrawals
-      .filter(w => w.brokerId === store.currentUser?.uid && w.status === 'approved')
+      .filter(w => w.brokerId === userId && w.status === 'approved')
       .reduce((acc, w) => acc + w.amount, 0);
     
     const pending = store.withdrawals
-      .filter(w => w.brokerId === store.currentUser?.uid && w.status === 'pending')
+      .filter(w => w.brokerId === userId && w.status === 'pending')
       .reduce((acc, w) => acc + w.amount, 0);
     
     return { 
@@ -109,12 +115,12 @@ export default function PharmaBeachApp() {
       pending, 
       balance: totalCommissions - withdrawn - pending 
     };
-  }, [store.bookings, store.withdrawals, store.role, store.currentUser]);
+  }, [store.bookings, store.withdrawals, activeRole, store.currentUser]);
 
   const stats = useMemo(() => {
     let relevantBookings = store.bookings;
-    if (store.role === 'broker') {
-      relevantBookings = store.bookings.filter(b => b.brokerId === store.currentUser?.uid);
+    if (activeRole === 'broker') {
+      relevantBookings = store.bookings.filter(b => b.brokerId === (store.currentUser?.uid || "admin1_uid"));
     }
 
     const verifiedBookings = relevantBookings.filter(b => b.paymentStatus === 'verified' || b.status === 'admin_approved' || b.status === 'confirmed');
@@ -133,23 +139,24 @@ export default function PharmaBeachApp() {
     const occupancyRate = totalChaletsCount > 0 ? Math.round((occupiedToday / totalChaletsCount) * 100) : 0;
 
     return { totalRevenue, pendingTransfers, activeCoupons, occupancyRate };
-  }, [store.bookings, store.chalets, store.coupons, store.role, store.currentUser]);
+  }, [store.bookings, store.chalets, store.coupons, activeRole, store.currentUser]);
 
   const myChalets = useMemo(() => {
     let list = store.chalets || []
-    if (store.role === 'broker') {
-        list = list.filter(c => c.ownerBrokerId === store.currentUser?.uid || c.status === 'active')
+    if (activeRole === 'broker') {
+        list = list.filter(c => c.ownerBrokerId === (store.currentUser?.uid || "admin1_uid") || c.status === 'active')
     }
     if (searchQuery) {
       list = list.filter(c => (c.name || '').includes(searchQuery) || (c.location && c.location.includes(searchQuery)) || (c.code && (c.code || '').includes(searchQuery)))
     }
     return list
-  }, [store.role, store.chalets, searchQuery, store.currentUser]);
+  }, [activeRole, store.chalets, searchQuery, store.currentUser]);
 
   const filteredBookings = useMemo(() => {
     let list = store.bookings || []
-    if (store.role === 'broker') list = list.filter(b => b.brokerId === store.currentUser?.uid)
-    if (store.role === 'supervisor') list = list.filter(b => b.status === 'confirmed' || b.status === 'admin_approved')
+    const userId = store.currentUser?.uid || "admin1_uid";
+    if (activeRole === 'broker') list = list.filter(b => b.brokerId === userId)
+    if (activeRole === 'supervisor') list = list.filter(b => b.status === 'confirmed' || b.status === 'admin_approved')
     
     if (statusFilter !== 'all') {
       list = list.filter(b => b.status === statusFilter || b.paymentStatus === statusFilter)
@@ -159,7 +166,7 @@ export default function PharmaBeachApp() {
       list = list.filter(b => b.clientName.includes(searchQuery) || b.phoneNumber.includes(searchQuery))
     }
     return list
-  }, [store.role, store.bookings, searchQuery, statusFilter, store.currentUser]);
+  }, [activeRole, store.bookings, searchQuery, statusFilter, store.currentUser]);
 
   const handleAuth = async () => {
     try {
@@ -194,10 +201,11 @@ export default function PharmaBeachApp() {
   }
 
   const handleWithdrawRequest = (data: any) => {
-    if (!store.currentUser) return;
+    const userId = store.currentUser?.uid || "admin1_uid";
+    const userName = store.currentUser?.name || "أحمد البروكر";
     store.addWithdrawalRequest({
-      brokerId: store.currentUser.uid,
-      brokerName: store.currentUser.name,
+      brokerId: userId,
+      brokerName: userName,
       amount: data.amount,
       method: data.method,
       details: data.details
@@ -225,7 +233,7 @@ export default function PharmaBeachApp() {
                  <div className="text-left hidden md:block">
                     <p className="text-sm font-black text-slate-900">{store.currentUser?.name || store.authUser.email}</p>
                     <Badge className="bg-primary/10 text-primary border-none text-[10px] py-1 px-3 rounded-full font-black">
-                        {store.role === 'admin' ? 'مدير النظام' : store.role === 'broker' ? 'وسيط' : store.role === 'supervisor' ? 'مشرف' : 'عميل'}
+                        {activeRole === 'admin' ? 'مدير النظام' : activeRole === 'broker' ? 'وسيط' : activeRole === 'supervisor' ? 'مشرف' : 'عميل'}
                     </Badge>
                  </div>
                  <Button variant="ghost" size="sm" onClick={() => signOut(auth)} className="rounded-2xl hover:bg-destructive/10 hover:text-destructive transition-colors"><LogOut className="h-5 w-5" /></Button>
@@ -241,7 +249,7 @@ export default function PharmaBeachApp() {
 
       <main className="flex-1 pb-24">
         
-        {(!store.role || store.role === 'client') ? (
+        {(!activeRole || activeRole === 'client') ? (
           <div className="space-y-0">
             <div className="bg-white py-32 border-b relative overflow-hidden text-right">
                <div className="container mx-auto px-4 text-center space-y-12 relative z-10">
@@ -278,7 +286,7 @@ export default function PharmaBeachApp() {
                </div>
             </div>
           </div>
-        ) : store.role === 'admin' ? (
+        ) : activeRole === 'admin' ? (
           <div className="container mx-auto px-4 py-12 space-y-12">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                <StatCard title="إجمالي الإيرادات" val={stats.totalRevenue.toLocaleString() + ' ج.م'} icon={Wallet} color="text-green-600" />
@@ -303,7 +311,7 @@ export default function PharmaBeachApp() {
                     bookings={store.bookings} 
                     onSelectChalet={handleOpenSpreadsheetReport} 
                     onAddBooking={handleAddBookingFromSheet}
-                    userRole={store.role} 
+                    userRole={activeRole} 
                   />
               </TabsContent>
 
@@ -524,7 +532,7 @@ export default function PharmaBeachApp() {
               </TabsContent>
             </Tabs>
           </div>
-        ) : store.role === 'broker' ? (
+        ) : activeRole === 'broker' ? (
           <div className="container mx-auto px-4 py-12 space-y-12">
              <div className="flex justify-between items-center flex-row-reverse">
                 <div className="text-right">
@@ -550,7 +558,7 @@ export default function PharmaBeachApp() {
                     bookings={store.bookings} 
                     onSelectChalet={handleOpenSpreadsheetReport} 
                     onAddBooking={handleAddBookingFromSheet}
-                    userRole={store.role} 
+                    userRole={activeRole} 
                    />
                 </TabsContent>
 
@@ -575,11 +583,11 @@ export default function PharmaBeachApp() {
 
                    <div className="space-y-6">
                       <h3 className="text-2xl font-black text-right">سجل التحويلات</h3>
-                      {store.withdrawals.filter(w => w.brokerId === store.currentUser?.uid).map(w => (
+                      {store.withdrawals.filter(w => w.brokerId === (store.currentUser?.uid || "admin1_uid")).map(w => (
                         <Card key={w.id} className="p-6 rounded-[2rem] bg-white border-none shadow-sm flex justify-between items-center flex-row-reverse text-right">
                            <div>
                               <p className="font-black text-slate-900">{w.amount.toLocaleString()} ج.م</p>
-                              <p className="text-xs font-bold text-slate-400">{format(new Date(w.createdAt?.seconds * 1000 || Date.now()), 'dd MMMM yyyy', { locale: ar })}</p>
+                              <p className="text-xs font-bold text-slate-400">{w.createdAt?.seconds ? format(new Date(w.createdAt.seconds * 1000), 'dd MMMM yyyy', { locale: ar }) : 'الآن'}</p>
                            </div>
                            <div className="flex items-center gap-4">
                               <Badge className={w.status === 'approved' ? 'bg-green-500' : w.status === 'pending' ? 'bg-orange-500' : 'bg-red-500'}>
@@ -589,6 +597,9 @@ export default function PharmaBeachApp() {
                            </div>
                         </Card>
                       ))}
+                      {store.withdrawals.filter(w => w.brokerId === (store.currentUser?.uid || "admin1_uid")).length === 0 && (
+                        <div className="text-center py-10 text-slate-400 font-bold">لا توجد تحويلات سابقة</div>
+                      )}
                    </div>
                 </TabsContent>
 
@@ -599,7 +610,7 @@ export default function PharmaBeachApp() {
                 </TabsContent>
              </Tabs>
           </div>
-        ) : store.role === 'supervisor' ? (
+        ) : activeRole === 'supervisor' ? (
           <div className="container mx-auto px-4 py-12 space-y-12">
              <div className="flex justify-between items-center flex-row-reverse">
                 <div className="text-right">
@@ -669,7 +680,7 @@ export default function PharmaBeachApp() {
         </DialogContent>
       </Dialog>
 
-      <ChaletDetailsDialog chalet={viewingDetailsChalet} isOpen={!!viewingDetailsChalet} onClose={() => setViewingDetailsChalet(null)} onBook={() => { setSelectedChalet(viewingDetailsChalet); setIsBookingOpen(true); setViewingDetailsChalet(null); }} existingBookings={store.bookings} userRole={store.role} />
+      <ChaletDetailsDialog chalet={viewingDetailsChalet} isOpen={!!viewingDetailsChalet} onClose={() => setViewingDetailsChalet(null)} onBook={() => { setSelectedChalet(viewingDetailsChalet); setIsBookingOpen(true); setViewingDetailsChalet(null); }} existingBookings={store.bookings} userRole={activeRole} />
       
       <BookingDialog 
         chalet={selectedChalet} 
@@ -689,7 +700,7 @@ export default function PharmaBeachApp() {
         isOpen={isReportOpen} 
         onClose={() => setIsReportOpen(false)} 
         onViewFullHistory={handleViewFullHistory}
-        userRole={store.role} 
+        userRole={activeRole} 
         allBookings={store.bookings}
       />
 
@@ -698,6 +709,9 @@ export default function PharmaBeachApp() {
       <EditUserDialog user={editingUser} isOpen={isEditUserOpen} onClose={() => { setIsEditUserOpen(false); setEditingUser(null); }} onUpdate={(userId, data) => { store.updateUser(userId, data); toast({ title: "تم تحديث بيانات الموظف بنجاح" }); }} />
       <SupervisorActionDialog isOpen={isSupervisorActionOpen} onClose={() => setIsSupervisorActionOpen(false)} booking={activeSupervisorBooking} chalet={store.chalets.find(c => c.id === activeSupervisorBooking?.chaletId) || null} onConfirm={(updates) => store.updateBooking(activeSupervisorBooking!.id, updates)} />
       <WithdrawalDialog isOpen={isWithdrawalOpen} onClose={() => setIsWithdrawalOpen(false)} availableBalance={brokerStats.balance} onConfirm={handleWithdrawRequest} />
+
+      {/* ميزة تبديل الهوية متاحة فقط للأدمن أو لأغراض التجربة */}
+      <RoleSwitcher currentRole={activeRole} onRoleChange={setManualRole} />
 
     </div>
   )
