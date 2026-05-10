@@ -52,11 +52,14 @@ export function ChaletSpreadsheet({ chalets, bookings, onSelectChalet, onAddBook
   }, [chalets, searchQuery, searchDate, bookings])
 
   const getCellStatus = (chaletId: string, day: Date) => {
-    return bookings.find(b => 
+    const allForDay = bookings.filter(b => 
       b.chaletId === chaletId && 
-      b.status !== 'cancelled' &&
       isWithinInterval(day, { start: new Date(b.startDate), end: new Date(b.endDate) })
     )
+    
+    // نفضل عرض الحجز غير الملغي إذا وجد، وإلا نعرض الملغي
+    const active = allForDay.find(b => b.status !== 'cancelled')
+    return active || allForDay[0]
   }
 
   return (
@@ -153,7 +156,8 @@ export function ChaletSpreadsheet({ chalets, bookings, onSelectChalet, onAddBook
                       {booking && (
                         <div className={`absolute inset-1 rounded-lg shadow-md flex items-center justify-center transition-all hover:scale-105 z-10 ${
                           booking.status === 'confirmed' ? 'bg-green-500' : 
-                          booking.status === 'admin_approved' ? 'bg-blue-500' : 'bg-orange-400'
+                          booking.status === 'admin_approved' ? 'bg-blue-500' : 
+                          booking.status === 'cancelled' ? 'bg-red-500' : 'bg-orange-400'
                         }`}>
                           <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></div>
                           {isExpanded && <span className="text-[8px] text-white font-black mr-1 hidden md:inline truncate px-1">{booking.clientName}</span>}
@@ -177,6 +181,7 @@ export function ChaletSpreadsheet({ chalets, bookings, onSelectChalet, onAddBook
         <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full bg-green-500"></div> حجز مؤكد</div>
         <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full bg-blue-500"></div> موافقة إدارية</div>
         <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full bg-orange-400"></div> انتظار المراجعة</div>
+        <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full bg-red-500"></div> حجز ملغي</div>
         <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-lg border border-slate-200"></div> متاح (اضغط للإضافة)</div>
         {isExpanded && <Button variant="outline" size="sm" className="rounded-full px-6 font-black border-slate-200" onClick={() => setIsExpanded(false)}>إغلاق العرض المكبر</Button>}
       </div>

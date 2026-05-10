@@ -49,6 +49,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     const twoDaysBefore = subDays(range.from, 2);
     const twoDaysAfter = addDays(range.to, 2);
 
+    // الحجوزات الملغاة لا تعتبر "إشغال" في خوارزمية الفجوة
     const isOccupied = (day: Date) => existingBookings.some(b => 
       b.chaletId === chalet.id && 
       b.status !== 'cancelled' &&
@@ -108,6 +109,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     const today = startOfDay(new Date())
     if (isBefore(day, today)) return true
 
+    // الحجوزات الملغاة تجعل التواريخ متاحة في التقويم
     return existingBookings.some(b => {
       if (b.chaletId !== chalet?.id || b.status === 'cancelled') return false
       const start = startOfDay(new Date(b.startDate))
@@ -149,7 +151,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
 
           <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3 flex-row-reverse text-right">
             <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0" />
-            <p className="text-xs text-orange-800 font-bold leading-relaxed">تنبيه: لن يقبل النظام أي حجز يترك يوماً واحداً منفرداً بين الحجوزات السابقة والجديدة.</p>
+            <p className="text-xs text-orange-800 font-bold leading-relaxed">تنبيه: لن يقبل النظام أي حجز يترك يوماً واحداً منفرداً بين الحجوزات السابقة والجديدة (تجاهل الملغى).</p>
           </div>
 
           <div className="grid grid-cols-1 gap-6">
