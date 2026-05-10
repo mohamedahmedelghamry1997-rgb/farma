@@ -28,6 +28,7 @@ export interface UserProfile {
   role: UserRole
   assignedChaletIds: string[]
   isApproved: boolean
+  email?: string
   phone?: string
   status?: 'active' | 'suspended'
   commissionRate?: number
@@ -37,13 +38,13 @@ export interface UserProfile {
 export interface Chalet {
   id: string
   name: string
-  code: string // كود الشاليه
+  code: string 
   normalPrice: number
   holidayPrice: number
   description: string
   image: string
   gallery?: string[]
-  videoUrl?: string // رابط الفيديو
+  videoUrl?: string 
   location: string
   city: string
   status: 'active' | 'maintenance' | 'closed' | 'pending'
@@ -67,8 +68,8 @@ export interface Booking {
   paymentReference?: string
   totalAmount: number
   brokerId?: string
-  brokerName?: string // اسم البروكر للحجز
-  brokerCommission: number // عمولة البروكر (عدد الليالي * 200)
+  brokerName?: string 
+  brokerCommission: number 
   supervisorId?: string
   notes?: string
   createdAt?: any
@@ -127,7 +128,8 @@ export function useAppStore() {
               isApproved: true,
               assignedChaletIds: [],
               status: 'active',
-              commissionRate: assignedRole === 'broker' ? 200 : 0
+              commissionRate: assignedRole === 'broker' ? 200 : 0,
+              email: user.email || ""
             };
             await setDoc(userDocRef, newProfile);
             setCurrentUser({ ...newProfile, id: user.uid } as UserProfile);
@@ -213,6 +215,21 @@ export function useAppStore() {
     }
   }
 
+  const addUser = async (data: any) => {
+    try {
+      const newUserRef = doc(collection(db, 'users'));
+      await setDoc(newUserRef, {
+        ...data,
+        uid: newUserRef.id,
+        isApproved: true,
+        status: 'active',
+        createdAt: serverTimestamp()
+      });
+    } catch (e) {
+      console.error("Error adding user:", e);
+    }
+  }
+
   const updateUser = async (id: string, updates: Partial<UserProfile>) => {
     try {
       await updateDoc(doc(db, 'users', id), updates);
@@ -252,7 +269,7 @@ export function useAppStore() {
         totalAmount: 15000, 
         brokerId: "admin1_uid",
         brokerName: "أحمد البروكر",
-        brokerCommission: 600, // 3 nights * 200
+        brokerCommission: 600, 
         paymentMethod: 'vodafone_cash', 
         paymentReference: 'REF123', 
         createdAt: serverTimestamp() 
@@ -270,7 +287,7 @@ export function useAppStore() {
   return {
     role, currentUser, authUser, isAuthLoading,
     chalets, bookings, users, coupons,
-    addBooking, updateBooking, addChalet, updateChalet, updateUser, seedDatabase,
+    addBooking, updateBooking, addChalet, updateChalet, addUser, updateUser, seedDatabase,
     isLoaded: !isAuthLoading && !isDataLoading
   }
 }
