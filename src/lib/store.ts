@@ -91,15 +91,6 @@ export interface WithdrawalRequest {
   createdAt: any
 }
 
-export interface Coupon {
-  id: string
-  code: string
-  discountType: 'percentage' | 'fixed'
-  value: number
-  expiryDate: string
-  isActive: boolean
-}
-
 export interface SystemSettings {
   vodafoneCash?: string
   instaPay?: string
@@ -120,7 +111,6 @@ export function useAppStore() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([])
   const [users, setUsers] = useState<UserProfile[]>([])
-  const [coupons, setCoupons] = useState<Coupon[]>([])
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({})
   const [isDataLoading, setIsDataLoading] = useState(true)
 
@@ -186,10 +176,6 @@ export function useAppStore() {
       if (snap.exists()) {
         setSystemSettings(snap.data() as SystemSettings);
       }
-    });
-
-    const unsubCoupons = onSnapshot(collection(db, 'coupons'), (snap) => {
-      setCoupons(snap.docs.map(d => ({ ...d.data() as Coupon, id: d.id })));
       setIsDataLoading(false);
     }, (err) => {
       setIsDataLoading(false);
@@ -202,7 +188,6 @@ export function useAppStore() {
       unsubWithdrawals();
       unsubUsers();
       unsubSettings();
-      unsubCoupons();
     };
   }, [auth, db]);
 
@@ -215,7 +200,6 @@ export function useAppStore() {
   }
 
   const addBooking = async (data: any) => {
-    // تنظيف البيانات من أي قيم undefined لمنع أخطاء Firebase
     const cleanData = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== undefined)
     );
@@ -373,7 +357,7 @@ export function useAppStore() {
 
   return {
     role, currentUser, authUser, isAuthLoading,
-    chalets, bookings, users, coupons, systemSettings, withdrawals,
+    chalets, bookings, users, systemSettings, withdrawals,
     addBooking, updateBooking, addChalet, updateChalet, addUser, updateUser, seedDatabase, updateSystemSettings, addWithdrawalRequest, updateWithdrawalStatus,
     isLoaded: !isAuthLoading && !isDataLoading
   }
