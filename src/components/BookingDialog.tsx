@@ -44,27 +44,46 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
   const checkGapRule = (range: DateRange | undefined) => {
     if (!range?.from || !range?.to || !chalet) return true;
 
-    const before = subDays(range.from, 1);
-    const after = addDays(range.to, 1);
-    const twoDaysBefore = subDays(range.from, 2);
-    const twoDaysAfter = addDays(range.to, 2);
+    const startOfNew = startOfDay(range.from);
+    const endOfNew = startOfDay(range.to);
 
-    const isOccupied = (day: Date) => existingBookings.some(b => 
-      b.chaletId === chalet.id && 
-      b.status !== 'cancelled' &&
-      isWithinInterval(startOfDay(day), { start: startOfDay(new Date(b.startDate)), end: startOfDay(new Date(b.endDate)) })
-    );
+    // الحصول على الحجوزات النشطة لهذا الشاليه وترتيبها زمنياً
+    const relevantBookings = existingBookings
+      .filter(b => b.chaletId === chalet.id && b.status !== 'cancelled')
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
-    const hasSingleGapBefore = isOccupied(twoDaysBefore) && !isOccupied(before);
-    const hasSingleGapAfter = isOccupied(twoDaysAfter) && !isOccupied(after);
+    // البحث عن أقرب حجز يسبق هذا الحجز
+    const prevBooking = [...relevantBookings].reverse().find(b => startOfDay(new Date(b.endDate)) < startOfNew);
+    
+    // البحث عن أقرب حجز يلي هذا الحجز
+    const nextBooking = relevantBookings.find(b => startOfDay(new Date(b.startDate)) > endOfNew);
 
-    if (hasSingleGapBefore || hasSingleGapAfter) {
-      toast({
-        variant: "destructive",
-        title: "خطأ في الجدولة",
-        description: "يمنع ترك يوم واحد فارغ بين الحجوزات. يرجى اختيار تواريخ متصلة بالحجوزات السابقة."
-      });
-      return false;
+    if (prevBooking) {
+      const prevEnd = startOfDay(new Date(prevBooking.endDate));
+      const gap = differenceInDays(startOfNew, prevEnd);
+      
+      if (gap > 1) {
+        toast({
+          variant: "destructive",
+          title: "خطأ في الجدولة (فجوة فارغة)",
+          description: `لا يمكن ترك أيام فارغة (${gap - 1} أيام). يجب أن يبدأ الحجز الجديد يوم ${format(addDays(prevEnd, 1), 'dd MMMM', { locale: ar })} ليكون متصلاً بالحجز السابق.`
+        });
+        return false;
+      }
+    }
+
+    if (nextBooking) {
+      const nextStart = startOfDay(new Date(nextBooking.startDate));
+      const gap = differenceInDays(nextStart, endOfNew);
+      
+      if (gap > 1) {
+        toast({
+          variant: "destructive",
+          title: "خطأ في الجدولة (فجوة فارغة)",
+          description: `لا يمكن ترك أيام فارغة (${gap - 1} أيام) قبل الحجز القادم. يجب أن ينتهي الحجز الجديد يوم ${format(subDays(nextStart, 1), 'dd MMMM', { locale: ar })} ليغلق الفجوة.`
+        });
+        return false;
+      }
     }
 
     return true;
@@ -89,7 +108,6 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
       paymentMethod,
       paymentReference: paymentRef,
       totalAmount: calculateTotal(),
-      // استخدام قيمة null بدلاً من undefined لضمان التوافق مع Firebase
       brokerId: currentUser?.uid || null,
       brokerName: currentUser?.name || "مباشر",
       brokerCommission: nights * commissionPerNight
@@ -122,7 +140,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
         <DialogHeader className="bg-primary p-8 text-white relative">
           <DialogTitle className="text-2xl font-bold text-right mb-2">طلب حجز واستلام الوحدة</DialogTitle>
           <DialogDescription className="text-white/70 text-right font-medium">
-             منتجع فارما بيتش - يرجى الالتزام بالجدولة المتصلة (بدون فجوات)
+             منتجع فارما بيتش - يرجى الالتزام بالجدولة المتصلة (بدون أي فجوات زمنية)
           </DialogDescription>
           <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
             <CalendarIcon size={120} />
@@ -149,7 +167,9 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
 
           <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3 flex-row-reverse text-right">
             <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0" />
-            <p className="text-xs text-orange-800 font-bold leading-relaxed">تنبيه: لن يقبل النظام أي حجز يترك يوماً واحداً منفرداً بين الحجوزات السابقة والجديدة (تجاهل الملغى).</p>
+            <p className="text-xs text-orange-800 font-bold leading-relaxed">
+              سياسة الجدولة: يمنع النظام ترك أي أيام فارغة بين الحجوزات. يجب أن تبدأ حجوزاتك من اليوم التالي مباشرة لآخر حجز مسجل لضمان استمرارية الإشغال.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-6">
