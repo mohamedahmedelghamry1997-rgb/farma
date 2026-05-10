@@ -132,10 +132,14 @@ export default function PharmaBeachApp() {
     setIsReportOpen(true)
   }
 
+  const handleViewFullHistory = (chalet: Chalet) => {
+    setIsReportOpen(false);
+    setViewingDetailsChalet(chalet);
+  }
+
   const handleAddBookingFromSheet = (chalet: Chalet, date: Date) => {
     setSelectedChalet(chalet);
     setIsBookingOpen(true);
-    // Note: We could pre-select the date in the dialog if needed
   }
 
   if (!store.isLoaded) return <div className="h-screen flex items-center justify-center font-black bg-slate-50 text-primary animate-pulse text-2xl">جاري تشغيل محرك فارما بيتش...</div>
@@ -500,7 +504,9 @@ export default function PharmaBeachApp() {
         booking={reportBooking} 
         isOpen={isReportOpen} 
         onClose={() => setIsReportOpen(false)} 
+        onViewFullHistory={handleViewFullHistory}
         userRole={store.role} 
+        allBookings={store.bookings}
       />
 
       <AddChaletDialog isOpen={isAddChaletOpen} onClose={() => setIsAddChaletOpen(false)} onAdd={(data) => { store.addChalet(data); toast({ title: "تمت إضافة الشاليه بنجاح" }); }} />

@@ -4,23 +4,38 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Chalet, Booking, UserRole } from '@/lib/store'
 import { Badge } from './ui/badge'
-import { User, Phone, Calendar as CalendarIcon, DollarSign, Tag, Briefcase, History, MapPin, Hash, Receipt, Wallet, UserCheck } from 'lucide-react'
-import { format, differenceInDays } from 'date-fns'
+import { User, Phone, Calendar as CalendarIcon, DollarSign, Tag, Briefcase, History, MapPin, Hash, Receipt, Wallet, UserCheck, Clock, ArrowLeftRight } from 'lucide-react'
+import { format, differenceInDays, isAfter, startOfDay } from 'date-fns'
 import { ar } from 'date-fns/locale'
+import { Button } from './ui/button'
 
 interface ChaletReportDialogProps {
   chalet: Chalet | null
   booking: Booking | null
   isOpen: boolean
   onClose: () => void
+  onViewFullHistory?: (chalet: Chalet) => void
   userRole?: UserRole | null
+  allBookings?: Booking[]
 }
 
-export function ChaletReportDialog({ chalet, booking, isOpen, onClose, userRole }: ChaletReportDialogProps) {
+export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFullHistory, userRole, allBookings = [] }: ChaletReportDialogProps) {
   if (!chalet) return null
 
   const nights = booking ? differenceInDays(new Date(booking.endDate), new Date(booking.startDate)) + 1 : 0;
   const commission = nights * 200;
+
+  // حساب الموعد القادم المتاح
+  const chaletBookings = allBookings
+    .filter(b => b.chaletId === chalet.id && b.status !== 'cancelled')
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+  const currentBooking = chaletBookings.find(b => {
+    const today = startOfDay(new Date());
+    return isAfter(new Date(b.endDate), today) && !isAfter(new Date(b.startDate), today);
+  });
+
+  const nextBooking = chaletBookings.find(b => isAfter(new Date(b.startDate), new Date()));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -42,12 +57,44 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, userRole 
         </DialogHeader>
 
         <div className="p-10 space-y-12">
-          {booking ? (
+          {/* قسم حالة التوافر الفورية */}
+          {!booking && (
+            <div className={`p-8 rounded-[2.5rem] border-2 flex flex-col items-center text-center gap-4 ${currentBooking ? 'border-orange-100 bg-orange-50' : 'border-green-100 bg-green-50'}`}>
+                {currentBooking ? (
+                  <>
+                    <Clock className="h-12 w-12 text-orange-600 animate-pulse" />
+                    <div>
+                      <p className="text-2xl font-black text-orange-900">الوحدة محجوزة حالياً</p>
+                      <p className="text-orange-700 font-bold mt-1">
+                        ستكون متاحة للإيجار بدءاً من: {format(new Date(currentBooking.endDate), 'dd MMMM yyyy', { locale: ar })}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="h-12 w-12 text-green-600" />
+                    <div>
+                      <p className="text-2xl font-black text-green-900">الوحدة متاحة الآن</p>
+                      <p className="text-green-700 font-bold mt-1">
+                        جاهزة لاستقبال الحجوزات الفورية في الشيت.
+                      </p>
+                    </div>
+                  </>
+                )}
+                {onViewFullHistory && (
+                  <Button variant="outline" className="mt-4 rounded-2xl h-12 px-8 font-black border-slate-200 gap-2" onClick={() => onViewFullHistory(chalet)}>
+                    عرض سجل التشغيل الكامل <History className="h-4 w-4" />
+                  </Button>
+                )}
+            </div>
+          )}
+
+          {booking && (
             <div className="space-y-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InfoCard title="العميل المستأجر" value={booking.clientName} icon={User} color="text-blue-600" subValue={booking.phoneNumber} />
                 <InfoCard title="فترة الإقامة" value={`${format(new Date(booking.startDate), 'dd MMMM yyyy', { locale: ar })}`} icon={CalendarIcon} color="text-orange-600" subValue={`إلى ${format(new Date(booking.endDate), 'dd MMMM yyyy', { locale: ar })} (${nights} ليالي)`} />
-                <InfoCard title="المسوق المسؤول" value={booking.brokerName || "حجز مباشر"} icon={Briefcase} color="text-purple-600" subValue={booking.brokerId ? "وسيط معتمد" : "إدارة المنتج"} />
+                <InfoCard title="المسوق المسؤول" value={booking.brokerName || "حجز مباشر"} icon={Briefcase} color="text-purple-600" subValue={booking.brokerId ? "وسيط معتمد" : "إدارة المنتجع"} />
                 <InfoCard title="إجمالي مبلغ الحجز" value={`${booking.totalAmount?.toLocaleString()} ج.م`} icon={Wallet} color="text-green-600" subValue={`سعر الليلة: ${chalet.normalPrice.toLocaleString()} ج.م`} />
               </div>
 
@@ -69,22 +116,13 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, userRole 
                  </div>
               </div>
 
-              {booking.notes && (
-                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-right">
-                   <p className="text-xs font-black text-slate-400 mb-2 uppercase">ملاحظات الحجز</p>
-                   <p className="text-slate-600 font-bold">{booking.notes}</p>
+              {onViewFullHistory && (
+                <div className="flex justify-center">
+                   <Button variant="link" className="text-primary font-black gap-2" onClick={() => onViewFullHistory(chalet)}>
+                      شاهد سجل الحجوزات الكامل لهذه الوحدة <ArrowLeftRight className="h-4 w-4" />
+                   </Button>
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="text-center py-20 space-y-6">
-              <div className="h-24 w-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
-                <History size={48} />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-slate-900">الوحدة متاحة حالياً</p>
-                <p className="text-slate-400 font-bold mt-2">لا يوجد أي حجوزات مسجلة لهذا التاريخ في شيت الجدولة.</p>
-              </div>
             </div>
           )}
 
