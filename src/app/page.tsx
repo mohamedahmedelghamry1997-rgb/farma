@@ -90,7 +90,7 @@ export default function PharmaBeachApp() {
         list = list.filter(c => c.ownerBrokerId === store.currentUser?.uid || c.status === 'active')
     }
     if (searchQuery) {
-      list = list.filter(c => c.name.includes(searchQuery) || c.location.includes(searchQuery) || c.code?.includes(searchQuery))
+      list = list.filter(c => c.name.includes(searchQuery) || (c.location && c.location.includes(searchQuery)) || (c.code && c.code.includes(searchQuery)))
     }
     return list
   }, [store.role, store.chalets, searchQuery, store.currentUser]);
@@ -281,11 +281,33 @@ export default function PharmaBeachApp() {
                                </div>
                              </div>
                           </div>
-                          <div className="flex gap-4 w-full md:w-auto">
-                            {b.paymentStatus === 'pending' && (
-                              <Button className="flex-1 md:flex-none h-16 px-12 bg-green-600 hover:bg-green-700 font-black rounded-2xl shadow-xl shadow-green-100" onClick={() => store.updateBooking(b.id, { paymentStatus: 'verified', status: 'admin_approved' })}>تأكيد الحوالة</Button>
+                          <div className="flex gap-3 w-full md:w-auto flex-wrap justify-end">
+                            {b.status !== 'confirmed' && b.status !== 'cancelled' && (
+                              <>
+                                <Button 
+                                  className="h-16 px-8 bg-green-600 hover:bg-green-700 font-black rounded-2xl shadow-lg shadow-green-100" 
+                                  onClick={() => {
+                                    store.updateBooking(b.id, { paymentStatus: 'verified', status: 'confirmed' });
+                                    toast({ title: "تم تأكيد الحجز بنجاح" });
+                                  }}
+                                >
+                                  تأكيد الحجز
+                                </Button>
+                                <Button 
+                                  variant="destructive"
+                                  className="h-16 px-8 font-black rounded-2xl shadow-lg shadow-red-100" 
+                                  onClick={() => {
+                                    if (confirm('هل أنت متأكد من إلغاء هذا الحجز؟')) {
+                                      store.updateBooking(b.id, { status: 'cancelled' });
+                                      toast({ title: "تم إلغاء الحجز" });
+                                    }
+                                  }}
+                                >
+                                  إلغاء الحجز
+                                </Button>
+                              </>
                             )}
-                            <Button variant="outline" className="flex-1 md:flex-none h-16 px-8 rounded-2xl font-black gap-2 border-slate-200" onClick={() => handleOpenSpreadsheetReport(store.chalets.find(c => c.id === b.chaletId)!, b)}><Eye className="h-5 w-5" /> عرض التقرير</Button>
+                            <Button variant="outline" className="h-16 px-8 rounded-2xl font-black gap-2 border-slate-200" onClick={() => handleOpenSpreadsheetReport(store.chalets.find(c => c.id === b.chaletId)!, b)}><Eye className="h-5 w-5" /> عرض التقرير</Button>
                           </div>
                       </Card>
                     ))}
