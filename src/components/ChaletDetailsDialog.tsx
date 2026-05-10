@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { Calendar } from "@/components/ui/calendar"
 import { Chalet, Booking, UserRole } from "@/lib/store"
-import { MapPin, Star, CheckCircle2, CalendarIcon, Info, ShieldAlert, History, User, Video, Play } from "lucide-react"
+import { MapPin, Star, CheckCircle2, CalendarIcon, Info, ShieldAlert, History, User, Video, Play, ImageIcon } from "lucide-react"
 import { ar } from "date-fns/locale"
 import Image from "next/image"
 import { startOfDay, isSameDay, isWithinInterval, format } from "date-fns"
@@ -166,7 +166,7 @@ export function ChaletDetailsDialog({ chalet, isOpen, onClose, onBook, existingB
                     <p className="text-xs font-black text-primary uppercase tracking-widest">نهاية الأسبوع</p>
                     <p className="text-3xl font-black text-primary">{chalet.holidayPrice.toLocaleString()} <span className="text-sm">ج.م</span></p>
                  </div>
-                 {(!userRole || userRole === 'client') && (
+                 {(!userRole || userRole === 'client' || userRole === 'broker') && (
                    <Button className="w-full h-16 rounded-2xl bg-slate-950 text-white font-black text-lg hover:bg-primary transition-colors mt-4" onClick={onBook}>
                      احجز الآن
                    </Button>
