@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react'
 import { Chalet, Booking, UserRole } from '@/lib/store'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, addMonths, subMonths, isSameDay } from 'date-fns'
 import { ar } from 'date-fns/locale'
-import { ChevronRight, ChevronLeft, Search, Info, User, DollarSign, Calendar as CalendarIcon, Plus, Maximize2 } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Search, Info, User, DollarSign, Calendar as CalendarIcon, Plus, Maximize2, Hash } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Badge } from './ui/badge'
@@ -103,7 +103,7 @@ export function ChaletSpreadsheet({ chalets, bookings, onSelectChalet, onAddBook
         <table className="w-full border-collapse text-right">
           <thead>
             <tr className="bg-slate-50 border-b">
-              <th className="p-4 min-w-[280px] sticky right-0 bg-slate-50 z-20 border-l font-black text-slate-500 text-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">اسم وكود الشاليه</th>
+              <th className="p-4 min-w-[300px] sticky right-0 bg-slate-50 z-20 border-l font-black text-slate-500 text-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">اسم وكود الشاليه</th>
               {days.map(day => (
                 <th key={day.toString()} className={`p-2 min-w-[50px] text-center border-l text-[10px] font-black uppercase tracking-tighter ${format(day, 'E') === 'Fri' || format(day, 'E') === 'Sat' ? 'bg-primary/5 text-primary' : 'text-slate-400'}`}>
                   {format(day, 'd')}<br/>{format(day, 'EEE', { locale: ar })}
@@ -116,11 +116,20 @@ export function ChaletSpreadsheet({ chalets, bookings, onSelectChalet, onAddBook
               <tr key={chalet.id} className="border-b hover:bg-slate-50/50 transition-colors">
                 <td className="p-4 sticky right-0 bg-white z-10 border-l group shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                   <div className="flex items-center justify-between flex-row-reverse">
-                    <div className="flex flex-col gap-1 cursor-pointer text-right" onClick={() => onSelectChalet(chalet)}>
-                      <span className="font-black text-slate-900 group-hover:text-primary transition-colors">{chalet.name}</span>
-                      <div className="flex gap-2 justify-end">
-                        <Badge variant="outline" className="text-[10px] font-bold border-slate-200 text-slate-400">{chalet.code}</Badge>
-                        <span className="text-[10px] font-black text-primary">{chalet.normalPrice} ج.م</span>
+                    <div className="flex flex-col gap-1 cursor-pointer text-right w-full" onClick={() => onSelectChalet(chalet)}>
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="font-black text-slate-900 group-hover:text-primary transition-colors text-base">{chalet.name}</span>
+                        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[10px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1">
+                          <Hash className="h-3 w-3" /> {chalet.code}
+                        </Badge>
+                      </div>
+                      <div className="flex gap-2 justify-end items-center mt-1">
+                        <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                          {chalet.city}
+                        </span>
+                        <span className="text-[12px] font-black text-primary">
+                          {chalet.normalPrice.toLocaleString()} ج.م
+                        </span>
                       </div>
                     </div>
                   </div>
