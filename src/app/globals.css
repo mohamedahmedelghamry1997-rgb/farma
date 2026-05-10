@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,65 +33,55 @@
     @apply border-border;
   }
   body {
-    @apply bg-slate-50 text-foreground;
+    @apply bg-slate-50 text-foreground antialiased;
     font-family: 'Cairo', sans-serif;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overflow-x: hidden;
   }
 }
 
-.top-bar-gradient {
-  background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
+/* PWA Display Adjustments */
+@media all and (display-mode: standalone) {
+  header {
+    @apply pt-8; /* Safe area for Notch */
+  }
 }
 
-.filter-container {
-  @apply bg-blue-50/50 p-8 rounded-[3rem] shadow-sm border border-blue-100/50 mb-12;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Touch Friendly Elements */
+button, a, select, input {
+  @apply min-h-[44px]; /* Apple's accessibility guideline */
 }
 
 .glass {
-  @apply bg-white/90 backdrop-blur-md border border-white/20;
+  @apply bg-white/80 backdrop-blur-xl border border-white/20;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full;
-}
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-300;
-}
-
-/* Calendar Styling */
-.rdp-month_grid {
-  @apply w-full border-collapse !important;
-}
-
-.rdp-day {
-  @apply h-11 w-11 flex items-center justify-center rounded-2xl transition-all cursor-pointer font-black text-sm !important;
-}
-
-.rdp-selected {
-  @apply bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 !important;
-}
-
-/* Animation */
+/* Animations */
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
+  from { transform: translateY(100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
-.animate-slide-up {
-  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.premium-card {
-  @apply bg-white rounded-[2.5rem] border-none shadow-xl shadow-slate-200/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2;
-}
-
-.status-badge {
-  @apply px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-wider;
+.animate-bottom-nav {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
