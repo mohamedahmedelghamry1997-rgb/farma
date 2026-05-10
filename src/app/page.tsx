@@ -19,7 +19,7 @@ import {
   ArrowUpRight, Megaphone, Percent, Copy, Filter, Download, Calendar as CalendarIcon,
   LogIn, UserCheck, Construction, ShoppingCart, Briefcase, UserCircle, Database,
   ArrowRightLeft, Eye, Waves, Sun, Anchor, Palmtree, TableProperties, CreditCard, Save,
-  ArrowDownToLine, Check, Ban
+  ArrowDownToLine, Check, Ban, Menu
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -34,6 +34,7 @@ import { ChaletReportDialog } from '@/components/ChaletReportDialog'
 import { WithdrawalDialog } from '@/components/WithdrawalDialog'
 import { RoleSwitcher } from '@/components/RoleSwitcher'
 import { BottomNav } from '@/components/BottomNav'
+import { SidebarNav } from '@/components/SidebarNav'
 import Image from 'next/image'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
@@ -79,6 +80,7 @@ export default function PharmaBeachApp() {
   const activeRole = manualRole || store.role
 
   const [activeMobileTab, setActiveMobileTab] = useState('home')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   useEffect(() => {
     if (activeRole === 'admin') setActiveMobileTab('spreadsheet')
@@ -234,6 +236,11 @@ export default function PharmaBeachApp() {
       <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 py-3 md:py-4 px-4 md:px-6 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2 md:gap-3">
+             {activeRole && activeRole !== 'client' && (
+               <Button variant="ghost" size="icon" className="rounded-xl bg-slate-50" onClick={() => setIsSidebarOpen(true)}>
+                 <Menu className="h-5 w-5 text-slate-600" />
+               </Button>
+             )}
              <div className="bg-primary p-2 md:p-2.5 rounded-xl md:rounded-2xl shadow-lg shadow-primary/20"><Anchor className="text-white h-5 w-5 md:h-6 md:w-6" /></div>
              <div className="text-right">
                 <h1 className="text-xl md:text-2xl font-black text-slate-900 leading-none">فارما بيتش</h1>
@@ -309,16 +316,6 @@ export default function PharmaBeachApp() {
             </div>
 
             <Tabs value={activeMobileTab} onValueChange={setActiveMobileTab} className="w-full">
-              <TabsList className="bg-white p-1 rounded-2xl md:rounded-[2.5rem] mb-6 flex overflow-x-auto no-scrollbar border shadow-sm h-auto gap-2 hidden md:flex">
-                <TabsTrigger value="spreadsheet" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">الجدول</TabsTrigger>
-                <TabsTrigger value="bookings" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">المالية</TabsTrigger>
-                <TabsTrigger value="ops" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">العمليات</TabsTrigger>
-                <TabsTrigger value="withdrawals" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">السحوبات</TabsTrigger>
-                <TabsTrigger value="chalets" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">الشاليهات</TabsTrigger>
-                <TabsTrigger value="users" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">الفريق</TabsTrigger>
-                <TabsTrigger value="settings" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white transition-all">الإعدادات</TabsTrigger>
-              </TabsList>
-
               <TabsContent value="spreadsheet" className="space-y-6">
                  <ChaletSpreadsheet 
                     chalets={store.chalets} 
@@ -497,13 +494,6 @@ export default function PharmaBeachApp() {
              </div>
 
              <Tabs value={activeMobileTab} onValueChange={setActiveMobileTab} className="w-full">
-                <TabsList className="bg-white p-1 rounded-2xl mb-6 border shadow-sm h-auto gap-2 hidden md:flex">
-                   <TabsTrigger value="spreadsheet" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">الجدول</TabsTrigger>
-                   <TabsTrigger value="ops" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">التنفيذ</TabsTrigger>
-                   <TabsTrigger value="wallet" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">المحفظة</TabsTrigger>
-                   <TabsTrigger value="units" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">تصفح</TabsTrigger>
-                </TabsList>
-
                 <TabsContent value="spreadsheet">
                    <ChaletSpreadsheet 
                     chalets={store.chalets} 
@@ -553,11 +543,6 @@ export default function PharmaBeachApp() {
              </div>
 
              <Tabs value={activeMobileTab} onValueChange={setActiveMobileTab} className="w-full">
-                <TabsList className="bg-white p-1 rounded-xl mb-6 border shadow-sm h-auto gap-2 hidden md:flex">
-                   <TabsTrigger value="tasks" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">المهام</TabsTrigger>
-                   <TabsTrigger value="spreadsheet" className="rounded-xl px-6 py-3 font-black data-[state=active]:bg-primary data-[state=active]:text-white">الجدول</TabsTrigger>
-                </TabsList>
-
                 <TabsContent value="tasks" className="space-y-3">
                    {filteredBookings.map(b => (
                      <Card key={b.id} className="p-4 rounded-2xl shadow-lg bg-white flex flex-col gap-3">
@@ -602,6 +587,14 @@ export default function PharmaBeachApp() {
         activeTab={activeMobileTab} 
         onTabChange={setActiveMobileTab} 
         role={activeRole} 
+      />
+
+      <SidebarNav 
+        activeTab={activeMobileTab} 
+        onTabChange={setActiveMobileTab} 
+        role={activeRole} 
+        isOpen={isSidebarOpen} 
+        setIsOpen={setIsSidebarOpen}
       />
 
       <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
