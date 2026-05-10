@@ -5,19 +5,15 @@ import { useState, useMemo, useEffect } from 'react'
 import { useAppStore, Booking, Chalet, UserProfile, UserRole } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
-  Users, CheckCircle2, XCircle, Plus, MapPin, Phone, LogOut, 
-  Wallet, Receipt, Search, Activity, Clock, Star,
-  History, Box, AlertTriangle, Tag, LayoutDashboard, Settings, UserPlus,
-  ArrowUpRight, Megaphone, Filter, Download, Calendar as CalendarIcon,
-  LogIn, UserCheck, Construction, Briefcase, UserCircle, Database,
-  Eye, Waves, Sun, Anchor, Palmtree, TableProperties, CreditCard, Save,
-  Check, Ban, Menu
+  Users, Wallet, Receipt, Search, Activity, AlertTriangle, 
+  LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar as CalendarIcon,
+  LogIn, UserCircle, Eye, Waves, Sun, Anchor, Palmtree, Settings,
+  LogOut, Phone, Menu
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -36,8 +32,6 @@ import { SidebarNav } from '@/components/SidebarNav'
 import Image from 'next/image'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
-import { format } from 'date-fns'
-import { ar } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 
 export default function PharmaBeachApp() {
@@ -70,8 +64,6 @@ export default function PharmaBeachApp() {
   const [isReportOpen, setIsReportOpen] = useState(false)
 
   const [vCash, setVCash] = useState('')
-  const [iPay, setIPay] = useState('')
-  const [bankInfo, setBankInfo] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
 
   const [manualRole, setManualRole] = useState<UserRole | null>(null)
@@ -90,8 +82,6 @@ export default function PharmaBeachApp() {
   useEffect(() => {
     if (store.systemSettings) {
       setVCash(store.systemSettings.vodafoneCash || '')
-      setIPay(store.systemSettings.instaPay || '')
-      setBankInfo(store.systemSettings.bankAccount || '')
       setWhatsapp(store.systemSettings.whatsappNumber || '')
     }
   }, [store.systemSettings])
@@ -99,15 +89,13 @@ export default function PharmaBeachApp() {
   const handleSaveSettings = () => {
     store.updateSystemSettings({
       vodafoneCash: vCash,
-      instaPay: iPay,
-      bankAccount: bankInfo,
       whatsappNumber: whatsapp
     })
     toast({ title: "تم حفظ إعدادات النظام بنجاح" })
   }
 
   const brokerStats = useMemo(() => {
-    const userId = store.currentUser?.uid || "admin1_uid"; 
+    const userId = store.currentUser?.uid || ""; 
     if (activeRole !== 'broker') return { total: 0, withdrawn: 0, pending: 0, balance: 0 };
     
     const totalCommissions = store.bookings
@@ -133,7 +121,7 @@ export default function PharmaBeachApp() {
   const stats = useMemo(() => {
     let relevantBookings = store.bookings;
     if (activeRole === 'broker') {
-      relevantBookings = store.bookings.filter(b => b.brokerId === (store.currentUser?.uid || "admin1_uid"));
+      relevantBookings = store.bookings.filter(b => b.brokerId === (store.currentUser?.uid || ""));
     }
 
     const verifiedBookings = relevantBookings.filter(b => b.paymentStatus === 'verified' || b.status === 'admin_approved' || b.status === 'confirmed');
@@ -156,7 +144,7 @@ export default function PharmaBeachApp() {
   const myChalets = useMemo(() => {
     let list = store.chalets || []
     if (activeRole === 'broker') {
-        list = list.filter(c => c.ownerBrokerId === (store.currentUser?.uid || "admin1_uid") || c.status === 'active')
+        list = list.filter(c => c.ownerBrokerId === (store.currentUser?.uid || "") || c.status === 'active')
     }
     if (searchQuery) {
       list = list.filter(c => (c.name || '').includes(searchQuery) || (c.location && c.location.includes(searchQuery)) || (c.code && (c.code || '').includes(searchQuery)))
@@ -166,7 +154,7 @@ export default function PharmaBeachApp() {
 
   const filteredBookings = useMemo(() => {
     let list = store.bookings || []
-    const userId = store.currentUser?.uid || "admin1_uid";
+    const userId = store.currentUser?.uid || "";
     if (activeRole === 'broker') list = list.filter(b => b.brokerId === userId)
     if (activeRole === 'supervisor') list = list.filter(b => b.status === 'confirmed' || b.status === 'admin_approved')
     
@@ -213,8 +201,8 @@ export default function PharmaBeachApp() {
   }
 
   const handleWithdrawRequest = (data: any) => {
-    const userId = store.currentUser?.uid || "admin1_uid";
-    const userName = store.currentUser?.name || "أحمد البروكر";
+    const userId = store.currentUser?.uid || "";
+    const userName = store.currentUser?.name || "وسيط";
     store.addWithdrawalRequest({
       brokerId: userId,
       brokerName: userName,
