@@ -214,10 +214,15 @@ export function useAppStore() {
     }
   }
 
-  const addBooking = async (data: Omit<Booking, 'id' | 'createdAt'>) => {
+  const addBooking = async (data: any) => {
+    // تنظيف البيانات من أي قيم undefined لمنع أخطاء Firebase
+    const cleanData = Object.fromEntries(
+      Object.entries(data).filter(([_, v]) => v !== undefined)
+    );
+    
     try {
       await addDoc(collection(db, 'bookings'), {
-        ...data,
+        ...cleanData,
         status: data.status || 'pending',
         opStatus: 'waiting',
         createdAt: serverTimestamp()
@@ -256,10 +261,13 @@ export function useAppStore() {
     }
   }
 
-  const addChalet = async (data: Omit<Chalet, 'id'>) => {
+  const addChalet = async (data: any) => {
+    const cleanData = Object.fromEntries(
+      Object.entries(data).filter(([_, v]) => v !== undefined)
+    );
     try {
       await addDoc(collection(db, 'chalets'), { 
-        ...data, 
+        ...cleanData, 
         status: data.status || 'active',
         createdAt: serverTimestamp() 
       });

@@ -49,16 +49,13 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     const twoDaysBefore = subDays(range.from, 2);
     const twoDaysAfter = addDays(range.to, 2);
 
-    // الحجوزات الملغاة لا تعتبر "إشغال" في خوارزمية الفجوة
     const isOccupied = (day: Date) => existingBookings.some(b => 
       b.chaletId === chalet.id && 
       b.status !== 'cancelled' &&
       isWithinInterval(startOfDay(day), { start: startOfDay(new Date(b.startDate)), end: startOfDay(new Date(b.endDate)) })
     );
 
-    // فحص إذا كان هناك يوم واحد فارغ قبل الحجز
     const hasSingleGapBefore = isOccupied(twoDaysBefore) && !isOccupied(before);
-    // فحص إذا كان هناك يوم واحد فارغ بعد الحجز
     const hasSingleGapAfter = isOccupied(twoDaysAfter) && !isOccupied(after);
 
     if (hasSingleGapBefore || hasSingleGapAfter) {
@@ -92,7 +89,8 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
       paymentMethod,
       paymentReference: paymentRef,
       totalAmount: calculateTotal(),
-      brokerId: currentUser?.uid,
+      // استخدام قيمة null بدلاً من undefined لضمان التوافق مع Firebase
+      brokerId: currentUser?.uid || null,
       brokerName: currentUser?.name || "مباشر",
       brokerCommission: nights * commissionPerNight
     })
@@ -110,7 +108,6 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     const today = startOfDay(new Date())
     if (isBefore(day, today)) return true
 
-    // الحجوزات الملغاة تجعل التواريخ متاحة في التقويم
     return existingBookings.some(b => {
       if (b.chaletId !== chalet?.id || b.status === 'cancelled') return false
       const start = startOfDay(new Date(b.startDate))
