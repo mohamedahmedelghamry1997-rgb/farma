@@ -2,16 +2,16 @@
 
 نظام إداري متكامل (PWA) مخصص للهواتف المحمولة لإدارة حجوزات الشاليهات والعمليات الميدانية.
 
-## 🚀 أوامر الرفع على GitHub
+## 🚀 أوامر الرفع على GitHub (الخاصة بمستودعك)
 
-إذا كنت ترفع المشروع لأول مرة، استخدم الأوامر التالية:
+افتح الـ Terminal في مجلد المشروع ونفذ الأوامر التالية:
 
 ```bash
 git init
 git add .
 git commit -m "Initial commit - PWA Mobile App"
 git branch -M main
-git remote add origin [رابط_مستودعك_هنا]
+git remote add origin https://github.com/mohamedahmedelghamry1997-rgb/farma.git
 git push -u origin main
 ```
 
@@ -19,7 +19,7 @@ git push -u origin main
 
 ### على iPhone (iOS):
 1. افتح الموقع في متصفح **Safari**.
-2. اضغط على زر **Share** (المشاركة).
+2. اضغط على زر **Share** (المشاركة) في الأسفل.
 3. اختر **Add to Home Screen** (إضافة إلى الشاشة الرئيسية).
 
 ### على Android:
