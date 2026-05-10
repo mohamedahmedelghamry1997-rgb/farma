@@ -71,6 +71,7 @@ export default function PharmaBeachApp() {
   const [vCash, setVCash] = useState('')
   const [iPay, setIPay] = useState('')
   const [bankInfo, setBankInfo] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
 
   // لأغراض التجربة فقط، نسمح بتبديل الأدوار يدوياً
   const [manualRole, setManualRole] = useState<UserRole | null>(null)
@@ -81,6 +82,7 @@ export default function PharmaBeachApp() {
       setVCash(store.systemSettings.vodafoneCash || '')
       setIPay(store.systemSettings.instaPay || '')
       setBankInfo(store.systemSettings.bankAccount || '')
+      setWhatsapp(store.systemSettings.whatsappNumber || '')
     }
   }, [store.systemSettings])
 
@@ -88,13 +90,14 @@ export default function PharmaBeachApp() {
     store.updateSystemSettings({
       vodafoneCash: vCash,
       instaPay: iPay,
-      bankAccount: bankInfo
+      bankAccount: bankInfo,
+      whatsappNumber: whatsapp
     })
-    toast({ title: "تم حفظ إعدادات الدفع بنجاح" })
+    toast({ title: "تم حفظ إعدادات النظام بنجاح" })
   }
 
   const brokerStats = useMemo(() => {
-    const userId = store.currentUser?.uid || "admin1_uid"; // استخدام معرف تجريبي إذا لم يوجد مستخدم
+    const userId = store.currentUser?.uid || "admin1_uid"; 
     if (activeRole !== 'broker') return { total: 0, withdrawn: 0, pending: 0, balance: 0 };
     
     const totalCommissions = store.bookings
@@ -499,7 +502,7 @@ export default function PharmaBeachApp() {
               <TabsContent value="settings" className="space-y-8">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <Card className="p-10 rounded-[3rem] bg-white border-none shadow-xl space-y-8 text-right">
-                       <h3 className="text-2xl font-black flex items-center gap-2 justify-end">إعدادات الدفع والاستلام <CreditCard className="text-primary" /></h3>
+                       <h3 className="text-2xl font-black flex items-center gap-2 justify-end">إعدادات النظام والدفع <CreditCard className="text-primary" /></h3>
                        <div className="space-y-6">
                           <div className="space-y-2">
                              <Label className="font-bold text-slate-500">رقم فودافون كاش</Label>
@@ -511,10 +514,14 @@ export default function PharmaBeachApp() {
                           </div>
                           <div className="space-y-2">
                              <Label className="font-bold text-slate-500">بيانات الحساب البنكي</Label>
-                             <Textarea placeholder="اسم البنك، رقم الحساب، IBAN..." value={bankInfo} onChange={setBankInfo} className="rounded-2xl min-h-[100px] bg-slate-50 border-none text-right" />
+                             <Textarea placeholder="اسم البنك، رقم الحساب، IBAN..." value={bankInfo} onChange={e => setBankInfo(e.target.value)} className="rounded-2xl min-h-[100px] bg-slate-50 border-none text-right" />
+                          </div>
+                          <div className="space-y-2">
+                             <Label className="font-bold text-slate-500">رقم الواتساب العائم (بدون 00)</Label>
+                             <Input placeholder="201xxxxxxxxx" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none text-right" />
                           </div>
                           <Button className="w-full h-16 rounded-2xl font-black gap-2 shadow-lg shadow-primary/20" onClick={handleSaveSettings}>
-                             <Save className="h-5 w-5" /> حفظ إعدادات الدفع
+                             <Save className="h-5 w-5" /> حفظ إعدادات النظام
                           </Button>
                        </div>
                     </Card>
@@ -713,6 +720,9 @@ export default function PharmaBeachApp() {
       {/* ميزة تبديل الهوية متاحة فقط للأدمن أو لأغراض التجربة */}
       <RoleSwitcher currentRole={activeRole} onRoleChange={setManualRole} />
 
+      {/* زر واتساب العائم */}
+      <WhatsAppButton number={store.systemSettings?.whatsappNumber} />
+
     </div>
   )
 }
@@ -727,4 +737,22 @@ function StatCard({ title, val, icon: Icon, color }: any) {
        </div>
     </Card>
   )
+}
+
+function WhatsAppButton({ number }: { number?: string }) {
+  if (!number) return null;
+  const link = `https://wa.me/${number.replace(/\s+/g, '')}`;
+  return (
+    <a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-24 left-6 bg-[#25D366] text-white p-5 rounded-full shadow-2xl z-[60] hover:scale-110 transition-transform flex items-center justify-center animate-bounce shadow-[#25D366]/20"
+      title="تواصل معنا عبر واتساب"
+    >
+      <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.438 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </svg>
+    </a>
+  );
 }

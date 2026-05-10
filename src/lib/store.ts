@@ -103,6 +103,7 @@ export interface SystemSettings {
   vodafoneCash?: string
   instaPay?: string
   bankAccount?: string
+  whatsappNumber?: string
 }
 
 export function useAppStore() {
