@@ -13,7 +13,7 @@ import {
   Users, Wallet, Receipt, Search, Activity, AlertTriangle, 
   LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar as CalendarIcon,
   LogIn, UserCircle, Eye, Waves, Sun, Anchor, Palmtree, Settings,
-  LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil
+  LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil, Image as ImageIcon
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -613,8 +613,16 @@ export default function PharmaBeachApp() {
                          </div>
                          <div className="flex gap-2">
                             <Button variant="outline" className="h-10 rounded-xl flex-1 border-slate-200" onClick={() => window.open(`tel:${b.phoneNumber}`)}><Phone size={16} /></Button>
+                            <Button 
+                              variant="outline" 
+                              className="h-10 rounded-xl flex-1 border-slate-200 gap-2 text-xs font-black" 
+                              onClick={() => b.clientIdCardUrl && window.open(b.clientIdCardUrl, '_blank')}
+                              disabled={!b.clientIdCardUrl}
+                            >
+                              <ImageIcon size={16} /> البطايق
+                            </Button>
                             {b.opStatus !== 'checked_out' && (
-                              <Button className={`h-10 rounded-xl font-black flex-[3] text-xs ${b.opStatus === 'checked_in' ? 'bg-orange-600' : 'bg-primary'}`} onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>
+                              <Button className={`h-10 rounded-xl font-black flex-[2] text-xs ${b.opStatus === 'checked_in' ? 'bg-orange-600' : 'bg-primary'}`} onClick={() => { setActiveSupervisorBooking(b); setIsSupervisorActionOpen(true); }}>
                                 {b.opStatus === 'checked_in' ? 'إخلاء' : 'استلام'}
                               </Button>
                             )}
