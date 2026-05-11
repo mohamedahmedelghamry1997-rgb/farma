@@ -81,6 +81,7 @@ export interface Booking {
   permitFee?: number
   expenses?: number
   ownerShare?: number
+  clientIdCardUrl?: string
 }
 
 export interface WithdrawalRequest {

@@ -4,11 +4,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Chalet, Booking, UserRole } from '@/lib/store'
 import { Badge } from './ui/badge'
-import { User, Phone, Calendar as CalendarIcon, DollarSign, Tag, Briefcase, History, MapPin, Hash, Receipt, Wallet, UserCheck, Clock, ArrowLeftRight, Zap, Droplets, ClipboardCheck, CheckCircle2 } from 'lucide-react'
+import { User, Phone, Calendar as CalendarIcon, DollarSign, Tag, Briefcase, History, MapPin, Hash, Receipt, Wallet, UserCheck, Clock, ArrowLeftRight, Zap, Droplets, ClipboardCheck, CheckCircle2, ImageIcon } from 'lucide-react'
 import { format, differenceInDays, isAfter, startOfDay } from 'date-fns'
 import { ar } from 'date-fns/locale'
 import { Button } from './ui/button'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 interface ChaletReportDialogProps {
   chalet: Chalet | null
@@ -92,6 +93,26 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
                 <InfoCard title="العميل المستأجر" value={booking.clientName} icon={User} color="text-blue-600" subValue={booking.phoneNumber} />
                 <InfoCard title="فترة الإقامة" value={`${format(new Date(booking.startDate), 'dd MMM', { locale: ar })}`} icon={CalendarIcon} color="text-orange-600" subValue={`إلى ${format(new Date(booking.endDate), 'dd MMM', { locale: ar })} (${nights} ليالي)`} />
               </div>
+
+              {booking.clientIdCardUrl && (
+                <div className="p-6 bg-slate-50 rounded-2xl md:rounded-[2.5rem] border border-slate-100 space-y-4">
+                  <div className="flex items-center justify-end gap-2 text-primary">
+                    <h4 className="text-lg font-black">بطاقة هوية العميل</h4>
+                    <ImageIcon className="h-5 w-5" />
+                  </div>
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-white shadow-md">
+                    <a href={booking.clientIdCardUrl} target="_blank" rel="noopener noreferrer">
+                      <Image 
+                        src={booking.clientIdCardUrl} 
+                        alt="بطاقة العميل" 
+                        fill 
+                        className="object-contain hover:scale-105 transition-transform cursor-zoom-in"
+                        unoptimized
+                      />
+                    </a>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-slate-50 p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-slate-100 space-y-6 md:space-y-8">
                  <div className="flex items-center justify-between flex-row-reverse border-b pb-4">

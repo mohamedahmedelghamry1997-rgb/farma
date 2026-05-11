@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Chalet, Booking } from "@/lib/store"
 import { format, isBefore, startOfDay, isSameDay, isWithinInterval, differenceInDays, addDays, subDays } from "date-fns"
 import { ar } from "date-fns/locale"
-import { CalendarIcon, Users, Phone, User, MessageSquare, Wallet, CreditCard, AlertTriangle } from "lucide-react"
+import { CalendarIcon, Users, Phone, User, MessageSquare, Wallet, CreditCard, AlertTriangle, ImageIcon } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { useToast } from '@/hooks/use-toast'
 
@@ -30,6 +30,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
+  const [idCardUrl, setIdCardUrl] = useState('')
   const [guests, setGuests] = useState(1)
   const [notes, setNotes] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('vodafone_cash')
@@ -47,15 +48,11 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     const startOfNew = startOfDay(range.from);
     const endOfNew = startOfDay(range.to);
 
-    // الحصول على الحجوزات النشطة لهذا الشاليه وترتيبها زمنياً
     const relevantBookings = existingBookings
       .filter(b => b.chaletId === chalet.id && b.status !== 'cancelled')
       .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
-    // البحث عن أقرب حجز يسبق هذا الحجز
     const prevBooking = [...relevantBookings].reverse().find(b => startOfDay(new Date(b.endDate)) < startOfNew);
-    
-    // البحث عن أقرب حجز يلي هذا الحجز
     const nextBooking = relevantBookings.find(b => startOfDay(new Date(b.startDate)) > endOfNew);
 
     if (prevBooking) {
@@ -101,6 +98,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
       chaletId: chalet.id,
       clientName: name,
       phoneNumber: phone,
+      clientIdCardUrl: idCardUrl,
       guestCount: guests,
       startDate: dateRange.from.toISOString(),
       endDate: dateRange.to.toISOString(),
@@ -116,6 +114,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     setDateRange(undefined)
     setName('')
     setPhone('')
+    setIdCardUrl('')
     setGuests(1)
     setNotes('')
     setPaymentRef('')
@@ -186,6 +185,13 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                 </Label>
                 <Input placeholder="01xxxxxxxxx" value={phone} onChange={e => setPhone(e.target.value)} className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-right" />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 justify-end">
+                رابط صورة بطاقة العميل <ImageIcon className="h-3 w-3" />
+              </Label>
+              <Input placeholder="أدخل رابط صورة البطاقة..." value={idCardUrl} onChange={e => setIdCardUrl(e.target.value)} className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-right" />
             </div>
 
             <div className="p-6 bg-blue-50/50 rounded-[2rem] border border-blue-100 space-y-4">
