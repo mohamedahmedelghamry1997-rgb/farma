@@ -13,7 +13,7 @@ import {
   Users, Wallet, Receipt, Search, Activity, AlertTriangle, 
   LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar as CalendarIcon,
   LogIn, UserCircle, Eye, Waves, Sun, Anchor, Palmtree, Settings,
-  LogOut, Phone, Menu
+  LogOut, Phone, Menu, Plus, FileText
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -29,6 +29,7 @@ import { WithdrawalDialog } from '@/components/WithdrawalDialog'
 import { RoleSwitcher } from '@/components/RoleSwitcher'
 import { BottomNav } from '@/components/BottomNav'
 import { SidebarNav } from '@/components/SidebarNav'
+import { ChaletFinancialReport } from '@/components/ChaletFinancialReport'
 import Image from 'next/image'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
@@ -62,6 +63,8 @@ export default function PharmaBeachApp() {
   const [reportChalet, setReportChalet] = useState<Chalet | null>(null)
   const [reportBooking, setReportBooking] = useState<Booking | null>(null)
   const [isReportOpen, setIsReportOpen] = useState(false)
+
+  const [financialReportChalet, setFinancialReportChalet] = useState<Chalet | null>(null)
 
   const [vCash, setVCash] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
@@ -310,6 +313,46 @@ export default function PharmaBeachApp() {
                   />
               )}
 
+              {activeMobileTab === 'chalet-reports' && (
+                financialReportChalet ? (
+                  <ChaletFinancialReport 
+                    chalet={financialReportChalet} 
+                    bookings={store.bookings} 
+                    onUpdateBooking={store.updateBooking}
+                    onBack={() => setFinancialReportChalet(null)}
+                  />
+                ) : (
+                  <div className="space-y-6">
+                    <div className="bg-white p-6 md:p-8 rounded-[2rem] border shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                      <div className="text-right">
+                        <h3 className="text-xl md:text-2xl font-black">تقارير الشاليهات التفصيلية</h3>
+                        <p className="text-slate-500 font-bold text-xs">اختر شاليه لعرض سجلات الليالي والبيانات المالية</p>
+                      </div>
+                      <div className="relative w-full md:w-64">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input placeholder="بحث بالكود أو الاسم..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="rounded-xl pr-10 bg-slate-50 border-none h-10 md:h-12 text-xs" />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {myChalets.map(c => (
+                        <Card key={c.id} className="p-4 rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all border-none cursor-pointer group" onClick={() => setFinancialReportChalet(c)}>
+                          <div className="flex items-center gap-4 flex-row-reverse text-right">
+                            <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                              <FileText size={24} />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-black text-lg">{c.name}</p>
+                              <Badge className="bg-slate-100 text-slate-600 border-none px-2 py-0 text-[10px]">{c.code}</Badge>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )
+              )}
+
               {activeMobileTab === 'ops' && (
                 <div className="space-y-4 md:space-y-8">
                   <div className="bg-white p-4 md:p-10 rounded-2xl md:rounded-[3rem] border shadow-sm">
@@ -547,7 +590,7 @@ export default function PharmaBeachApp() {
                    <div className="space-y-3">
                    {filteredBookings.map(b => (
                      <Card key={b.id} className="p-4 rounded-2xl shadow-lg bg-white flex flex-col gap-3">
-                         <div className="text-right flex items-center gap-3 flex-row-reverse">
+                         <div className="text-right flex items-center gap-3 flex-row-reverse text-right">
                            <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${b.opStatus === 'checked_in' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50'}`}><Activity size={20} /></div>
                            <div className="flex-1">
                               <p className="text-base font-black">{b.clientName}</p>

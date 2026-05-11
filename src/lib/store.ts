@@ -78,6 +78,10 @@ export interface Booking {
   waterReading?: string
   checkInTime?: string
   checkOutTime?: string
+  // New financial fields for manual entry
+  permitFee?: number
+  expenses?: number
+  ownerShare?: number
 }
 
 export interface WithdrawalRequest {
