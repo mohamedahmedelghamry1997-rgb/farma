@@ -8,7 +8,7 @@ import { ar } from 'date-fns/locale'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
-import { ChevronRight, Save, DollarSign, Calculator } from 'lucide-react'
+import { ChevronRight, Save, DollarSign, Calculator, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ChaletFinancialReportProps {
@@ -77,7 +77,7 @@ export function ChaletFinancialReport({ chalet, bookings, onUpdateBooking, onBac
 
       <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100">
         <div className="overflow-x-auto custom-scrollbar">
-          <Table className="text-right min-w-[1200px]" dir="rtl">
+          <Table className="text-right min-w-[1300px]" dir="rtl">
             <TableHeader className="bg-slate-50">
               <TableRow>
                 <TableHead className="text-right font-black">عدد الليالي</TableHead>
@@ -90,6 +90,7 @@ export function ChaletFinancialReport({ chalet, bookings, onUpdateBooking, onBac
                 <TableHead className="text-right font-black bg-orange-50/50">مصاريف</TableHead>
                 <TableHead className="text-right font-black bg-green-50/50">الصافي</TableHead>
                 <TableHead className="text-right font-black bg-blue-50/50">وصل المالك</TableHead>
+                <TableHead className="text-right font-black bg-purple-50/50">أرباح الإدارة</TableHead>
                 <TableHead className="text-center font-black">حفظ</TableHead>
               </TableRow>
             </TableHeader>
@@ -106,6 +107,8 @@ export function ChaletFinancialReport({ chalet, bookings, onUpdateBooking, onBac
                 const permit = parseFloat(currentVals.permitFee) || 0
                 const exp = parseFloat(currentVals.expenses) || 0
                 const net = b.totalAmount - (b.brokerCommission || 0) - permit - exp
+                const ownerShareVal = parseFloat(currentVals.ownerShare) || 0
+                const adminProfit = net - ownerShareVal
 
                 return (
                   <TableRow key={b.id} className="hover:bg-slate-50 transition-colors">
@@ -131,7 +134,7 @@ export function ChaletFinancialReport({ chalet, bookings, onUpdateBooking, onBac
                         className="w-20 h-9 rounded-lg border-orange-100 bg-white text-center font-black"
                       />
                     </TableCell>
-                    <TableCell className="bg-green-50/20 font-black text-green-700 text-lg">
+                    <TableCell className="bg-green-50/20 font-black text-green-700">
                       {net.toLocaleString()}
                     </TableCell>
                     <TableCell className="bg-blue-50/20">
@@ -141,6 +144,9 @@ export function ChaletFinancialReport({ chalet, bookings, onUpdateBooking, onBac
                         onChange={e => handleInputChange(b.id, 'ownerShare', e.target.value)}
                         className="w-24 h-9 rounded-lg border-blue-100 bg-white text-center font-black text-blue-700"
                       />
+                    </TableCell>
+                    <TableCell className="bg-purple-50/20 font-black text-purple-700 text-lg">
+                      {adminProfit.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-center">
                       <Button 
