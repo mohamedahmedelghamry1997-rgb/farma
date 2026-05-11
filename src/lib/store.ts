@@ -78,7 +78,6 @@ export interface Booking {
   waterReading?: string
   checkInTime?: string
   checkOutTime?: string
-  // New financial fields for manual entry
   permitFee?: number
   expenses?: number
   ownerShare?: number
@@ -272,6 +271,14 @@ export function useAppStore() {
     }
   }
 
+  const deleteChalet = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'chalets', id));
+    } catch (e) {
+      console.error("Error deleting chalet:", e);
+    }
+  }
+
   const addUser = async (data: any) => {
     try {
       const newUserRef = doc(collection(db, 'users'));
@@ -362,7 +369,7 @@ export function useAppStore() {
   return {
     role, currentUser, authUser, isAuthLoading,
     chalets, bookings, users, systemSettings, withdrawals,
-    addBooking, updateBooking, addChalet, updateChalet, addUser, updateUser, seedDatabase, updateSystemSettings, addWithdrawalRequest, updateWithdrawalStatus,
+    addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser, updateUser, seedDatabase, updateSystemSettings, addWithdrawalRequest, updateWithdrawalStatus,
     isLoaded: !isAuthLoading && !isDataLoading
   }
 }
