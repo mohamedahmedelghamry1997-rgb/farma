@@ -4,7 +4,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Chalet, Booking, UserRole } from '@/lib/store'
 import { Badge } from './ui/badge'
-import { User, Phone, Calendar as CalendarIcon, DollarSign, Tag, Briefcase, History, MapPin, Hash, Receipt, Wallet, UserCheck, Clock, ArrowLeftRight, Zap, Droplets, ClipboardCheck, CheckCircle2, ImageIcon } from 'lucide-react'
+import { User, Phone, Calendar as CalendarIcon, Tag, MapPin, Hash, Receipt, UserCheck, Clock, Zap, Droplets, ClipboardCheck, CheckCircle2, ImageIcon, History } from 'lucide-react'
 import { format, differenceInDays, isAfter, startOfDay } from 'date-fns'
 import { ar } from 'date-fns/locale'
 import { Button } from './ui/button'
@@ -36,7 +36,6 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
     return isAfter(new Date(b.endDate), today) && !isAfter(new Date(b.startDate), today);
   });
 
-  // Handle both single and multiple ID card URLs
   const idCardUrls = booking?.clientIdCardUrls || (booking?.clientIdCardUrl ? [booking.clientIdCardUrl] : []);
 
   return (

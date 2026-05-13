@@ -16,7 +16,7 @@ import {
   User, 
   Wallet, 
   CreditCard, 
-  AlertCircle, 
+  Info, 
   PlusCircle, 
   Trash2, 
   Smartphone, 
@@ -112,6 +112,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     if (!checkGapRule(dateRange)) return;
 
     const nights = differenceInDays(dateRange.to, dateRange.from) + 1;
+    // Admin gets 0 commission, brokers get their rate or default 200
     const commissionPerNight = currentUser?.role === 'admin' ? 0 : (currentUser?.commissionRate || 200);
     const validIdUrls = idCardUrls.filter(u => u.trim() !== '');
 
@@ -187,7 +188,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
           </div>
 
           <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3 flex-row-reverse text-right">
-            <AlertCircle className="h-5 w-5 text-orange-600 shrink-0" />
+            <Info className="h-5 w-5 text-orange-600 shrink-0" />
             <p className="text-xs text-orange-800 font-bold leading-relaxed">
               سياسة الجدولة: يمنع النظام ترك أي أيام فارغة بين الحجوزات. يجب أن تبدأ حجوزاتك من اليوم التالي مباشرة لآخر حجز مسجل لضمان استمرارية الإشغال.
             </p>
@@ -260,9 +261,6 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                       </div>
                       <span className="font-black text-sm text-slate-900 select-all">{systemSettings.instaPay}</span>
                     </div>
-                  )}
-                  {(!systemSettings?.vodafoneCash && !systemSettings?.instaPay) && (
-                    <p className="text-[10px] font-bold text-orange-600 text-center">يرجى التواصل مع الإدارة للحصول على بيانات الدفع.</p>
                   )}
                </div>
 

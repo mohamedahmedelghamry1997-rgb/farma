@@ -81,8 +81,8 @@ export interface Booking {
   permitFee?: number
   expenses?: number
   ownerShare?: number
-  clientIdCardUrl?: string // Backwards compatibility
-  clientIdCardUrls?: string[] // Multiple IDs support
+  clientIdCardUrl?: string 
+  clientIdCardUrls?: string[] 
 }
 
 export interface WithdrawalRequest {
@@ -134,12 +134,10 @@ export function useAppStore() {
           } else {
             let assignedRole: UserRole = 'client';
             if (user.email === 'admin@gmail.com') assignedRole = 'admin';
-            else if (user.email === 'admin1@gmail.com') assignedRole = 'broker';
-            else if (user.email === 'admin2@gmail.com') assignedRole = 'supervisor';
 
             const newProfile: Omit<UserProfile, 'id'> = {
               uid: user.uid,
-              name: user.displayName || (user.email === 'admin@gmail.com' ? 'المدير العام' : user.email === 'admin1@gmail.com' ? 'أحمد البروكر' : 'محمود المشرف'),
+              name: user.displayName || (user.email === 'admin@gmail.com' ? 'المدير العام' : 'مستخدم جديد'),
               role: assignedRole,
               isApproved: true,
               assignedChaletIds: [],
@@ -304,74 +302,10 @@ export function useAppStore() {
     }
   }
 
-  const seedDatabase = async () => {
-    const batch = writeBatch(db);
-
-    const chaletData = [
-      { code: "CH-101", name: "فيلا الياقوت - مارينا 5", normalPrice: 5000, holidayPrice: 7500, city: "الساحل الشمالي", location: "مارينا 5، الصف الأول", status: "active", description: "فيلا فاخرة تطل مباشرة على البحر مع حمام سباحة خاص وحديقة واسعة.", image: "https://picsum.photos/seed/beachfront1/800/600", gallery: ["https://picsum.photos/seed/beach1/800/600", "https://picsum.photos/seed/beach2/800/600"] },
-      { code: "CH-102", name: "شاليه اللؤلؤة - هاسيندا", normalPrice: 3500, holidayPrice: 5000, city: "الساحل الشمالي", location: "هاسيندا باي، الساحل", status: "active", description: "شاليه مودرن بموقع متميز بالقرب من الكلوب هاوس.", image: "https://picsum.photos/seed/beachfront2/800/600", gallery: ["https://picsum.photos/seed/resort1/800/600"] },
-      { code: "CH-103", name: "رويال سويت - العين السخنة", normalPrice: 2500, holidayPrice: 3500, city: "العين السخنة", location: "بورتو سخنة", status: "active", description: "جناح ملكي مع إطلالة بانورامية على الجبل والبحر.", image: "https://picsum.photos/seed/beachfront3/800/600" }
-    ];
-
-    const chaletRefs: string[] = [];
-    for (const c of chaletData) {
-      const ref = doc(collection(db, 'chalets'));
-      batch.set(ref, { ...c, createdAt: serverTimestamp() });
-      chaletRefs.push(ref.id);
-    }
-
-    const today = new Date();
-    const bookingData = [
-      { 
-        chaletId: chaletRefs[0], 
-        clientName: "ياسر محمود", 
-        phoneNumber: "01011223344", 
-        guestCount: 4, 
-        startDate: today.toISOString(), 
-        endDate: new Date(today.getTime() + 86400000 * 2).toISOString(), 
-        status: "confirmed", 
-        opStatus: "waiting", 
-        paymentStatus: "verified", 
-        totalAmount: 15000, 
-        brokerId: "admin1_uid",
-        brokerName: "أحمد البروكر",
-        brokerCommission: 600, 
-        paymentMethod: 'vodafone_cash', 
-        paymentReference: 'REF123', 
-        createdAt: serverTimestamp() 
-      },
-      { 
-        chaletId: chaletRefs[1], 
-        clientName: "منى علي", 
-        phoneNumber: "01155667788", 
-        guestCount: 2, 
-        startDate: new Date(today.getTime() + 86400000 * 5).toISOString(), 
-        endDate: new Date(today.getTime() + 86400000 * 8).toISOString(), 
-        status: "confirmed", 
-        opStatus: "waiting", 
-        paymentStatus: "verified", 
-        totalAmount: 10500, 
-        brokerId: "admin1_uid",
-        brokerName: "أحمد البروكر",
-        brokerCommission: 800, 
-        paymentMethod: 'instapay', 
-        paymentReference: 'TXN999', 
-        createdAt: serverTimestamp() 
-      }
-    ];
-
-    for (const b of bookingData) {
-      const ref = doc(collection(db, 'bookings'));
-      batch.set(ref, b);
-    }
-
-    await batch.commit();
-  }
-
   return {
     role, currentUser, authUser, isAuthLoading,
     chalets, bookings, users, systemSettings, withdrawals,
-    addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser, updateUser, seedDatabase, updateSystemSettings, addWithdrawalRequest, updateWithdrawalStatus,
+    addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser, updateUser, updateSystemSettings, addWithdrawalRequest, updateWithdrawalStatus,
     isLoaded: !isAuthLoading && !isDataLoading
   }
 }
