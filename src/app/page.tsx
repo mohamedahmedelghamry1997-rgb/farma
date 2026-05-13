@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
-  Users, Wallet, Receipt, Search, Activity, CircleAlert, 
+  Users, Wallet, Receipt, Search, Activity, AlertCircle, 
   LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar as LucideCalendar,
   LogIn, UserCircle, Eye, Waves, Sun, Anchor, Palmtree, Settings,
   LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil, Image as ImageIcon, Clock, CheckCircle2,
@@ -390,7 +390,7 @@ export default function PharmaBeachApp() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-8">
                <StatCard title="الإيرادات" val={stats.totalRevenue.toLocaleString() + ' ج'} icon={Wallet} color="text-green-600" />
                <StatCard title="الإشغال" val={stats.occupancyRate + "%"} icon={Activity} color="text-blue-600" />
-               <StatCard title="حوالات معلقة" val={stats.pendingTransfers} icon={CircleAlert} color="text-orange-600" />
+               <StatCard title="حوالات معلقة" val={stats.pendingTransfers} icon={AlertCircle} color="text-orange-600" />
             </div>
 
             <div className="w-full">
