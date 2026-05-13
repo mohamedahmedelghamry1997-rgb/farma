@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Chalet, Booking } from "@/lib/store"
+import { Chalet, Booking, useAppStore } from "@/lib/store"
 import { format, isBefore, startOfDay, isSameDay, isWithinInterval, differenceInDays, addDays, subDays } from "date-fns"
 import { ar } from "date-fns/locale"
-import { CalendarIcon, Users, Phone, User, MessageSquare, Wallet, CreditCard, AlertTriangle, ImageIcon, PlusCircle, Trash2 } from "lucide-react"
+import { CalendarIcon, Users, Phone, User, MessageSquare, Wallet, CreditCard, AlertTriangle, ImageIcon, PlusCircle, Trash2, Smartphone, Landmark } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { useToast } from '@/hooks/use-toast'
 
@@ -27,6 +27,8 @@ interface BookingDialogProps {
 
 export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBookings, currentUser }: BookingDialogProps) {
   const { toast } = useToast()
+  const { systemSettings } = useAppStore()
+  
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -108,9 +110,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
 
     const nights = differenceInDays(dateRange.to, dateRange.from) + 1;
     
-    // Admin booking has 0 commission, Broker uses their set rate or default 200
     const commissionPerNight = currentUser?.role === 'admin' ? 0 : (currentUser?.commissionRate || 200);
-
     const validIdUrls = idCardUrls.filter(u => u.trim() !== '');
 
     onConfirm({
@@ -118,7 +118,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
       clientName: name,
       phoneNumber: phone,
       clientIdCardUrls: validIdUrls,
-      clientIdCardUrl: validIdUrls[0] || '', // Backwards compatibility
+      clientIdCardUrl: validIdUrls[0] || '',
       guestCount: guests,
       startDate: dateRange.from.toISOString(),
       endDate: dateRange.to.toISOString(),
@@ -230,11 +230,32 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
             </div>
 
             <div className="p-6 bg-blue-50/50 rounded-[2rem] border border-blue-100 space-y-4">
-               <div className="flex justify-between items-center mb-2">
-                  <span className="text-blue-600 font-black flex items-center gap-2"><Wallet className="h-4 w-4" /> بيانات الدفع المالي</span>
+               <div className="flex justify-between items-center mb-2 flex-row-reverse">
+                  <span className="text-blue-600 font-black flex items-center gap-2 flex-row-reverse"><Wallet className="h-4 w-4" /> بيانات الدفع المالي</span>
                   <span className="text-xl font-black text-slate-800">{calculateTotal()} ج.م</span>
                </div>
                
+               {/* عرض بيانات التحويل من إعدادات النظام */}
+               {(systemSettings?.vodafoneCash || systemSettings?.instaPay) && (
+                 <div className="bg-white/80 p-4 rounded-2xl border border-blue-100/50 space-y-2 text-right">
+                    <p className="text-[10px] font-black text-slate-400 mb-2">يرجى التحويل على أحد الحسابات التالية:</p>
+                    {systemSettings?.vodafoneCash && (
+                      <div className="flex items-center justify-end gap-2 text-slate-700">
+                        <span className="font-black text-sm">{systemSettings.vodafoneCash}</span>
+                        <span className="text-[10px] font-bold text-slate-500">فودافون كاش:</span>
+                        <Smartphone className="h-3 w-3 text-red-500" />
+                      </div>
+                    )}
+                    {systemSettings?.instaPay && (
+                      <div className="flex items-center justify-end gap-2 text-slate-700">
+                        <span className="font-black text-sm">{systemSettings.instaPay}</span>
+                        <span className="text-[10px] font-bold text-slate-500">انستا باي:</span>
+                        <Landmark className="h-3 w-3 text-purple-600" />
+                      </div>
+                    )}
+                 </div>
+               )}
+
                <div className="space-y-3">
                  <Label className="text-[10px] font-black text-slate-400 uppercase">رقم العملية أو المرجع <CreditCard className="h-3 w-3 inline ml-1" /></Label>
                  <Input 
