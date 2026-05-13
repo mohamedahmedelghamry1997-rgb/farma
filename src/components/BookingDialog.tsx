@@ -16,7 +16,7 @@ import {
   User, 
   Wallet, 
   CreditCard, 
-  AlertCircle, 
+  CircleAlert, 
   PlusCircle, 
   Trash2, 
   Smartphone, 
@@ -187,7 +187,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
           </div>
 
           <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3 flex-row-reverse text-right">
-            <AlertCircle className="h-5 w-5 text-orange-600 shrink-0" />
+            <CircleAlert className="h-5 w-5 text-orange-600 shrink-0" />
             <p className="text-xs text-orange-800 font-bold leading-relaxed">
               سياسة الجدولة: يمنع النظام ترك أي أيام فارغة بين الحجوزات. يجب أن تبدأ حجوزاتك من اليوم التالي مباشرة لآخر حجز مسجل لضمان استمرارية الإشغال.
             </p>

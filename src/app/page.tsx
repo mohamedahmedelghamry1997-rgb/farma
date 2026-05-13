@@ -10,10 +10,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
-  Users, Wallet, Receipt, Search, Activity, AlertCircle, 
-  LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar,
+  Users, Wallet, Receipt, Search, Activity, CircleAlert, 
+  LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar as LucideCalendar,
   LogIn, UserCircle, Eye, Waves, Sun, Anchor, Palmtree, Settings,
-  LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil, Image as ImageIcon, Clock, CheckCircle2
+  LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil, Image as ImageIcon, Clock, CheckCircle2,
+  ChevronRight
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -84,6 +85,7 @@ export default function PharmaBeachApp() {
     if (activeRole === 'admin') setActiveMobileTab('spreadsheet')
     else if (activeRole === 'broker') setActiveMobileTab('spreadsheet')
     else if (activeRole === 'supervisor') setActiveMobileTab('tasks')
+    else if (activeRole === 'client') setActiveMobileTab('my-bookings')
     else setActiveMobileTab('home')
   }, [activeRole])
 
@@ -328,7 +330,7 @@ export default function PharmaBeachApp() {
 
                {clientBookings.length === 0 ? (
                  <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-slate-200 space-y-4">
-                    <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-slate-300"><Calendar size={40} /></div>
+                    <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-slate-300"><LucideCalendar size={40} /></div>
                     <p className="text-xl font-black text-slate-400">لم تقم بإجراء أي حجوزات بعد</p>
                     <Button variant="link" className="text-primary font-bold" onClick={() => setActiveMobileTab('home')}>تصفح الشاليهات الآن</Button>
                  </div>
@@ -388,7 +390,7 @@ export default function PharmaBeachApp() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-8">
                <StatCard title="الإيرادات" val={stats.totalRevenue.toLocaleString() + ' ج'} icon={Wallet} color="text-green-600" />
                <StatCard title="الإشغال" val={stats.occupancyRate + "%"} icon={Activity} color="text-blue-600" />
-               <StatCard title="حوالات معلقة" val={stats.pendingTransfers} icon={AlertCircle} color="text-orange-600" />
+               <StatCard title="حوالات معلقة" val={stats.pendingTransfers} icon={CircleAlert} color="text-orange-600" />
             </div>
 
             <div className="w-full">
@@ -621,7 +623,7 @@ export default function PharmaBeachApp() {
                 </div>
                 <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
                   <StatCard title="العمولات" val={brokerStats.total.toLocaleString()} icon={ArrowUpRight} color="text-primary" />
-                  <StatCard title="حجوزاتي" val={filteredBookings.length} icon={Calendar} color="text-blue-600" />
+                  <StatCard title="حجوزاتي" val={filteredBookings.length} icon={LucideCalendar} color="text-blue-600" />
                 </div>
              </div>
 
