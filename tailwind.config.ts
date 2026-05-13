@@ -11,9 +11,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Cairo', 'Tajawal', 'sans-serif'],
+        sans: ['Cairo', 'sans-serif'],
         cairo: ['Cairo', 'sans-serif'],
-        tajawal: ['Tajawal', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
