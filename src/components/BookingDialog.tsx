@@ -241,25 +241,30 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                   <span className="text-xl font-black text-slate-800">{calculateTotal()} ج.م</span>
                </div>
                
-               {(systemSettings?.vodafoneCash || systemSettings?.instaPay) && (
-                 <div className="bg-white/80 p-4 rounded-2xl border border-blue-100/50 space-y-2 text-right">
-                    <p className="text-[10px] font-black text-slate-400 mb-2">يرجى التحويل على أحد الحسابات التالية:</p>
-                    {systemSettings?.vodafoneCash && (
-                      <div className="flex items-center justify-end gap-2 text-slate-700">
-                        <span className="font-black text-sm">{systemSettings.vodafoneCash}</span>
-                        <span className="text-[10px] font-bold text-slate-500">فودافون كاش:</span>
-                        <Smartphone className="h-3 w-3 text-red-500" />
+               <div className="bg-white/80 p-4 rounded-2xl border border-blue-100/50 space-y-3 text-right">
+                  <p className="text-[10px] font-black text-slate-400 mb-1">يرجى التحويل على أحد الحسابات التالية:</p>
+                  {systemSettings?.vodafoneCash && (
+                    <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <div className="flex items-center gap-2">
+                         <Smartphone className="h-4 w-4 text-red-500" />
+                         <span className="text-[10px] font-bold text-slate-500">فودافون كاش:</span>
                       </div>
-                    )}
-                    {systemSettings?.instaPay && (
-                      <div className="flex items-center justify-end gap-2 text-slate-700">
-                        <span className="font-black text-sm">{systemSettings.instaPay}</span>
-                        <span className="text-[10px] font-bold text-slate-500">انستا باي:</span>
-                        <Landmark className="h-3 w-3 text-purple-600" />
+                      <span className="font-black text-sm text-slate-900 select-all">{systemSettings.vodafoneCash}</span>
+                    </div>
+                  )}
+                  {systemSettings?.instaPay && (
+                    <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <div className="flex items-center gap-2">
+                         <Landmark className="h-4 w-4 text-purple-600" />
+                         <span className="text-[10px] font-bold text-slate-500">انستا باي:</span>
                       </div>
-                    )}
-                 </div>
-               )}
+                      <span className="font-black text-sm text-slate-900 select-all">{systemSettings.instaPay}</span>
+                    </div>
+                  )}
+                  {(!systemSettings?.vodafoneCash && !systemSettings?.instaPay) && (
+                    <p className="text-[10px] font-bold text-orange-600 text-center">يرجى التواصل مع الإدارة للحصول على بيانات الدفع.</p>
+                  )}
+               </div>
 
                <div className="space-y-3">
                  <Label className="text-[10px] font-black text-slate-400 uppercase">رقم العملية أو المرجع <CreditCard className="h-3 w-3 inline ml-1" /></Label>
