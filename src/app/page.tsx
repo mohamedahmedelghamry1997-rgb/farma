@@ -226,7 +226,13 @@ export default function PharmaBeachApp() {
     }
   }
 
-  if (!store.isLoaded) return <div className="h-screen flex items-center justify-center font-black bg-slate-50 text-primary animate-pulse text-2xl">جاري تشغيل محرك فارما بيتش...</div>
+  if (!store.isLoaded) return (
+    <div className="h-screen flex flex-col items-center justify-center bg-slate-50">
+      <div className="bg-primary p-6 rounded-3xl shadow-2xl shadow-primary/30 animate-pulse">
+        <Anchor className="text-white h-12 w-12" />
+      </div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-right pb-24 md:pb-0" dir="rtl">
@@ -250,7 +256,7 @@ export default function PharmaBeachApp() {
                <>
                  <div className="text-left hidden sm:block">
                     <p className="text-xs md:text-sm font-black text-slate-900">{store.currentUser?.name || store.authUser.email}</p>
-                    <Badge className="bg-primary/10 text-primary border-none text-[8px] md:text-[10px] py-0.5 md:py-1 px-2 md:px-3 rounded-full font-black">
+                    <Badge className={cn("bg-primary/10 text-primary border-none text-[8px] md:text-[10px] py-0.5 md:py-1 px-2 md:px-3 rounded-full font-black")}>
                         {activeRole === 'admin' ? 'مدير النظام' : activeRole === 'broker' ? 'وسيط' : activeRole === 'supervisor' ? 'مشرف' : 'عميل'}
                     </Badge>
                  </div>
