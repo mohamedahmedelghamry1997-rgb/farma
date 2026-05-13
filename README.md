@@ -11,7 +11,6 @@ git init
 git add .
 git commit -m "🚀 إطلاق النسخة الأولى - PWA Mobile App"
 git branch -M main
-git remote remove origin
 git remote add origin https://github.com/mohamedahmedelghamry1997-rgb/farma.git
 git push -u origin main
 ```
@@ -37,9 +36,10 @@ git push -u origin main
 ## 🛠 المميزات التقنية المضافة
 - **PWA Ready:** يدعم العمل بدون اتصال وتثبيت الأيقونة على الشاشة الرئيسية.
 - **Mobile-First UI:** واجهة مستخدم سفلية (Bottom Nav) مريحة للتحكم بيد واحدة.
-- **Service Worker:** تخزين مؤقت للملفات لسرعة استجابة فائقة.
+- **Cairo Font:** استخدام خط "كايرو" الاحترافي لواجهة عربية فخمة.
 - **Real-time Integration:** مزامنة لحظية مع Firebase Firestore و Authentication.
-- **Safe Area Support:** متوافق مع هواتف الـ Notch (iPhone & Android).
+- **Financial Reports:** جداول مالية تفصيلية للأدمن لمتابعة الأرباح والعمولات.
+- **Client Portal:** لوحة تحكم خاصة للعملاء لمتابعة حجوزاتهم.
 
 ---
 تم التطوير والتحويل بواسطة AI Partner - نظام فارما بيتش الإداري.
