@@ -81,7 +81,8 @@ export interface Booking {
   permitFee?: number
   expenses?: number
   ownerShare?: number
-  clientIdCardUrl?: string
+  clientIdCardUrl?: string // Backwards compatibility
+  clientIdCardUrls?: string[] // Multiple IDs support
 }
 
 export interface WithdrawalRequest {

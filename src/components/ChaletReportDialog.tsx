@@ -36,6 +36,9 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
     return isAfter(new Date(b.endDate), today) && !isAfter(new Date(b.startDate), today);
   });
 
+  // Handle both single and multiple ID card URLs
+  const idCardUrls = booking?.clientIdCardUrls || (booking?.clientIdCardUrl ? [booking.clientIdCardUrl] : []);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-3xl md:rounded-[3rem] border-none shadow-2xl text-right bg-white max-h-[92vh] overflow-y-auto custom-scrollbar">
@@ -94,22 +97,26 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
                 <InfoCard title="فترة الإقامة" value={`${format(new Date(booking.startDate), 'dd MMM', { locale: ar })}`} icon={CalendarIcon} color="text-orange-600" subValue={`إلى ${format(new Date(booking.endDate), 'dd MMM', { locale: ar })} (${nights} ليالي)`} />
               </div>
 
-              {booking.clientIdCardUrl && (
-                <div className="p-6 bg-slate-50 rounded-2xl md:rounded-[2.5rem] border border-slate-100 space-y-4">
+              {idCardUrls.length > 0 && (
+                <div className="p-6 bg-slate-50 rounded-2xl md:rounded-[2.5rem] border border-slate-100 space-y-6">
                   <div className="flex items-center justify-end gap-2 text-primary">
-                    <h4 className="text-lg font-black">بطاقة هوية العميل</h4>
+                    <h4 className="text-lg font-black">بطاقات هوية العميل ({idCardUrls.length})</h4>
                     <ImageIcon className="h-5 w-5" />
                   </div>
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-white shadow-md">
-                    <a href={booking.clientIdCardUrl} target="_blank" rel="noopener noreferrer">
-                      <Image 
-                        src={booking.clientIdCardUrl} 
-                        alt="بطاقة العميل" 
-                        fill 
-                        className="object-contain hover:scale-105 transition-transform cursor-zoom-in"
-                        unoptimized
-                      />
-                    </a>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {idCardUrls.map((url, idx) => (
+                      <div key={idx} className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-white shadow-md bg-white">
+                        <a href={url} target="_blank" rel="noopener noreferrer">
+                          <Image 
+                            src={url} 
+                            alt={`بطاقة العميل ${idx + 1}`} 
+                            fill 
+                            className="object-contain hover:scale-105 transition-transform cursor-zoom-in"
+                            unoptimized
+                          />
+                        </a>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

@@ -256,7 +256,7 @@ export default function PharmaBeachApp() {
                <>
                  <div className="text-left hidden sm:block">
                     <p className="text-xs md:text-sm font-black text-slate-900">{store.currentUser?.name || store.authUser.email}</p>
-                    <Badge className={cn("bg-primary/10 text-primary border-none text-[8px] md:text-[10px] py-0.5 md:py-1 px-2 md:px-3 rounded-full font-black")}>
+                    <Badge className={cn("bg-primary/10 text-primary border-none py-1 px-3 rounded-full font-black", "text-[10px]")}>
                         {activeRole === 'admin' ? 'مدير النظام' : activeRole === 'broker' ? 'وسيط' : activeRole === 'supervisor' ? 'مشرف' : 'عميل'}
                     </Badge>
                  </div>
@@ -422,7 +422,7 @@ export default function PharmaBeachApp() {
                                 <p className="font-black text-lg md:text-3xl text-slate-900">{b.clientName}</p>
                                 <p className="text-xs md:text-lg font-bold text-slate-500">{(b.totalAmount || 0).toLocaleString()} ج.م</p>
                                 <div className="flex gap-2 justify-end mt-1 flex-wrap">
-                                    <Badge className={cn(b.paymentStatus === 'verified' ? 'bg-green-500' : 'bg-orange-500', "text-white border-none px-2 py-0.5 text-[8px] md:text-xs")}>
+                                    <Badge className={cn(b.paymentStatus === 'verified' ? 'bg-green-500' : 'bg-orange-500', "text-white border-none py-1 px-3 rounded-full font-black", "text-[10px]")}>
                                       {b.paymentStatus === 'verified' ? 'مؤكد' : 'معلق'}
                                     </Badge>
                                 </div>
@@ -622,8 +622,8 @@ export default function PharmaBeachApp() {
                             <Button 
                               variant="outline" 
                               className="h-10 rounded-xl flex-1 border-slate-200 gap-2 text-xs font-black" 
-                              onClick={() => b.clientIdCardUrl && window.open(b.clientIdCardUrl, '_blank')}
-                              disabled={!b.clientIdCardUrl}
+                              onClick={() => handleOpenSpreadsheetReport(store.chalets.find(c => c.id === b.chaletId)!, b)}
+                              disabled={!(b.clientIdCardUrls && b.clientIdCardUrls.length > 0) && !b.clientIdCardUrl}
                             >
                               <ImageIcon size={16} /> البطايق
                             </Button>

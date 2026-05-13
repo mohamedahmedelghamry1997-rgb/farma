@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Chalet, Booking } from "@/lib/store"
 import { format, isBefore, startOfDay, isSameDay, isWithinInterval, differenceInDays, addDays, subDays } from "date-fns"
 import { ar } from "date-fns/locale"
-import { CalendarIcon, Users, Phone, User, MessageSquare, Wallet, CreditCard, AlertTriangle, ImageIcon } from "lucide-react"
+import { CalendarIcon, Users, Phone, User, MessageSquare, Wallet, CreditCard, AlertTriangle, ImageIcon, PlusCircle, Trash2 } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { useToast } from '@/hooks/use-toast'
 
@@ -30,11 +30,26 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
-  const [idCardUrl, setIdCardUrl] = useState('')
+  const [idCardUrls, setIdCardUrls] = useState<string[]>([''])
   const [guests, setGuests] = useState(1)
   const [notes, setNotes] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('vodafone_cash')
   const [paymentRef, setPaymentRef] = useState('')
+
+  const handleAddIdUrl = () => {
+    setIdCardUrls([...idCardUrls, ''])
+  }
+
+  const handleUpdateIdUrl = (index: number, value: string) => {
+    const newUrls = [...idCardUrls]
+    newUrls[index] = value
+    setIdCardUrls(newUrls)
+  }
+
+  const handleRemoveIdUrl = (index: number) => {
+    if (idCardUrls.length <= 1) return
+    setIdCardUrls(idCardUrls.filter((_, i) => i !== index))
+  }
 
   const calculateTotal = () => {
     if (!chalet || !dateRange?.from || !dateRange?.to) return 0
@@ -94,11 +109,14 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     const nights = differenceInDays(dateRange.to, dateRange.from) + 1;
     const commissionPerNight = currentUser?.commissionRate || 200;
 
+    const validIdUrls = idCardUrls.filter(u => u.trim() !== '');
+
     onConfirm({
       chaletId: chalet.id,
       clientName: name,
       phoneNumber: phone,
-      clientIdCardUrl: idCardUrl,
+      clientIdCardUrls: validIdUrls,
+      clientIdCardUrl: validIdUrls[0] || '', // Backwards compatibility
       guestCount: guests,
       startDate: dateRange.from.toISOString(),
       endDate: dateRange.to.toISOString(),
@@ -114,7 +132,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     setDateRange(undefined)
     setName('')
     setPhone('')
-    setIdCardUrl('')
+    setIdCardUrls([''])
     setGuests(1)
     setNotes('')
     setPaymentRef('')
@@ -187,11 +205,26 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 justify-end">
-                رابط صورة بطاقة العميل <ImageIcon className="h-3 w-3" />
+                روابط صور بطاقات العميل <PlusCircle className="h-3 w-3 ml-1" />
               </Label>
-              <Input placeholder="أدخل رابط صورة البطاقة..." value={idCardUrl} onChange={e => setIdCardUrl(e.target.value)} className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-right" />
+              {idCardUrls.map((url, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <Button variant="ghost" size="icon" onClick={() => handleRemoveIdUrl(idx)} className="text-red-500 rounded-xl h-12 w-12 shrink-0 bg-slate-50" disabled={idCardUrls.length <= 1}>
+                    <Trash2 size={18} />
+                  </Button>
+                  <Input 
+                    placeholder={`رابط بطاقة ${idx + 1}...`} 
+                    value={url} 
+                    onChange={e => handleUpdateIdUrl(idx, e.target.value)} 
+                    className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-right flex-1" 
+                  />
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={handleAddIdUrl} className="w-full rounded-xl border-dashed border-2 font-bold gap-2">
+                <PlusCircle className="h-4 w-4" /> إضافة رابط بطاقة آخر
+              </Button>
             </div>
 
             <div className="p-6 bg-blue-50/50 rounded-[2rem] border border-blue-100 space-y-4">
