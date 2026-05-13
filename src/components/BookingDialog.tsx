@@ -11,7 +11,7 @@ import { Chalet, Booking, useAppStore } from "@/lib/store"
 import { format, isBefore, startOfDay, isSameDay, isWithinInterval, differenceInDays, addDays, subDays } from "date-fns"
 import { ar } from "date-fns/locale"
 import { 
-  Calendar as CalendarIcon, 
+  Calendar as LucideCalendar, 
   Phone, 
   User, 
   Wallet, 
@@ -54,7 +54,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
   const handleUpdateIdUrl = (index: number, value: string) => {
     const newUrls = [...idCardUrls]
     newUrls[index] = value
-    setIdCardUrls(newUrls)
+    setGalleryLinks(newUrls)
   }
 
   const handleRemoveIdUrl = (index: number) => {
@@ -118,7 +118,6 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     if (!checkGapRule(dateRange)) return;
 
     const nights = differenceInDays(dateRange.to, dateRange.from) + 1;
-    
     const commissionPerNight = currentUser?.role === 'admin' ? 0 : (currentUser?.commissionRate || 200);
     const validIdUrls = idCardUrls.filter(u => u.trim() !== '');
 
@@ -171,14 +170,14 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
              منتجع فارما بيتش - يرجى الالتزام بالجدولة المتصلة (بدون أي فجوات زمنية)
           </DialogDescription>
           <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-            <CalendarIcon size={120} />
+            <LucideCalendar size={120} />
           </div>
         </DialogHeader>
         
         <div className="p-8 space-y-6 bg-white overflow-y-auto max-h-[75vh]">
           <div className="space-y-4">
             <Label className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 justify-end">
-               اختر تواريخ الإقامة <CalendarIcon className="h-3 w-3" />
+               اختر تواريخ الإقامة <LucideCalendar className="h-3 w-3" />
             </Label>
             <div className="flex justify-center border rounded-3xl p-2 bg-slate-50/50">
               <Calendar
@@ -228,7 +227,11 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                   <Input 
                     placeholder={`رابط بطاقة ${idx + 1}...`} 
                     value={url} 
-                    onChange={e => handleUpdateIdUrl(idx, e.target.value)} 
+                    onChange={e => {
+                        const newUrls = [...idCardUrls];
+                        newUrls[idx] = e.target.value;
+                        setIdCardUrls(newUrls);
+                    }} 
                     className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-right flex-1" 
                   />
                 </div>

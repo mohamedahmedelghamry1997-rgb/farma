@@ -10,8 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
-  Users, Wallet, Receipt, Search, Activity, AlertTriangle, 
-  LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar as CalendarIcon,
+  Users, Wallet, Receipt, Search, Activity, TriangleAlert, 
+  LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar as LucideCalendar,
   LogIn, UserCircle, Eye, Waves, Sun, Anchor, Palmtree, Settings,
   LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil, Image as ImageIcon
 } from 'lucide-react'
@@ -315,7 +315,7 @@ export default function PharmaBeachApp() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-8">
                <StatCard title="الإيرادات" val={stats.totalRevenue.toLocaleString() + ' ج'} icon={Wallet} color="text-green-600" />
                <StatCard title="الإشغال" val={stats.occupancyRate + "%"} icon={Activity} color="text-blue-600" />
-               <StatCard title="حوالات معلقة" val={stats.pendingTransfers} icon={AlertTriangle} color="text-orange-600" />
+               <StatCard title="حوالات معلقة" val={stats.pendingTransfers} icon={TriangleAlert} color="text-orange-600" />
             </div>
 
             <div className="w-full">
@@ -548,7 +548,7 @@ export default function PharmaBeachApp() {
                 </div>
                 <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
                   <StatCard title="العمولات" val={brokerStats.total.toLocaleString()} icon={ArrowUpRight} color="text-primary" />
-                  <StatCard title="حجوزاتي" val={filteredBookings.length} icon={CalendarIcon} color="text-blue-600" />
+                  <StatCard title="حجوزاتي" val={filteredBookings.length} icon={LucideCalendar} color="text-blue-600" />
                 </div>
              </div>
 
