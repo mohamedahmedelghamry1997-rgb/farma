@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
   Users, Wallet, Receipt, Search, Activity, TriangleAlert, 
-  LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar as LucideCalendar,
+  LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar,
   LogIn, UserCircle, Eye, Waves, Sun, Anchor, Palmtree, Settings,
   LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil, Image as ImageIcon
 } from 'lucide-react'
@@ -548,7 +548,7 @@ export default function PharmaBeachApp() {
                 </div>
                 <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
                   <StatCard title="العمولات" val={brokerStats.total.toLocaleString()} icon={ArrowUpRight} color="text-primary" />
-                  <StatCard title="حجوزاتي" val={filteredBookings.length} icon={LucideCalendar} color="text-blue-600" />
+                  <StatCard title="حجوزاتي" val={filteredBookings.length} icon={Calendar} color="text-blue-600" />
                 </div>
              </div>
 
