@@ -1,7 +1,7 @@
 
 "use client"
 
-import { Home, Calendar, Wallet, Settings, ClipboardCheck, Search } from 'lucide-react'
+import { Home, Calendar, Wallet, Settings, ClipboardCheck, Search, ListTodo } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserRole } from '@/lib/store'
 
@@ -27,9 +27,19 @@ export function BottomNav({ activeTab, onTabChange, role }: BottomNavProps) {
           active={activeTab === 'units'} 
           onClick={() => {
             onTabChange('home');
-            document.getElementById('units')?.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+              document.getElementById('units')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
           }} 
         />
+        {role === 'client' && (
+          <NavItem 
+            icon={ListTodo} 
+            label="حجوزاتي" 
+            active={activeTab === 'my-bookings'} 
+            onClick={() => onTabChange('my-bookings')} 
+          />
+        )}
       </nav>
     )
   }

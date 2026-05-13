@@ -13,7 +13,7 @@ import {
   Users, Wallet, Receipt, Search, Activity, AlertCircle, 
   LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar,
   LogIn, UserCircle, Eye, Waves, Sun, Anchor, Palmtree, Settings,
-  LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil, Image as ImageIcon
+  LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil, Image as ImageIcon, Clock, CheckCircle2
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -35,6 +35,8 @@ import Image from 'next/image'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
 import { cn } from '@/lib/utils'
+import { format } from 'date-fns'
+import { ar } from 'date-fns/locale'
 
 export default function PharmaBeachApp() {
   const store = useAppStore()
@@ -174,6 +176,12 @@ export default function PharmaBeachApp() {
     return list
   }, [activeRole, store.bookings, searchQuery, statusFilter, store.currentUser]);
 
+  const clientBookings = useMemo(() => {
+    if (activeRole !== 'client') return []
+    const userPhone = store.currentUser?.phone || ""
+    return store.bookings.filter(b => b.phoneNumber === userPhone)
+  }, [store.bookings, store.currentUser, activeRole])
+
   const handleAuth = async () => {
     try {
       if (isLoginView) {
@@ -274,42 +282,107 @@ export default function PharmaBeachApp() {
       <main className="flex-1">
         
         {(!activeRole || activeRole === 'client') ? (
-          <div className="space-y-0">
-            <div className="bg-white py-12 md:py-32 border-b relative overflow-hidden text-right">
-               <div className="container mx-auto px-4 text-center space-y-6 md:space-y-12 relative z-10">
-                  <div className="flex justify-center gap-3 md:gap-8 mb-2">
-                    <div className="bg-primary/5 p-3 md:p-6 rounded-2xl md:rounded-[2rem] text-primary animate-bounce delay-75"><Waves size={24} className="md:w-12 md:h-12" /></div>
-                    <div className="bg-primary/5 p-3 md:p-6 rounded-2xl md:rounded-[2rem] text-primary animate-bounce delay-150"><Sun size={24} className="md:w-12 md:h-12" /></div>
-                    <div className="bg-primary/5 p-3 md:p-6 rounded-2xl md:rounded-[2rem] text-primary animate-bounce delay-300"><Palmtree size={24} className="md:w-12 md:h-12" /></div>
-                  </div>
-                  <h2 className="text-3xl md:text-7xl font-black text-slate-900 leading-tight">فخامة <span className="text-primary">الإقامة الساحلية</span><br/>بين يديك الآن</h2>
-                  <p className="text-sm md:text-2xl font-bold text-slate-500 max-w-3xl mx-auto leading-relaxed px-2">استكشف أفخم شاليهات فارما بيتش واحجز عطلتك القادمة بضغطة زر.</p>
-                  <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-6 px-4">
-                    <Button size="lg" className="rounded-2xl md:rounded-[2rem] h-14 md:h-20 px-10 md:px-16 text-lg md:text-2xl font-black shadow-2xl shadow-primary/30 transition-transform hover:scale-105" onClick={() => document.getElementById('units')?.scrollIntoView({behavior: 'smooth'})}>تصفح الشاليهات</Button>
-                    {!store.authUser && (
-                      <Button size="lg" variant="outline" className="rounded-2xl md:rounded-[2rem] h-14 md:h-20 px-10 md:px-16 text-lg md:text-2xl font-black border-2 border-slate-200" onClick={() => setIsAuthOpen(true)}>سجل دخولك</Button>
-                    )}
-                  </div>
-               </div>
+          activeMobileTab === 'home' ? (
+            <div className="space-y-0">
+              <div className="bg-white py-12 md:py-32 border-b relative overflow-hidden text-right">
+                <div className="container mx-auto px-4 text-center space-y-6 md:space-y-12 relative z-10">
+                    <div className="flex justify-center gap-3 md:gap-8 mb-2">
+                      <div className="bg-primary/5 p-3 md:p-6 rounded-2xl md:rounded-[2rem] text-primary animate-bounce delay-75"><Waves size={24} className="md:w-12 md:h-12" /></div>
+                      <div className="bg-primary/5 p-3 md:p-6 rounded-2xl md:rounded-[2rem] text-primary animate-bounce delay-150"><Sun size={24} className="md:w-12 md:h-12" /></div>
+                      <div className="bg-primary/5 p-3 md:p-6 rounded-2xl md:rounded-[2rem] text-primary animate-bounce delay-300"><Palmtree size={24} className="md:w-12 md:h-12" /></div>
+                    </div>
+                    <h2 className="text-3xl md:text-7xl font-black text-slate-900 leading-tight">فخامة <span className="text-primary">الإقامة الساحلية</span><br/>بين يديك الآن</h2>
+                    <p className="text-sm md:text-2xl font-bold text-slate-500 max-w-3xl mx-auto leading-relaxed px-2">استكشف أفخم شاليهات فارما بيتش واحجز عطلتك القادمة بضغطة زر.</p>
+                    <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-6 px-4">
+                      <Button size="lg" className="rounded-2xl md:rounded-[2rem] h-14 md:h-20 px-10 md:px-16 text-lg md:text-2xl font-black shadow-2xl shadow-primary/30 transition-transform hover:scale-105" onClick={() => document.getElementById('units')?.scrollIntoView({behavior: 'smooth'})}>تصفح الشاليهات</Button>
+                      {!store.authUser && (
+                        <Button size="lg" variant="outline" className="rounded-2xl md:rounded-[2rem] h-14 md:h-20 px-10 md:px-16 text-lg md:text-2xl font-black border-2 border-slate-200" onClick={() => setIsAuthOpen(true)}>سجل دخولك</Button>
+                      )}
+                    </div>
+                </div>
+              </div>
+              <div id="units" className="container mx-auto px-4 py-12 md:py-32 text-right">
+                <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-16 gap-6">
+                    <div className="space-y-1 text-right w-full md:w-auto">
+                      <h3 className="text-2xl md:text-5xl font-black text-slate-900">الوحدات المتاحة</h3>
+                      <p className="text-slate-400 font-bold text-xs md:text-lg">اختر وحدتك المثالية من مجموعتنا الحصرية</p>
+                    </div>
+                    <div className="w-full md:w-[450px] relative">
+                      <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 h-5 w-5" />
+                      <Input placeholder="ابحث عن موقع أو شاليه..." className="h-12 md:h-16 rounded-2xl md:rounded-[1.5rem] pr-12 text-right bg-white shadow-lg border-none text-sm md:text-lg" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12">
+                    {myChalets.map(c => (
+                      <ChaletCard key={c.id} chalet={c} onBook={(chalet) => setViewingDetailsChalet(chalet)} />
+                    ))}
+                </div>
+              </div>
             </div>
-            <div id="units" className="container mx-auto px-4 py-12 md:py-32 text-right">
-               <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-16 gap-6">
-                  <div className="space-y-1 text-right w-full md:w-auto">
-                    <h3 className="text-2xl md:text-5xl font-black text-slate-900">الوحدات المتاحة</h3>
-                    <p className="text-slate-400 font-bold text-xs md:text-lg">اختر وحدتك المثالية من مجموعتنا الحصرية</p>
-                  </div>
-                  <div className="w-full md:w-[450px] relative">
-                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 h-5 w-5" />
-                    <Input placeholder="ابحث عن موقع أو شاليه..." className="h-12 md:h-16 rounded-2xl md:rounded-[1.5rem] pr-12 text-right bg-white shadow-lg border-none text-sm md:text-lg" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                  </div>
+          ) : (
+            <div className="container mx-auto px-4 py-8 md:py-16 space-y-8">
+               <div className="bg-white p-8 rounded-[2.5rem] border shadow-sm text-right">
+                  <h2 className="text-2xl md:text-4xl font-black text-slate-900">حجوزاتي الخاصة</h2>
+                  <p className="text-slate-500 font-bold mt-1">تتبع حالة إقامتك واستلامك للوحدات في فارما بيتش</p>
                </div>
-               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12">
-                  {myChalets.map(c => (
-                    <ChaletCard key={c.id} chalet={c} onBook={(chalet) => setViewingDetailsChalet(chalet)} />
-                  ))}
-               </div>
+
+               {clientBookings.length === 0 ? (
+                 <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-slate-200 space-y-4">
+                    <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-slate-300"><Calendar size={40} /></div>
+                    <p className="text-xl font-black text-slate-400">لم تقم بإجراء أي حجوزات بعد</p>
+                    <Button variant="link" className="text-primary font-bold" onClick={() => setActiveMobileTab('home')}>تصفح الشاليهات الآن</Button>
+                 </div>
+               ) : (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {clientBookings.map(b => (
+                      <Card key={b.id} className="p-6 md:p-8 rounded-[2.5rem] bg-white border-none shadow-xl hover:shadow-2xl transition-all cursor-pointer" onClick={() => handleOpenSpreadsheetReport(store.chalets.find(c => c.id === b.chaletId)!, b)}>
+                         <div className="flex items-start justify-between flex-row-reverse gap-4 mb-6">
+                            <div className="text-right flex-1">
+                               <p className="text-[10px] font-black text-primary uppercase tracking-widest">{store.chalets.find(c => c.id === b.chaletId)?.code}</p>
+                               <h4 className="text-xl font-black text-slate-900">{store.chalets.find(c => c.id === b.chaletId)?.name}</h4>
+                            </div>
+                            <Badge className={cn(
+                              b.status === 'confirmed' ? 'bg-green-500' : 'bg-orange-500',
+                              "text-white px-4 py-1.5 rounded-full font-black text-[10px] border-none"
+                            )}>
+                               {b.status === 'confirmed' ? 'حجز مؤكد' : 'بانتظار التأكيد'}
+                            </Badge>
+                         </div>
+
+                         <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="bg-slate-50 p-3 rounded-2xl text-right">
+                               <p className="text-[8px] font-black text-slate-400 uppercase">تاريخ الوصول</p>
+                               <p className="text-sm font-black">{format(new Date(b.startDate), 'dd MMMM', { locale: ar })}</p>
+                            </div>
+                            <div className="bg-slate-50 p-3 rounded-2xl text-right">
+                               <p className="text-[8px] font-black text-slate-400 uppercase">تاريخ المغادرة</p>
+                               <p className="text-sm font-black">{format(new Date(b.endDate), 'dd MMMM', { locale: ar })}</p>
+                            </div>
+                         </div>
+
+                         <div className="flex items-center justify-between flex-row-reverse pt-4 border-t">
+                            <div className="flex items-center gap-2 flex-row-reverse">
+                               <div className={cn(
+                                 "h-8 w-8 rounded-full flex items-center justify-center",
+                                 b.opStatus === 'checked_in' ? 'bg-blue-100 text-blue-600' : 
+                                 b.opStatus === 'checked_out' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'
+                               )}>
+                                  {b.opStatus === 'checked_in' ? <Activity size={16} /> : 
+                                   b.opStatus === 'checked_out' ? <CheckCircle2 size={16} /> : <Clock size={16} />}
+                               </div>
+                               <span className="text-xs font-black text-slate-600">
+                                  {b.opStatus === 'checked_in' ? 'أنت الآن في الوحدة' : 
+                                   b.opStatus === 'checked_out' ? 'تم إنهاء الإقامة' : 'بانتظار موعد الاستلام'}
+                               </span>
+                            </div>
+                            <Button variant="ghost" size="sm" className="text-primary font-black gap-2">التفاصيل <ChevronRight className="h-4 w-4" /></Button>
+                         </div>
+                      </Card>
+                    ))}
+                 </div>
+               )}
             </div>
-          </div>
+          )
         ) : activeRole === 'admin' ? (
           <div className="container mx-auto px-4 py-6 md:py-12 space-y-6 md:space-y-12">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-8">

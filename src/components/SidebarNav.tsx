@@ -4,7 +4,7 @@
 import { 
   Calendar, Wallet, Settings, ClipboardCheck, Users, 
   Home as HomeIcon, LayoutDashboard, History, Box, Tag, 
-  UserPlus, Search, Waves, FileText 
+  UserPlus, Search, Waves, FileText, ListTodo 
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserRole } from '@/lib/store'
@@ -27,7 +27,7 @@ interface SidebarNavProps {
 }
 
 export function SidebarNav({ activeTab, onTabChange, role, isOpen, setIsOpen }: SidebarNavProps) {
-  if (!role || role === 'client') return null
+  if (!role) return null
 
   const adminItems = [
     { id: 'spreadsheet', label: 'جدول الحجوزات', icon: Calendar },
@@ -52,7 +52,14 @@ export function SidebarNav({ activeTab, onTabChange, role, isOpen, setIsOpen }: 
     { id: 'spreadsheet', label: 'جدول الإشغال', icon: Calendar },
   ]
 
-  const items = role === 'admin' ? adminItems : role === 'broker' ? brokerItems : supervisorItems
+  const clientItems = [
+    { id: 'home', label: 'تصفح الشاليهات', icon: Search },
+    { id: 'my-bookings', label: 'حجوزاتي الخاصة', icon: ListTodo },
+  ]
+
+  const items = role === 'admin' ? adminItems : 
+                role === 'broker' ? brokerItems : 
+                role === 'supervisor' ? supervisorItems : clientItems
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
