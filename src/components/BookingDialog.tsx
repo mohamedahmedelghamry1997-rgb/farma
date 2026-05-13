@@ -7,12 +7,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Chalet, Booking, useAppStore } from "@/lib/store"
 import { format, isBefore, startOfDay, isSameDay, isWithinInterval, differenceInDays, addDays, subDays } from "date-fns"
 import { ar } from "date-fns/locale"
-import { CalendarIcon, Users, Phone, User, MessageSquare, Wallet, CreditCard, AlertTriangle, ImageIcon, PlusCircle, Trash2, Smartphone, Landmark } from "lucide-react"
+import { 
+  Calendar as CalendarIcon, 
+  Phone, 
+  User, 
+  Wallet, 
+  CreditCard, 
+  TriangleAlert, 
+  PlusCircle, 
+  Trash2, 
+  Smartphone, 
+  Landmark 
+} from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { useToast } from '@/hooks/use-toast'
 
@@ -185,7 +194,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
           </div>
 
           <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3 flex-row-reverse text-right">
-            <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0" />
+            <TriangleAlert className="h-5 w-5 text-orange-600 shrink-0" />
             <p className="text-xs text-orange-800 font-bold leading-relaxed">
               سياسة الجدولة: يمنع النظام ترك أي أيام فارغة بين الحجوزات. يجب أن تبدأ حجوزاتك من اليوم التالي مباشرة لآخر حجز مسجل لضمان استمرارية الإشغال.
             </p>
@@ -235,7 +244,6 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                   <span className="text-xl font-black text-slate-800">{calculateTotal()} ج.م</span>
                </div>
                
-               {/* عرض بيانات التحويل من إعدادات النظام */}
                {(systemSettings?.vodafoneCash || systemSettings?.instaPay) && (
                  <div className="bg-white/80 p-4 rounded-2xl border border-blue-100/50 space-y-2 text-right">
                     <p className="text-[10px] font-black text-slate-400 mb-2">يرجى التحويل على أحد الحسابات التالية:</p>
