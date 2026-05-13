@@ -31,7 +31,7 @@ export function SidebarNav({ activeTab, onTabChange, role, isOpen, setIsOpen }: 
 
   const adminItems = [
     { id: 'spreadsheet', label: 'جدول الحجوزات', icon: Calendar },
-    { id: 'chalet-reports', label: 'تقارير الشاليهات', icon: FileText },
+    { id: 'chalet-reports', label: 'التقارير المالية التفصيلية', icon: FileText },
     { id: 'bookings', label: 'الإدارة المالية', icon: Wallet },
     { id: 'ops', label: 'العمليات الميدانية', icon: ClipboardCheck },
     { id: 'withdrawals', label: 'طلبات السحب', icon: History },

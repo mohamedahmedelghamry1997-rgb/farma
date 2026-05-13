@@ -107,7 +107,9 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     if (!checkGapRule(dateRange)) return;
 
     const nights = differenceInDays(dateRange.to, dateRange.from) + 1;
-    const commissionPerNight = currentUser?.commissionRate || 200;
+    
+    // Admin booking has 0 commission, Broker uses their set rate or default 200
+    const commissionPerNight = currentUser?.role === 'admin' ? 0 : (currentUser?.commissionRate || 200);
 
     const validIdUrls = idCardUrls.filter(u => u.trim() !== '');
 
