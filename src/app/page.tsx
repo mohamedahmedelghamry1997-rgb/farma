@@ -14,7 +14,7 @@ import {
   LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar as LucideCalendar,
   LogIn, UserCircle, Eye, Waves, Sun, Anchor, Palmtree, Settings,
   LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil, Image as ImageIcon, Clock, CheckCircle2,
-  ChevronRight
+  ChevronRight, ShieldAlert
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'

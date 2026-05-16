@@ -20,10 +20,14 @@ import {
   PlusCircle, 
   Trash2, 
   Smartphone, 
-  Landmark 
+  Landmark,
+  Upload,
+  X,
+  ImageIcon
 } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { useToast } from '@/hooks/use-toast'
+import Image from 'next/image'
 
 interface BookingDialogProps {
   chalet: Chalet | null
@@ -41,19 +45,30 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
-  const [idCardUrls, setIdCardUrls] = useState<string[]>([''])
+  const [idCardUrls, setIdCardUrls] = useState<string[]>([])
   const [guests, setGuests] = useState(1)
   const [notes, setNotes] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('vodafone_cash')
   const [paymentRef, setPaymentRef] = useState('')
 
-  const handleAddIdUrl = () => {
-    setIdCardUrls([...idCardUrls, ''])
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+
+    const fileArray = Array.from(files)
+    
+    fileArray.forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setIdCardUrls(prev => [...prev, base64String])
+      }
+      reader.readAsDataURL(file)
+    })
   }
 
-  const handleRemoveIdUrl = (index: number) => {
-    if (idCardUrls.length <= 1) return
-    setIdCardUrls(idCardUrls.filter((_, i) => i !== index))
+  const removeImage = (index: number) => {
+    setIdCardUrls(prev => prev.filter((_, i) => i !== index))
   }
 
   const calculateTotal = () => {
@@ -112,16 +127,14 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     if (!checkGapRule(dateRange)) return;
 
     const nights = differenceInDays(dateRange.to, dateRange.from) + 1;
-    // Admin gets 0 commission, brokers get their rate or default 200
     const commissionPerNight = currentUser?.role === 'admin' ? 0 : (currentUser?.commissionRate || 200);
-    const validIdUrls = idCardUrls.filter(u => u.trim() !== '');
 
     onConfirm({
       chaletId: chalet.id,
       clientName: name,
       phoneNumber: phone,
-      clientIdCardUrls: validIdUrls,
-      clientIdCardUrl: validIdUrls[0] || '',
+      clientIdCardUrls: idCardUrls,
+      clientIdCardUrl: idCardUrls[0] || '',
       guestCount: guests,
       startDate: dateRange.from.toISOString(),
       endDate: dateRange.to.toISOString(),
@@ -137,7 +150,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
     setDateRange(undefined)
     setName('')
     setPhone('')
-    setIdCardUrls([''])
+    setIdCardUrls([])
     setGuests(1)
     setNotes('')
     setPaymentRef('')
@@ -164,13 +177,10 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
           <DialogDescription className="text-white/70 text-right font-medium">
              منتجع فارما بيتش - يرجى إدخال بيانات العميل والبطاقات أولاً
           </DialogDescription>
-          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-            <LucideCalendar size={120} />
-          </div>
         </DialogHeader>
         
-        <div className="p-8 space-y-6 bg-white overflow-y-auto max-h-[75vh]">
-          {/* Moved Client Info to the Top */}
+        <div className="p-8 space-y-6 bg-white overflow-y-auto max-h-[75vh] custom-scrollbar">
+          
           <div className="grid grid-cols-1 gap-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -189,28 +199,33 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
 
             <div className="space-y-3">
               <Label className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 justify-end">
-                روابط صور بطاقات العميل <PlusCircle className="h-3 w-3 ml-1" />
+                صور بطاقات العميل (وجه وظهر) <ImageIcon className="h-3 w-3 ml-1" />
               </Label>
-              {idCardUrls.map((url, idx) => (
-                <div key={idx} className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => handleRemoveIdUrl(idx)} className="text-red-500 rounded-xl h-12 w-12 shrink-0 bg-slate-50" disabled={idCardUrls.length <= 1}>
-                    <Trash2 size={18} />
-                  </Button>
-                  <Input 
-                    placeholder={`رابط بطاقة ${idx + 1}...`} 
-                    value={url} 
-                    onChange={e => {
-                        const newUrls = [...idCardUrls];
-                        newUrls[idx] = e.target.value;
-                        setIdCardUrls(newUrls);
-                    }} 
-                    className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-right flex-1" 
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {idCardUrls.map((url, idx) => (
+                  <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border-2 border-slate-100 group">
+                    <Image src={url} alt={`بطاقة ${idx + 1}`} fill className="object-cover" />
+                    <button 
+                      onClick={() => removeImage(idx)}
+                      className="absolute top-1 left-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+                <label className="aspect-video rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 transition-colors">
+                  <Upload size={20} className="text-slate-400" />
+                  <span className="text-[10px] font-bold text-slate-500">رفع صور</span>
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={handleFileChange}
                   />
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={handleAddIdUrl} className="w-full rounded-xl border-dashed border-2 font-bold gap-2">
-                <PlusCircle className="h-4 w-4" /> إضافة رابط بطاقة آخر
-              </Button>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -234,7 +249,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
           <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3 flex-row-reverse text-right">
             <Info className="h-5 w-5 text-orange-600 shrink-0" />
             <p className="text-xs text-orange-800 font-bold leading-relaxed">
-              سياسة الجدولة: يمنع النظام ترك أي أيام فارغة بين الحجوزات. يجب أن تبدأ حجوزاتك من اليوم التالي مباشرة لآخر حجز مسجل لضمان استمرارية الإشغال.
+              سياسة الجدولة: يمنع النظام ترك أي أيام فارغة بين الحجوزات. يجب أن تبدأ حجوزاتك من اليوم التالي مباشرة لآخر حجز مسجل.
             </p>
           </div>
 
@@ -281,7 +296,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
         <DialogFooter className="p-8 pt-0 bg-white gap-3 flex flex-row-reverse">
           <Button 
             onClick={handleConfirm} 
-            disabled={!dateRange?.from || !dateRange?.to || !name || !phone || !paymentRef}
+            disabled={!dateRange?.from || !dateRange?.to || !name || !phone || !paymentRef || idCardUrls.length === 0}
             className="rounded-2xl h-14 bg-primary hover:bg-primary/90 text-white flex-1 font-bold text-lg shadow-xl shadow-primary/20"
           >
             تأكيد الطلب وإرسال الدفع
