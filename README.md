@@ -3,27 +3,48 @@
 
 نظام إداري متكامل مخصص للهواتف المحمولة لإدارة حجوزات الشاليهات والعمليات الميدانية، محول بالكامل إلى تطبيق ويب تقدمي (PWA).
 
-## 🚀 الخطوات النهائية للنشر المباشر
+## 🚀 الخطوات النهائية للنشر على A2 Hosting (cPanel)
 
-### 1. الرفع على GitHub
-افتح الـ Terminal في مجلد المشروع ونفذ الأوامر التالية لربط الكود بمستودعك الحقيقي:
+بما أنك تستخدم استضافة تدعم Node.js، اتبع الخطوات التالية بدقة:
+
+### 1. تجهيز الملفات محلياً (على جهازك)
+افتح الـ CMD في مجلد المشروع ونفذ:
 ```bash
-git init
-git add .
-git commit -m "🚀 إطلاق النسخة الأولى - PWA Mobile App"
-git branch -M main
-git remote add origin https://github.com/mohamedahmedelghamry1997-rgb/farma.git
-git push -u origin main
+# 1. بناء المشروع (Build)
+npm run build
+```
+بعد الانتهاء، سيقوم Next.js بإنشاء مجلد باسم `.next/standalone`. هذا المجلد يحتوي على كل ما تحتاجه للتشغيل.
+
+### 2. إعداد تطبيق Node.js في cPanel
+1. ادخل إلى **cPanel** الخاصة بـ A2 Hosting.
+2. ابحث عن **Setup Node.js App**.
+3. اضغط على **Create Application**.
+4. **Application root**: اكتب مسار المجلد (مثلاً: `public_html/farma`).
+5. **Application URL**: اختر دومين موقعك.
+6. **Application startup file**: اكتب `server.js`.
+7. اضغط **Create**.
+
+### 3. رفع الملفات
+باستخدام الـ **File Manager** في cPanel، ارفع الملفات التالية إلى مجلد المشروع (`farma`):
+- ملف `server.js` الموجود في المجلد الرئيسي.
+- مجلد `public`.
+- مجلد `.next`.
+- ملف `package.json`.
+- ملف `.env` (تأكد من وجود مفاتيح Firebase بداخله).
+
+### 4. تثبيت الحزم وتشغيل الموقع
+1. من صفحة **Setup Node.js App** في cPanel، ستجد رابطاً بجانب "Command for entering to enter the virtual environment". انسخه ونفذه في الـ **Terminal** الخاص بـ cPanel.
+2. نفذ الأوامر التالية بالترتيب:
+```bash
+# تثبيت المكتبات على السيرفر
+npm install
+
+# العودة لصفحة Node.js App في cPanel واضغط على "Restart"
 ```
 
-### 2. النشر على Vercel (الموقع المباشر)
-لجعل الموقع متاحاً للجميع برابط مباشر ومحمي:
-- قم بتثبيت Vercel CLI: `npm install -g vercel`
-- نفذ أمر الربط الأول: `vercel` (اتبع التعليمات واضغط Enter للموافقة)
-- نفذ أمر النشر النهائي: `vercel --prod`
-*ملاحظة: تأكد من إضافة مفاتيح Firebase في لوحة تحكم Vercel (Settings -> Environment Variables) لضمان عمل قاعدة البيانات.*
+---
 
-## 📱 كيفية تثبيت التطبيق على هاتفك
+## 📱 كيفية تثبيت التطبيق على الهاتف (PWA)
 
 ### على iPhone (Safari):
 1. افتح الرابط المنشور في متصفح **Safari**.
@@ -35,12 +56,10 @@ git push -u origin main
 2. ستظهر لك رسالة "تثبيت التطبيق" تلقائياً، أو اضغط على النقاط الثلاث واختر **Install App**.
 
 ## 🛠 المميزات التقنية المضافة
-- **PWA Ready:** يدعم العمل بدون اتصال وتثبيت الأيقونة على الشاشة الرئيسية.
-- **Mobile-First UI:** واجهة مستخدم سفلية (Bottom Nav) مريحة للتحكم بيد واحدة.
-- **Cairo Font:** استخدام خط "كايرو" الاحترافي لواجهة عربية فخمة.
-- **Real-time Integration:** مزامنة لحظية مع Firebase Firestore و Authentication.
-- **Financial Reports:** جداول مالية تفصيلية للأدمن لمتابعة الأرباح والعمولات.
-- **Client Portal:** لوحة تحكم خاصة للعملاء لمتابعة حجوزاتهم.
+- **Node.js Standalone Ready:** مهيأ للعمل على استضافات السيرفرات العادية.
+- **Firebase Service Layer:** منطق البيانات مفصول تماماً لسهولة الصيانة.
+- **Mobile-First UI:** واجهة مستخدم سفلية (Bottom Nav) مريحة.
+- **AI Agent:** مدمج لتحليل فجوات الحجوزات وتقارير المشرفين.
 
 ---
 تم التطوير والتحويل بواسطة AI Partner - نظام فارما بيتش الإداري.
