@@ -32,6 +32,7 @@ import { RoleSwitcher } from '@/components/RoleSwitcher'
 import { BottomNav } from '@/components/BottomNav'
 import { SidebarNav } from '@/components/SidebarNav'
 import { ChaletFinancialReport } from '@/components/ChaletFinancialReport'
+import { BrokersManagement } from '@/components/BrokersManagement'
 import Image from 'next/image'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
@@ -401,6 +402,15 @@ export default function PharmaBeachApp() {
                     onSelectChalet={handleOpenSpreadsheetReport} 
                     onAddBooking={handleAddBookingFromSheet}
                     userRole={activeRole} 
+                  />
+              )}
+
+              {activeMobileTab === 'brokers-management' && (
+                 <BrokersManagement 
+                    users={store.users} 
+                    bookings={store.bookings} 
+                    withdrawals={store.withdrawals} 
+                    chalets={store.chalets}
                   />
               )}
 

@@ -4,7 +4,7 @@
 import { 
   Calendar, Wallet, Settings, ClipboardCheck, Users, 
   Home as HomeIcon, LayoutDashboard, History, Box, Tag, 
-  UserPlus, Search, Waves, FileText, ListTodo 
+  UserPlus, Search, Waves, FileText, ListTodo, UserCheck
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserRole } from '@/lib/store'
@@ -31,6 +31,7 @@ export function SidebarNav({ activeTab, onTabChange, role, isOpen, setIsOpen }: 
 
   const adminItems = [
     { id: 'spreadsheet', label: 'جدول الحجوزات', icon: Calendar },
+    { id: 'brokers-management', label: 'تقارير الوسطاء', icon: UserCheck },
     { id: 'chalet-reports', label: 'التقارير المالية التفصيلية', icon: FileText },
     { id: 'bookings', label: 'الإدارة المالية', icon: Wallet },
     { id: 'ops', label: 'العمليات الميدانية', icon: ClipboardCheck },
