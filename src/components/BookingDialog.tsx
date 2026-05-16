@@ -162,7 +162,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
         <DialogHeader className="bg-primary p-8 text-white relative">
           <DialogTitle className="text-2xl font-bold text-right mb-2">طلب حجز واستلام الوحدة</DialogTitle>
           <DialogDescription className="text-white/70 text-right font-medium">
-             منتجع فارما بيتش - يرجى الالتزام بالجدولة المتصلة (بدون أي فجوات زمنية)
+             منتجع فارما بيتش - يرجى إدخال بيانات العميل والبطاقات أولاً
           </DialogDescription>
           <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
             <LucideCalendar size={120} />
@@ -170,30 +170,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
         </DialogHeader>
         
         <div className="p-8 space-y-6 bg-white overflow-y-auto max-h-[75vh]">
-          <div className="space-y-4">
-            <Label className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 justify-end">
-               اختر تواريخ الإقامة <LucideCalendar className="h-3 w-3" />
-            </Label>
-            <div className="flex justify-center border rounded-3xl p-2 bg-slate-50/50">
-              <Calendar
-                mode="range"
-                selected={dateRange}
-                onSelect={(range) => setDateRange(range)}
-                disabled={isDateDisabled}
-                className="rounded-xl w-full flex justify-center"
-                locale={ar}
-                dir="rtl"
-              />
-            </div>
-          </div>
-
-          <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3 flex-row-reverse text-right">
-            <Info className="h-5 w-5 text-orange-600 shrink-0" />
-            <p className="text-xs text-orange-800 font-bold leading-relaxed">
-              سياسة الجدولة: يمنع النظام ترك أي أيام فارغة بين الحجوزات. يجب أن تبدأ حجوزاتك من اليوم التالي مباشرة لآخر حجز مسجل لضمان استمرارية الإشغال.
-            </p>
-          </div>
-
+          {/* Moved Client Info to the Top */}
           <div className="grid grid-cols-1 gap-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -235,8 +212,33 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                 <PlusCircle className="h-4 w-4" /> إضافة رابط بطاقة آخر
               </Button>
             </div>
+          </div>
 
-            <div className="p-6 bg-blue-50/50 rounded-[2rem] border border-blue-100 space-y-4">
+          <div className="space-y-4 pt-4 border-t">
+            <Label className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 justify-end">
+               اختر تواريخ الإقامة <LucideCalendar className="h-3 w-3" />
+            </Label>
+            <div className="flex justify-center border rounded-3xl p-2 bg-slate-50/50">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={(range) => setDateRange(range)}
+                disabled={isDateDisabled}
+                className="rounded-xl w-full flex justify-center"
+                locale={ar}
+                dir="rtl"
+              />
+            </div>
+          </div>
+
+          <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3 flex-row-reverse text-right">
+            <Info className="h-5 w-5 text-orange-600 shrink-0" />
+            <p className="text-xs text-orange-800 font-bold leading-relaxed">
+              سياسة الجدولة: يمنع النظام ترك أي أيام فارغة بين الحجوزات. يجب أن تبدأ حجوزاتك من اليوم التالي مباشرة لآخر حجز مسجل لضمان استمرارية الإشغال.
+            </p>
+          </div>
+
+          <div className="p-6 bg-blue-50/50 rounded-[2rem] border border-blue-100 space-y-4">
                <div className="flex justify-between items-center mb-2 flex-row-reverse">
                   <span className="text-blue-600 font-black flex items-center gap-2 flex-row-reverse"><Wallet className="h-4 w-4" /> بيانات الدفع المالي</span>
                   <span className="text-xl font-black text-slate-800">{calculateTotal()} ج.م</span>
@@ -274,7 +276,6 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
                 />
                </div>
             </div>
-          </div>
         </div>
 
         <DialogFooter className="p-8 pt-0 bg-white gap-3 flex flex-row-reverse">

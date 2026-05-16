@@ -293,7 +293,7 @@ export default function PharmaBeachApp() {
                       <div className="bg-primary/5 p-3 md:p-6 rounded-2xl md:rounded-[2rem] text-primary animate-bounce delay-150"><Sun size={24} className="md:w-12 md:h-12" /></div>
                       <div className="bg-primary/5 p-3 md:p-6 rounded-2xl md:rounded-[2rem] text-primary animate-bounce delay-300"><Palmtree size={24} className="md:w-12 md:h-12" /></div>
                     </div>
-                    <h2 className="text-3xl md:text-7xl font-black text-slate-900 leading-tight">فخامة <span className="text-primary">الإقامة الساحلية</span><br/>بين يديك الآن</h2>
+                    <h2 className="text-3xl md:text-7xl font-black text-slate-900 leading-tight">أهلاً بك في <span className="text-primary">فارما بيتش</span><br/>مع مستر اكس</h2>
                     <p className="text-sm md:text-2xl font-bold text-slate-500 max-w-3xl mx-auto leading-relaxed px-2">استكشف أفخم شاليهات فارما بيتش واحجز عطلتك القادمة بضغطة زر.</p>
                     <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-6 px-4">
                       <Button size="lg" className="rounded-2xl md:rounded-[2rem] h-14 md:h-20 px-10 md:px-16 text-lg md:text-2xl font-black shadow-2xl shadow-primary/30 transition-transform hover:scale-105" onClick={() => document.getElementById('units')?.scrollIntoView({behavior: 'smooth'})}>تصفح الشاليهات</Button>
