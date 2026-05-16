@@ -11,7 +11,7 @@ import { Chalet, Booking, useAppStore } from "@/lib/store"
 import { format, isBefore, startOfDay, isSameDay, isWithinInterval, differenceInDays, addDays, subDays } from "date-fns"
 import { ar } from "date-fns/locale"
 import { 
-  Calendar as LucideCalendar, 
+  Calendar as CalendarIcon, 
   Phone, 
   User, 
   Wallet, 
@@ -231,7 +231,7 @@ export function BookingDialog({ chalet, isOpen, onClose, onConfirm, existingBook
 
           <div className="space-y-4 pt-4 border-t">
             <Label className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 justify-end">
-               اختر تواريخ الإقامة <LucideCalendar className="h-3 w-3" />
+               اختر تواريخ الإقامة <CalendarIcon className="h-3 w-3" />
             </Label>
             <div className="flex justify-center border rounded-3xl p-2 bg-slate-50/50">
               <Calendar
