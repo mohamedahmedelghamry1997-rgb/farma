@@ -62,6 +62,24 @@ export function ChaletSpreadsheet({ chalets, bookings, onSelectChalet, onAddBook
     return active || allForDay[0]
   }
 
+  const getBookingColor = (booking: Booking) => {
+    if (booking.status === 'cancelled') return 'bg-slate-400';
+    
+    // 1. اللون الأصفر: بانتظار تأكيد الحجز من الأدمن
+    if (booking.status === 'pending') return 'bg-orange-400';
+    
+    // 2. اللون الأزرق: تم التأكيد لكن لم يتم الاستلام بعد
+    if (booking.status === 'confirmed' && (booking.opStatus === 'waiting' || !booking.opStatus)) return 'bg-blue-500';
+    
+    // 3. اللون الأخضر: تم الاستلام والعميل بالداخل ولم يتم الإخلاء
+    if (booking.status === 'confirmed' && booking.opStatus === 'checked_in') return 'bg-green-500';
+    
+    // 4. اللون الأحمر: تم الحجز والاستلام والإخلاء (مكتمل)
+    if (booking.status === 'confirmed' && booking.opStatus === 'checked_out') return 'bg-red-500';
+    
+    return 'bg-slate-500';
+  }
+
   return (
     <div className={cn(
       "bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 transition-all duration-300",
@@ -168,9 +186,7 @@ export function ChaletSpreadsheet({ chalets, bookings, onSelectChalet, onAddBook
                       {booking && (
                         <div className={cn(
                           "absolute inset-0.5 md:inset-1 rounded-sm md:rounded-lg shadow-sm flex items-center justify-center transition-all hover:scale-105 z-10",
-                          booking.status === 'confirmed' ? 'bg-green-500' : 
-                          booking.status === 'admin_approved' ? 'bg-blue-500' : 
-                          booking.status === 'cancelled' ? 'bg-red-500' : 'bg-orange-400'
+                          getBookingColor(booking)
                         )}>
                           <div className="h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-white animate-pulse"></div>
                           <span className="text-[7px] md:text-[9px] text-white font-black mr-0.5 md:mr-1 truncate max-w-full px-0.5">
@@ -192,11 +208,11 @@ export function ChaletSpreadsheet({ chalets, bookings, onSelectChalet, onAddBook
         </table>
       </div>
       
-      <div className="p-3 md:p-6 border-t bg-white flex flex-wrap gap-3 md:gap-6 justify-center text-[8px] md:text-xs font-black text-slate-500 overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-1.5 whitespace-nowrap"><div className="h-2 w-2 md:h-3 md:w-3 rounded-full bg-green-500"></div> مؤكد</div>
-        <div className="flex items-center gap-1.5 whitespace-nowrap"><div className="h-2 w-2 md:h-3 md:w-3 rounded-full bg-blue-500"></div> موافقة</div>
-        <div className="flex items-center gap-1.5 whitespace-nowrap"><div className="h-2 w-2 md:h-3 md:w-3 rounded-full bg-orange-400"></div> انتظار</div>
-        <div className="flex items-center gap-1.5 whitespace-nowrap"><div className="h-2 w-2 md:h-3 md:w-3 rounded-full bg-red-500"></div> ملغي</div>
+      <div className="p-3 md:p-6 border-t bg-white flex flex-wrap gap-3 md:gap-6 justify-center text-[8px] md:text-[10px] font-black text-slate-500 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 whitespace-nowrap"><div className="h-2.5 w-2.5 rounded-full bg-orange-400"></div> انتظار تأكيد الأدمن</div>
+        <div className="flex items-center gap-1.5 whitespace-nowrap"><div className="h-2.5 w-2.5 rounded-full bg-blue-500"></div> مؤكد (بانتظار الاستلام)</div>
+        <div className="flex items-center gap-1.5 whitespace-nowrap"><div className="h-2.5 w-2.5 rounded-full bg-green-500"></div> تم الاستلام (العميل بالداخل)</div>
+        <div className="flex items-center gap-1.5 whitespace-nowrap"><div className="h-2.5 w-2.5 rounded-full bg-red-500"></div> مكتمل (تم الإخلاء)</div>
         {isExpanded && <Button variant="secondary" size="sm" className="rounded-full h-8 px-4 font-black text-[10px]" onClick={() => setIsExpanded(false)}>إغلاق المكبر</Button>}
       </div>
     </div>
