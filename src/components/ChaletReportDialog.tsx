@@ -4,7 +4,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Chalet, Booking, UserRole } from '@/lib/store'
 import { Badge } from './ui/badge'
-import { User, Phone, Calendar as CalendarIcon, Tag, MapPin, Hash, Receipt, UserCheck, Clock, Zap, Droplets, ClipboardCheck, CheckCircle2, ImageIcon, History } from 'lucide-react'
+import { User, Phone, Calendar as CalendarIcon, Tag, MapPin, Hash, Receipt, UserCheck, Clock, Zap, Droplets, ClipboardCheck, CheckCircle2, ImageIcon, History, Briefcase } from 'lucide-react'
 import { format, differenceInDays, isAfter, startOfDay } from 'date-fns'
 import { ar } from 'date-fns/locale'
 import { Button } from './ui/button'
@@ -156,6 +156,12 @@ export function ChaletReportDialog({ chalet, booking, isOpen, onClose, onViewFul
                  <div className="p-4 md:p-8 bg-primary/5 rounded-2xl md:rounded-[2.5rem] border border-primary/10 flex flex-col items-center text-center gap-1 md:gap-2">
                     <p className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest">إجمالي العمولة</p>
                     <p className="text-2xl md:text-4xl font-black text-primary">{commission.toLocaleString()} <span className="text-xs">ج.م</span></p>
+                    {booking.brokerName && (
+                      <div className="flex items-center gap-1 text-slate-500 mt-1">
+                        <span className="text-[10px] md:text-sm font-bold">الوسيط: {booking.brokerName}</span>
+                        <Briefcase className="h-3 w-3 md:h-4 md:w-4" />
+                      </div>
+                    )}
                  </div>
                  <div className="p-4 md:p-8 bg-slate-50 rounded-2xl md:rounded-[2.5rem] border border-slate-100 flex flex-col items-center text-center gap-1 md:gap-2">
                     <p className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest">مرجع العملية</p>
