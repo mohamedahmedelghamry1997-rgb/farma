@@ -1,7 +1,8 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: 'standalone', // تم الإضافة لدعم الاستضافات التي تعمل بنظام Node.js المستقل
   typescript: {
     ignoreBuildErrors: true,
   },

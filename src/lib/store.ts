@@ -1,23 +1,10 @@
 
 "use client"
 
-import { useState, useEffect } from 'react'
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  deleteDoc, 
-  query, 
-  orderBy, 
-  serverTimestamp,
-  onSnapshot,
-  getDoc,
-  setDoc,
-  writeBatch
-} from 'firebase/firestore'
+import { useState, useEffect, useMemo } from 'react'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { useFirestore, useAuth } from '@/firebase'
+import { DataService } from '@/services/data-service'
 
 export type UserRole = 'client' | 'broker' | 'supervisor' | 'admin'
 
@@ -93,7 +80,7 @@ export interface WithdrawalRequest {
   amount: number
   method: 'vodafone_cash' | 'instapay' | 'bank'
   details: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'approved' | 'rejected' | 'completed'
   createdAt: any
 }
 
@@ -107,6 +94,9 @@ export interface SystemSettings {
 export function useAppStore() {
   const db = useFirestore()
   const auth = useAuth()
+  
+  // إنشاء نسخة من طبقة الخدمات
+  const dataService = useMemo(() => new DataService(db), [db]);
   
   const [role, setRoleState] = useState<UserRole | null>(null)
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
@@ -125,12 +115,9 @@ export function useAppStore() {
       setAuthUser(user)
       if (user) {
         try {
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as UserProfile;
-            setCurrentUser({ ...userData, id: userDoc.id });
+          const userData = await dataService.getUserProfile(user.uid);
+          if (userData) {
+            setCurrentUser({ ...userData, id: user.uid });
             setRoleState(userData.role);
           } else {
             let assignedRole: UserRole = 'client';
@@ -146,7 +133,7 @@ export function useAppStore() {
               commissionRate: assignedRole === 'broker' ? 200 : 0,
               email: user.email || ""
             };
-            await setDoc(userDocRef, newProfile);
+            await dataService.setUserProfile(user.uid, newProfile);
             setCurrentUser({ ...newProfile, id: user.uid } as UserProfile);
             setRoleState(assignedRole);
           }
@@ -160,153 +147,35 @@ export function useAppStore() {
       setIsAuthLoading(false);
     });
 
-    const unsubChalets = onSnapshot(collection(db, 'chalets'), (snap) => {
-      setChalets(snap.docs.map(d => ({ ...d.data() as Chalet, id: d.id })));
-    });
+    const unsubChalets = dataService.subscribeToChalets(setChalets);
+    const unsubBookings = dataService.subscribeToBookings(setBookings);
+    const unsubUsers = dataService.subscribeToUsers(setUsers);
+    const unsubSettings = dataService.subscribeToSettings(setSystemSettings);
 
-    const unsubBookings = onSnapshot(query(collection(db, 'bookings'), orderBy('createdAt', 'desc')), (snap) => {
-      setBookings(snap.docs.map(d => ({ ...d.data() as Booking, id: d.id })));
-    });
-
-    const unsubWithdrawals = onSnapshot(query(collection(db, 'withdrawals'), orderBy('createdAt', 'desc')), (snap) => {
-      setWithdrawals(snap.docs.map(d => ({ ...d.data() as WithdrawalRequest, id: d.id })));
-    });
-
-    const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
-      setUsers(snap.docs.map(d => ({ ...d.data() as UserProfile, id: d.id })));
-    });
-
-    const unsubSettings = onSnapshot(doc(db, 'config', 'system'), (snap) => {
-      if (snap.exists()) {
-        setSystemSettings(snap.data() as SystemSettings);
-      }
-      setIsDataLoading(false);
-    }, (err) => {
-      setIsDataLoading(false);
-    });
+    // التحميل المبدئي للبيانات
+    setIsDataLoading(false);
 
     return () => {
       unsubscribeAuth();
       unsubChalets();
       unsubBookings();
-      unsubWithdrawals();
       unsubUsers();
       unsubSettings();
     };
-  }, [auth, db]);
+  }, [auth, dataService]);
 
-  const updateSystemSettings = async (settings: SystemSettings) => {
-    try {
-      await setDoc(doc(db, 'config', 'system'), settings, { merge: true });
-    } catch (e) {
-      console.error("Error updating system settings:", e);
-    }
-  }
-
-  const addBooking = async (data: any) => {
-    const cleanData = Object.fromEntries(
-      Object.entries(data).filter(([_, v]) => v !== undefined)
-    );
-    
-    try {
-      await addDoc(collection(db, 'bookings'), {
-        ...cleanData,
-        status: data.status || 'pending',
-        opStatus: 'waiting',
-        createdAt: serverTimestamp()
-      });
-    } catch (e) {
-      console.error("Error adding booking:", e);
-      throw e;
-    }
-  }
-
-  const updateBooking = async (id: string, updates: Partial<Booking>) => {
-    try {
-      await updateDoc(doc(db, 'bookings', id), updates);
-    } catch (e) {
-      console.error("Error updating booking:", e);
-    }
-  }
-
-  const addWithdrawalRequest = async (data: Omit<WithdrawalRequest, 'id' | 'createdAt' | 'status'>) => {
-    try {
-      await addDoc(collection(db, 'withdrawals'), {
-        ...data,
-        status: 'pending',
-        createdAt: serverTimestamp()
-      });
-    } catch (e) {
-      console.error("Error adding withdrawal request:", e);
-    }
-  }
-
-  const updateWithdrawalStatus = async (id: string, status: 'approved' | 'rejected') => {
-    try {
-      await updateDoc(doc(db, 'withdrawals', id), { status });
-    } catch (e) {
-      console.error("Error updating withdrawal status:", e);
-    }
-  }
-
-  const addChalet = async (data: any) => {
-    const cleanData = Object.fromEntries(
-      Object.entries(data).filter(([_, v]) => v !== undefined)
-    );
-    try {
-      await addDoc(collection(db, 'chalets'), { 
-        ...cleanData, 
-        status: data.status || 'active',
-        createdAt: serverTimestamp() 
-      });
-    } catch (e) {
-      console.error("Error adding chalet:", e);
-    }
-  }
-
-  const updateChalet = async (id: string, updates: Partial<Chalet>) => {
-    try {
-      await updateDoc(doc(db, 'chalets', id), updates);
-    } catch (e) {
-      console.error("Error updating chalet:", e);
-    }
-  }
-
-  const deleteChalet = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'chalets', id));
-    } catch (e) {
-      console.error("Error deleting chalet:", e);
-    }
-  }
-
-  const addUser = async (data: any) => {
-    try {
-      const newUserRef = doc(collection(db, 'users'));
-      await setDoc(newUserRef, {
-        ...data,
-        uid: newUserRef.id,
-        isApproved: true,
-        status: 'active',
-        createdAt: serverTimestamp()
-      });
-    } catch (e) {
-      console.error("Error adding user:", e);
-    }
-  }
-
-  const updateUser = async (id: string, updates: Partial<UserProfile>) => {
-    try {
-      await updateDoc(doc(db, 'users', id), updates);
-    } catch (e) {
-      console.error("Error updating user:", e);
-    }
-  }
+  // العمليات (تم توجيهها الآن لطبقة الخدمات)
+  const addBooking = (data: any) => dataService.addBooking(data);
+  const updateBooking = (id: string, updates: Partial<Booking>) => dataService.updateBooking(id, updates);
+  const addChalet = (data: any) => dataService.addChalet(data);
+  const updateChalet = (id: string, updates: Partial<Chalet>) => dataService.updateChalet(id, updates);
+  const addUser = (data: any) => dataService.setUserProfile(data.uid, data);
+  const updateUser = (id: string, updates: Partial<UserProfile>) => dataService.setUserProfile(id, updates);
 
   return {
     role, currentUser, authUser, isAuthLoading,
     chalets, bookings, users, systemSettings, withdrawals,
-    addBooking, updateBooking, addChalet, updateChalet, deleteChalet, addUser, updateUser, updateSystemSettings, addWithdrawalRequest, updateWithdrawalStatus,
+    addBooking, updateBooking, addChalet, updateChalet, addUser, updateUser,
     isLoaded: !isAuthLoading && !isDataLoading
   }
 }
