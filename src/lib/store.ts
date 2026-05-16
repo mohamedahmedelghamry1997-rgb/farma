@@ -33,6 +33,7 @@ export interface UserProfile {
   status?: 'active' | 'suspended'
   commissionRate?: number
   image?: string
+  password?: string
 }
 
 export interface Chalet {
