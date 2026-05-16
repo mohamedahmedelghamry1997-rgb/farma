@@ -14,7 +14,7 @@ import {
   LayoutDashboard, UserPlus, ArrowUpRight, Filter, Calendar as LucideCalendar,
   LogIn, UserCircle, Eye, Waves, Sun, Anchor, Palmtree, Settings,
   LogOut, Phone, Menu, Plus, FileText, Trash2, Pencil, Image as ImageIcon, Clock, CheckCircle2,
-  ChevronRight, ShieldAlert
+  ChevronRight, ShieldAlert, AlertCircle, BellRing
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { BookingDialog } from '@/components/BookingDialog'
@@ -37,7 +37,7 @@ import Image from 'next/image'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useAuth } from '@/firebase'
 import { cn } from '@/lib/utils'
-import { format } from 'date-fns'
+import { format, isToday, startOfDay } from 'date-fns'
 import { ar } from 'date-fns/locale'
 
 export default function PharmaBeachApp() {
@@ -692,16 +692,45 @@ export default function PharmaBeachApp() {
 
              <div className="w-full">
                 {activeMobileTab === 'tasks' && (
-                   <div className="space-y-3">
-                   {filteredBookings.map(b => (
-                     <Card key={b.id} className="p-4 rounded-2xl shadow-lg bg-white flex flex-col gap-3">
-                         <div className="text-right flex items-center gap-3 flex-row-reverse text-right">
-                           <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${b.opStatus === 'checked_in' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50'}`}><Activity size={20} /></div>
-                           <div className="flex-1">
-                              <p className="text-base font-black">{b.clientName}</p>
-                              <p className="text-slate-500 font-bold text-[10px]">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
-                           </div>
+                   <div className="space-y-4">
+                   {filteredBookings.map(b => {
+                     const isCheckInToday = isToday(startOfDay(new Date(b.startDate)));
+                     const isCheckOutToday = isToday(startOfDay(new Date(b.endDate)));
+                     const isUrgent = isCheckInToday || isCheckOutToday;
+
+                     return (
+                     <Card key={b.id} className={cn("p-4 rounded-2xl shadow-lg bg-white flex flex-col gap-3 border-r-4 transition-all", isUrgent ? "border-r-red-500 shadow-red-100" : "border-r-slate-200")}>
+                         <div className="flex justify-between items-start flex-row-reverse mb-1">
+                            <div className="text-right flex items-center gap-3 flex-row-reverse text-right">
+                              <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shadow-inner", b.opStatus === 'checked_in' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-400')}><Activity size={20} /></div>
+                              <div className="flex-1">
+                                 <p className="text-base font-black">{b.clientName}</p>
+                                 <p className="text-slate-500 font-bold text-[10px]">{store.chalets.find(c => c.id === b.chaletId)?.name}</p>
+                              </div>
+                            </div>
+                            {isUrgent && (
+                              <Badge className="bg-red-500 text-white border-none animate-pulse text-[8px] flex items-center gap-1 font-black">
+                                <BellRing size={10} /> تنبيه: اليوم
+                              </Badge>
+                            )}
                          </div>
+
+                         <div className="bg-slate-50/80 p-3 rounded-xl flex justify-between items-center flex-row-reverse">
+                            <div className="text-right">
+                               <p className="text-[8px] font-black text-slate-400 uppercase">تاريخ الوصول</p>
+                               <p className={cn("text-[10px] font-black", isCheckInToday ? "text-red-600" : "text-slate-700")}>
+                                  {format(new Date(b.startDate), 'dd MMMM yyyy', { locale: ar })}
+                               </p>
+                            </div>
+                            <div className="h-4 w-px bg-slate-200" />
+                            <div className="text-right">
+                               <p className="text-[8px] font-black text-slate-400 uppercase">تاريخ المغادرة</p>
+                               <p className={cn("text-[10px] font-black", isCheckOutToday ? "text-red-600" : "text-slate-700")}>
+                                  {format(new Date(b.endDate), 'dd MMMM yyyy', { locale: ar })}
+                               </p>
+                            </div>
+                         </div>
+
                          <div className="flex gap-2">
                             <Button variant="outline" className="h-10 rounded-xl flex-1 border-slate-200" onClick={() => window.open(`tel:${b.phoneNumber}`)}><Phone size={16} /></Button>
                             <Button 
@@ -719,7 +748,7 @@ export default function PharmaBeachApp() {
                             )}
                          </div>
                      </Card>
-                   ))}
+                   )})}
                 </div>
                 )}
 
